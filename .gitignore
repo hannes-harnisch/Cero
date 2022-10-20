@@ -1,0 +1,12 @@
+.vs/
+bin/
+CMakeFiles/
+*.dir/
+
+*.cmake
+*.filters
+*.sln
+*.user
+*.vcxproj
+
+CMakeCache.txt
