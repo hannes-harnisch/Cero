@@ -1,24 +1,29 @@
 #include "Driver.hpp"
+#include "driver/Config.hpp"
 
-namespace cero
+static ExitCode perform_build(const Config& config)
 {
-	int run(std::span<std::string_view> args)
-	{
-		cero::Driver driver;
-		return driver.run_command(args) ? EXIT_SUCCESS : EXIT_FAILURE;
-	}
+	return ExitCode::InternalError;
+}
 
-	Driver::Driver()
-	{}
-
-	Driver::Driver(std::streambuf* output_stream, std::streambuf* error_stream)
+static ExitCode run_driver_with_config(const Config& config)
+{
+	switch (config.command)
 	{
-		std::cout.rdbuf(output_stream);
-		std::cerr.rdbuf(error_stream);
+		case Command::Build: return perform_build(config);
+		case Command::Clean:
+		case Command::Run:
+		case Command::Eval: std::abort();
 	}
+	return ExitCode::InternalError;
+}
 
-	bool Driver::run_command(std::span<std::string_view> args)
-	{
-		return false;
-	}
+ExitCode run_driver(std::vector<std::string_view> args)
+{
+	auto config = Config::from(args);
+
+	if (!config.has_value())
+		return config.error();
+
+	return run_driver_with_config(*config);
 }
