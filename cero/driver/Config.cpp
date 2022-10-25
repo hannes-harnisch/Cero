@@ -24,7 +24,7 @@ static bool is_file_path(std::string_view arg)
 	return !arg.starts_with("-"); // TODO
 }
 
-static std::optional<Option> read_option(std::string_view arg)
+static std::optional<Option> read_option(std::string_view)
 {
 	return {};
 }

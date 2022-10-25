@@ -9,7 +9,7 @@ AlignEscapedNewlines: Right
 AlignOperands: Align
 AlignTrailingComments: true
 AllowAllArgumentsOnNextLine: false
-AllowAllParametersOfDeclarationOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortBlocksOnASingleLine: Never
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortEnumsOnASingleLine: false
@@ -21,7 +21,7 @@ AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: true
 AttributeMacros: []
-BinPackArguments: true
+BinPackArguments: false
 BinPackParameters: false
 BitFieldColonSpacing: Both
 BraceWrapping:
@@ -37,7 +37,7 @@ BraceWrapping:
   AfterExternBlock: true
   BeforeCatch: true
   BeforeElse: true
-  BeforeLambdaBody: true
+  BeforeLambdaBody: false
   BeforeWhile: true
   IndentBraces: false
   SplitEmptyFunction: false
@@ -83,13 +83,13 @@ IndentPPDirectives: BeforeHash
 IndentRequires: false
 IndentWidth: 4
 IndentWrappedFunctionNames: false
-# InsertBraces: false
+InsertBraces: false
 InsertTrailingCommas: None
 JavaImportGroups: []
 JavaScriptQuotes: Double
 JavaScriptWrapImports: true
 KeepEmptyLinesAtTheStartOfBlocks: false
-LambdaBodyIndentation: Signature
+LambdaBodyIndentation: OuterScope
 Language: Cpp
 MacroBlockBegin: ""
 MacroBlockEnd: ""
@@ -103,16 +103,16 @@ ObjCSpaceAfterProperty: false
 ObjCSpaceBeforeProtocolList: false
 PPIndentWidth: -1
 PackConstructorInitializers: Never
-PenaltyBreakAssignment: 0
-PenaltyBreakBeforeFirstCallParameter: 0
+PenaltyBreakAssignment: 1000
+PenaltyBreakBeforeFirstCallParameter: 1000
 PenaltyBreakComment : 0
 PenaltyBreakFirstLessLess : 0
 PenaltyBreakOpenParenthesis: 0
 PenaltyBreakString: 0
 PenaltyBreakTemplateDeclaration: 0
-PenaltyExcessCharacter: 0
+PenaltyExcessCharacter: 10000
 PenaltyIndentedWhitespace: 0
-PenaltyReturnTypeOnItsOwnLine: 0
+PenaltyReturnTypeOnItsOwnLine: 1000
 PointerAlignment: Left
 QualifierAlignment: Custom
 QualifierOrder: ['static', 'constexpr', 'inline', 'const', 'volatile', 'restrict', 'type']
@@ -120,7 +120,7 @@ RawStringFormats: []
 ReferenceAlignment: Pointer
 ReflowComments: true
 RemoveBracesLLVM: false
-# RequiresClausePosition: OwnLine
+RequiresClausePosition: OwnLine
 SeparateDefinitionBlocks: Always
 ShortNamespaceLines: 1
 SortIncludes: true
