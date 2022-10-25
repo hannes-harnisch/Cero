@@ -1,20 +1,11 @@
 #pragma once
 
 #include "driver/Message.hpp"
-#include "syntax/TokenStream.hpp"
+#include "driver/SourceLocation.hpp"
 
 #include <format>
 #include <string_view>
 #include <vector>
-
-struct SourceLocation
-{
-	uint32_t		 line	= 0;
-	uint32_t		 column = 0;
-	std::string_view file;
-
-	bool operator==(const SourceLocation&) const = default;
-};
 
 class Reporter
 {
@@ -28,15 +19,14 @@ class Reporter
 	};
 
 	std::vector<Report> reports;
-	TokenStream			token_stream;
 	bool				warnings_as_errors = false;
 
 public:
 	template<Message MESSAGE, typename... Args>
 	void report(SourceLocation location, Args&&... args)
 	{
-		static_assert(arg_count_matches_message<Args...>(MESSAGE),
-					  "The given number of arguments does not match required number of arguments for this message.");
+		static_assert(arg_count_matches_message<Args...>(MESSAGE), "The given number of arguments does not match required "
+																   "number of arguments for this message.");
 
 		write(MESSAGE, location, get_format(MESSAGE), std::make_format_args(std::forward<Args>(args)...));
 	}
@@ -48,10 +38,8 @@ public:
 		return do_pop_report(message, location, std::make_format_args(std::forward<Args>(args)...));
 	}
 
-	void			   set_warnings_as_errors();
-	bool			   has_reports() const;
-	const TokenStream& get_token_stream() const;
-	void			   finalize(TokenStream tokens);
+	void set_warnings_as_errors();
+	bool has_reports() const;
 
 private:
 	// Determines whether the number of parameters in the parameter pack matches the number of placeholders in the format string

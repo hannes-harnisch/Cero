@@ -5,15 +5,33 @@ void TokenStream::append(Token token)
 	tokens.emplace_back(token);
 }
 
-std::string TokenStream::to_string(std::string_view source) const
+std::string TokenStream::to_string(const Source& source) const
 {
-	constexpr unsigned AVG_TOKEN_LENGTH = 5; // arbitrary heuristic
-
-	std::string str;
-	str.reserve(tokens.size() * AVG_TOKEN_LENGTH);
+	std::stringstream str;
 
 	for (auto token : tokens)
-		str += std::format("`{}` ", token.to_string(source));
+	{
+		str << token.to_string(source);
+		if (token.kind == TokenKind::NewLine)
+			str << '\n';
+		else
+			str << ' ';
+	}
 
-	return str;
+	return str.str();
+}
+
+std::span<const Token> TokenStream::get_slice() const
+{
+	return tokens;
+}
+
+Token TokenStream::at(size_t index) const
+{
+	return tokens.at(index);
+}
+
+void TokenStream::print(const Source& source) const
+{
+	std::clog << to_string(source);
 }

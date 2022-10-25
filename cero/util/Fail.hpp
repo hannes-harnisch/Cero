@@ -1,5 +1,8 @@
 #pragma once
 
+// To be used in control flow branches that are only reachable via logic bugs in the compiler. Terminates the compiler in any
+// build configuration.
 [[noreturn]] void fail_unreachable();
-[[noreturn]] void fail_unimplemented();
+
+// To be used in place of functionality that is not yet implemented. Terminates the compiler in any build configuration.
 [[noreturn]] void to_do();

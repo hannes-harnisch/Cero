@@ -7,9 +7,8 @@ file(GLOB_RECURSE PCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}${CMAKE_FILES_DIRECTORY}/
 
 add_library(Cero ${CERO_SRC})
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/extern/magic_enum/include)
-set_target_properties(Cero PROPERTIES PRECOMPILE_HEADERS "PCH.hpp")
+target_include_directories(Cero PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(Cero PUBLIC ${CMAKE_SOURCE_DIR}/extern/magic_enum/include)
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${CERO_SRC})
 source_group("generated" FILES ${PCH_FILES})

@@ -2,7 +2,8 @@
 
 #include "syntax/Token.hpp"
 
-#include <string_view>
+#include <span>
+#include <string>
 #include <vector>
 
 class TokenStream
@@ -10,6 +11,9 @@ class TokenStream
 	std::vector<Token> tokens;
 
 public:
-	void		append(Token token);
-	std::string to_string(std::string_view source) const;
+	void				   append(Token token);
+	std::string			   to_string(const Source& source) const;
+	std::span<const Token> get_slice() const;
+	Token				   at(size_t index) const;
+	void				   print(const Source& source) const;
 };

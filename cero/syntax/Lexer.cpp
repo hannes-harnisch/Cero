@@ -1,77 +1,73 @@
 #include "Lexer.hpp"
+
+#include "driver/Message.hpp"
 #include "syntax/CharUtils.hpp"
 #include "util/Enum.hpp"
 #include "util/LookupTable.hpp"
-#include "util/StringMap.hpp"
 
-constexpr LookupTable<TokenKind, uint16_t> compute_token_length_lookup_table()
+constexpr LookupTable<TokenKind, uint32_t> compute_token_length_lookup_table()
 {
-	LookupTable<TokenKind, uint16_t> table;
+	LookupTable<TokenKind, uint32_t> table;
 
-	using enum TokenKind;
-	static_assert(std::to_underlying(Dot) == 7);
-	static_assert(std::to_underlying(ThinArrow) == 35);
-	static_assert(std::to_underlying(Spaceship) == 57);
-	static_assert(std::to_underlying(EndOfFile) == 98,
-				  "After a change to the TokenKind enum, ensure that the lookup table computation is still correct.");
-
-	auto increment = [](TokenKind& kind) {
-		kind = static_cast<TokenKind>(std::to_underlying(kind) + 1);
-	};
-	for (auto i = Dot; i != ThinArrow; increment(i))
-		table[i] = 1;
-
-	for (auto i = ThinArrow; i != Spaceship; increment(i))
-		table[i] = 2;
-
-	for (auto i = Spaceship; i != As; increment(i))
-		table[i] = 3;
-
-	for (auto i = As; i != EndOfFile; increment(i))
-		table[i] = static_cast<uint16_t>(magic_enum::enum_name(i).length());
+	for (auto value : magic_enum::enum_values<TokenKind>())
+		table[value] = get_token_length(value);
 
 	return table;
 }
 
-constexpr LookupTable<TokenKind, uint16_t> TOKEN_LENGTHS = compute_token_length_lookup_table();
+constexpr LookupTable<TokenKind, uint32_t> TOKEN_LENGTHS = compute_token_length_lookup_table();
 
-static const StringMap<TokenKind> KEYWORDS {
-	{"as", TokenKind::As},
-	{"async", TokenKind::Async},
-	{"await", TokenKind::Await},
-	{"break", TokenKind::Break},
-	{"catch", TokenKind::Catch},
-	{"const", TokenKind::Const},
-	{"continue", TokenKind::Continue},
-	{"do", TokenKind::Do},
-	{"else", TokenKind::Else},
-	{"enum", TokenKind::Enum},
-	{"extern", TokenKind::Extern},
-	{"for", TokenKind::For},
-	{"if", TokenKind::If},
-	{"in", TokenKind::In},
-	{"let", TokenKind::Let},
-	{"out", TokenKind::Out},
-	{"override", TokenKind::Override},
-	{"private", TokenKind::Private},
-	{"protected", TokenKind::Protected},
-	{"public", TokenKind::Public},
-	{"raw", TokenKind::Raw},
-	{"return", TokenKind::Return},
-	{"sealed", TokenKind::Sealed},
-	{"static", TokenKind::Static},
-	{"struct", TokenKind::Struct},
-	{"super", TokenKind::Super},
-	{"switch", TokenKind::Switch},
-	{"throw", TokenKind::Throw},
-	{"trait", TokenKind::Trait},
-	{"try", TokenKind::Try},
-	{"use", TokenKind::Use},
-	{"var", TokenKind::Var},
-	{"virtual", TokenKind::Virtual},
-	{"while", TokenKind::While},
-	{"yield", TokenKind::Yield},
-};
+TokenKind identify_word_lexeme(std::string_view lexeme)
+{
+	struct Keyword
+	{
+		std::string_view word;
+		TokenKind		 token_kind;
+	};
+	using enum TokenKind;
+	static constexpr Keyword KEYWORDS[] {
+		{"as", As},
+		{"async", Async},
+		{"await", Await},
+		{"break", Break},
+		{"catch", Catch},
+		{"const", Const},
+		{"continue", Continue},
+		{"do", Do},
+		{"else", Else},
+		{"enum", Enum},
+		{"for", For},
+		{"if", If},
+		{"in", In},
+		{"let", Let},
+		{"out", Out},
+		{"override", Override},
+		{"private", Private},
+		{"protected", Protected},
+		{"public", Public},
+		{"raw", Raw},
+		{"return", Return},
+		{"sealed", Sealed},
+		{"static", Static},
+		{"struct", Struct},
+		{"super", Super},
+		{"switch", Switch},
+		{"throw", Throw},
+		{"trait", Trait},
+		{"try", Try},
+		{"use", Use},
+		{"var", Var},
+		{"virtual", Virtual},
+		{"while", While},
+		{"yield", Yield},
+	};
+
+	for (auto& keyword : KEYWORDS)
+		if (lexeme == keyword.word)
+			return keyword.token_kind;
+
+	return Name;
+}
 
 class Lexer
 {
@@ -103,8 +99,8 @@ public:
 private:
 	struct UnplacedToken
 	{
-		TokenKind kind;
-		uint16_t  length;
+		TokenKind kind : Token::KIND_BITS;
+		uint32_t  length : Token::LENGTH_BITS;
 
 		UnplacedToken() = default;
 
@@ -113,7 +109,7 @@ private:
 			length(TOKEN_LENGTHS[kind])
 		{}
 
-		UnplacedToken(TokenKind kind, uint16_t length) :
+		UnplacedToken(TokenKind kind, uint32_t length) :
 			kind(kind),
 			length(length)
 		{}
@@ -161,7 +157,17 @@ private:
 			case '"': t = lex_string(); break;
 			case '\'': t = lex_character(); break;
 			case '\\': t = lex_escaped_keyword(); break;
-			default: t = lex_alphanumeric(); break;
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9': t = lex_number(); break;
+			default: t = lex_alphabetic(); break;
 		}
 		tokens.append({t.kind, t.length, offset});
 	}
@@ -185,7 +191,7 @@ private:
 			if (match('.'))
 				return TokenKind::Ellipsis;
 
-			--cursor;
+			--cursor; // step back to ensure the extra dot is not skipped
 		}
 		else if (is_dec_digit(*cursor))
 			return lex_number();
@@ -199,10 +205,10 @@ private:
 		auto kind	   = determine_number_literal_kind();
 
 		auto length = cursor - num_begin;
-		if (length > UINT16_MAX)
-			report<Message::TokenTooLong>(num_begin);
+		if (length > Token::MAX_LENGTH)
+			report<Message::TokenTooLong>(cursor);
 
-		return {kind, static_cast<uint16_t>(length)};
+		return {kind, static_cast<uint32_t>(length)};
 	}
 
 	TokenKind determine_number_literal_kind()
@@ -211,24 +217,24 @@ private:
 		if (first == '.')
 		{
 			eat_number_literal<is_dec_digit>();
-			return TokenKind::Rational;
+			return TokenKind::DecFloatLiteral;
 		}
 		else if (first == '0' && cursor != end)
 		{
 			switch (*cursor)
 			{
-				case 'x': eat_number_literal<is_hex_digit>(); return TokenKind::Integer;
-				case 'b': eat_number_literal<is_bin_digit>(); return TokenKind::Integer;
-				case 'o': eat_number_literal<is_oct_digit>(); return TokenKind::Integer;
+				case 'x': eat_number_literal<is_hex_digit>(); return TokenKind::HexIntLiteral;
+				case 'b': eat_number_literal<is_bin_digit>(); return TokenKind::BinIntLiteral;
+				case 'o': eat_number_literal<is_oct_digit>(); return TokenKind::OctIntLiteral;
 			}
 		}
 
-		auto kind = TokenKind::Integer;
+		auto kind = TokenKind::DecIntLiteral;
 		while (cursor != end)
 		{
 			char ch = *cursor++;
 			if (ch == '.')
-				kind = TokenKind::Rational; // TODO incorrect
+				kind = TokenKind::DecFloatLiteral; // TODO incorrect
 
 			if (!is_dec_digit(ch) && !is_ignored_whitespace(ch))
 				break;
@@ -262,7 +268,7 @@ private:
 			if (match(']'))
 				return TokenKind::BracketedCaret;
 
-			--cursor;
+			--cursor; // step back to ensure caret is not skipped
 		}
 		return TokenKind::LeftBracket;
 	}
@@ -351,27 +357,29 @@ private:
 	UnplacedToken match_slash()
 	{
 		if (match('/'))
-			return lex_comment();
+			return lex_line_comment();
 		else if (match('='))
 			return TokenKind::SlashEqual;
 
 		return TokenKind::Slash;
 	}
 
-	UnplacedToken lex_comment()
+	UnplacedToken lex_line_comment()
 	{
-		auto comment_begin = cursor - 1;
+		auto comment_begin = cursor;
 		while (cursor != end)
 		{
-			if (*cursor++ == '\n') // TODO emit newline token after comment?
+			if (*cursor == '\n')
 				break;
+
+			++cursor;
 		}
 
 		auto length = cursor - comment_begin;
-		if (length > UINT16_MAX)
-			report<Message::TokenTooLong>(comment_begin);
+		if (length > Token::MAX_LENGTH)
+			report<Message::TokenTooLong>(cursor);
 
-		return {TokenKind::Comment, static_cast<uint16_t>(length)};
+		return {TokenKind::LineComment, static_cast<unsigned>(length)};
 	}
 
 	UnplacedToken match_percent()
@@ -420,15 +428,15 @@ private:
 
 	UnplacedToken lex_string()
 	{
-		return lex_quoted_sequence('"', TokenKind::String);
+		return {TokenKind::StringLiteral, lex_quoted_sequence('"')};
 	}
 
 	UnplacedToken lex_character()
 	{
-		return lex_quoted_sequence('\'', TokenKind::Character);
+		return {TokenKind::CharLiteral, lex_quoted_sequence('\'')};
 	}
 
-	UnplacedToken lex_quoted_sequence(char quote, TokenKind kind)
+	uint32_t lex_quoted_sequence(char quote)
 	{
 		auto sequence_begin = cursor - 1;
 
@@ -437,13 +445,11 @@ private:
 		{
 			char ch = *cursor++;
 
-			if (ch == '\\') // TODO: check
+			if (ch == '\\')
 				ignore_quote ^= true;
-
-			if (ch == quote && !ignore_quote)
+			else if (ch == quote && !ignore_quote)
 				break;
-
-			if (ignore_quote)
+			else if (ignore_quote)
 				ignore_quote = false;
 
 			if (ch == '\n')
@@ -453,11 +459,11 @@ private:
 			}
 		}
 
-		auto length = cursor - sequence_begin + 1;
-		if (length > UINT16_MAX)
-			report<Message::TokenTooLong>(sequence_begin);
+		auto length = cursor - sequence_begin;
+		if (length > Token::MAX_LENGTH)
+			report<Message::TokenTooLong>(cursor);
 
-		return {kind, static_cast<uint16_t>(length)};
+		return static_cast<uint32_t>(length);
 	}
 
 	UnplacedToken lex_escaped_keyword()
@@ -471,28 +477,28 @@ private:
 			++cursor;
 		}
 
-		std::string_view kw(name_begin, cursor);
-		if (KEYWORDS.find(kw) == KEYWORDS.end())
-			report<Message::EscapedNonKeyword>(name_begin, kw);
+		std::string_view lexeme(name_begin, cursor);
 
-		return {TokenKind::Name, static_cast<uint16_t>(kw.length())};
+		auto kind = identify_word_lexeme(lexeme);
+		if (kind == TokenKind::Name)
+			report<Message::EscapedNonKeyword>(name_begin, lexeme);
+
+		return {TokenKind::Name, static_cast<uint32_t>(lexeme.length())};
 	}
 
-	UnplacedToken lex_alphanumeric()
+	UnplacedToken lex_alphabetic()
 	{
-		char ch = cursor[-1];
-		if (can_begin_names(ch))
+		char first_char = cursor[-1];
+		if (can_begin_names(first_char))
 			return lex_word();
-		else if (is_dec_digit(ch))
-			return lex_number();
 
-		report<Message::IllegalChar>(cursor - 1, static_cast<int>(cursor[-1]));
+		report<Message::IllegalChar>(cursor - 1, static_cast<int>(first_char));
 		return {TokenKind::Name, 1}; // treat unknown character as name for better parsing
 	}
 
 	UnplacedToken lex_word()
 	{
-		auto name_begin = cursor - 1;
+		auto word_begin = cursor - 1;
 		while (cursor != end)
 		{
 			if (!is_word_char(*cursor))
@@ -501,16 +507,14 @@ private:
 			++cursor;
 		}
 
-		std::string_view kw(name_begin, cursor);
+		auto length = cursor - word_begin;
+		if (length > Token::MAX_LENGTH)
+			report<Message::TokenTooLong>(cursor);
 
-		auto it	  = KEYWORDS.find(kw);
-		auto kind = it == KEYWORDS.end() ? TokenKind::Name : it->second;
+		std::string_view lexeme(word_begin, cursor);
 
-		auto length = cursor - name_begin;
-		if (length > UINT16_MAX)
-			report<Message::TokenTooLong>(name_begin);
-
-		return {kind, static_cast<uint16_t>(length)};
+		auto kind = identify_word_lexeme(lexeme);
+		return {kind, static_cast<uint32_t>(length)};
 	}
 
 	template<Message MESSAGE, typename... Ts>

@@ -8,7 +8,7 @@ AlignConsecutiveMacros: true
 AlignEscapedNewlines: Right
 AlignOperands: Align
 AlignTrailingComments: true
-AllowAllArgumentsOnNextLine: false
+AllowAllArgumentsOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortBlocksOnASingleLine: Never
 AllowShortCaseLabelsOnASingleLine: true
@@ -21,7 +21,7 @@ AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: true
 AttributeMacros: []
-BinPackArguments: false
+BinPackArguments: true
 BinPackParameters: false
 BitFieldColonSpacing: Both
 BraceWrapping:
@@ -68,10 +68,12 @@ ForEachMacros: []
 IfMacros: []
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex:		'PCH\.hpp'
-    Priority:	-1
-  - Regex:		'.+\.(hpp|hh)'
-    Priority:	0
+  - Regex:		'".*"'
+    Priority:	1
+  - Regex:		'<.*\.(h|hpp|hh|hxx)>'
+    Priority:	2
+  - Regex:		'<.*>'
+    Priority:	3
 IncludeIsMainRegex: ""
 IncludeIsMainSourceRegex: ""
 IndentAccessModifiers: false

@@ -1,4 +1,5 @@
 #include "Driver.hpp"
+
 #include "driver/Config.hpp"
 #include "driver/Source.hpp"
 #include "syntax/Lexer.hpp"
@@ -51,6 +52,5 @@ Reporter build_file(const Source& source)
 	auto tokens = lex(source, reporter);
 	// TODO: add stages
 
-	reporter.finalize(tokens);
 	return reporter;
 }

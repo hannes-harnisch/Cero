@@ -1,4 +1,5 @@
 #include "Reporter.hpp"
+
 #include "util/Enum.hpp"
 
 enum class Severity
@@ -35,16 +36,6 @@ bool Reporter::has_reports() const
 	return !reports.empty();
 }
 
-const TokenStream& Reporter::get_token_stream() const
-{
-	return token_stream;
-}
-
-void Reporter::finalize(TokenStream tokens)
-{
-	token_stream = std::move(tokens);
-}
-
 void Reporter::write(Message message, SourceLocation location, std::string_view format, std::format_args args)
 {
 	auto severity = get_severity(message);
@@ -53,12 +44,7 @@ void Reporter::write(Message message, SourceLocation location, std::string_view 
 
 	auto message_text  = std::vformat(format, args);
 	auto severity_text = to_string(severity);
-	std::fprintf(stderr,
-				 "%s:%u:%u: %s: %s\n",
-				 location.file.data(),
-				 location.line,
-				 location.column,
-				 severity_text,
+	std::fprintf(stderr, "%s:%u:%u: %s: %s\n", location.file.data(), location.line, location.column, severity_text,
 				 message_text.data());
 
 	reports.emplace_back(message, location, std::move(message_text));

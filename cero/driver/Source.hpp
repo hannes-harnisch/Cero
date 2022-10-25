@@ -1,6 +1,6 @@
 #pragma once
 
-#include "driver/Reporter.hpp"
+#include "driver/SourceLocation.hpp"
 
 #include <optional>
 #include <string_view>

@@ -1,32 +1,21 @@
 #pragma once
 
-#include <driver/Driver.hpp>
-#include <driver/Reporter.hpp>
-#include <driver/Source.hpp>
-#include <util/Traits.hpp>
+#include <cero/driver/Reporter.hpp>
+#include <cero/driver/Source.hpp>
+#include <cero/util/Traits.hpp>
 
-#include <doctest/doctest.h>
-
+// A test utility that triggers a test failure if there are unexpected messages left after running the compiler.
 class ExhaustiveReporter : public Reporter,
 						   public Immovable
 {
 public:
-	static ExhaustiveReporter from(std::string_view file_path)
-	{
-		return ExhaustiveReporter(Source::from(file_path).value());
-	}
+	static ExhaustiveReporter from(std::string_view file_path);
 
-	ExhaustiveReporter(std::string source) :
-		ExhaustiveReporter(Source(std::move(source)))
-	{}
+	ExhaustiveReporter() = default;
+	ExhaustiveReporter(std::string source_text);
 
-	~ExhaustiveReporter()
-	{
-		CHECK(!has_reports());
-	}
+	~ExhaustiveReporter();
 
 private:
-	ExhaustiveReporter(const Source& source) :
-		Reporter(build_file(source))
-	{}
+	ExhaustiveReporter(const Source& source);
 };
