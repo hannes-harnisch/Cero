@@ -6,12 +6,13 @@
 
 #include <cstdint>
 
-enum class TokenKind : unsigned
+enum class TokenKind : uint32_t
 {
 	Name,
 	NewLine,
 	LineComment,
 	BlockComment,
+	DocComment,
 	DecIntLiteral,
 	HexIntLiteral,
 	BinIntLiteral,
@@ -49,39 +50,38 @@ enum class TokenKind : unsigned
 	At,			  // @
 	Dollar,		  // $
 	Hash,		  // #
-	Underscore,	  // _
 
 	// Two-character tokens
-	ThinArrow,		// ->
-	ThickArrow,		// =>
-	ColonColon,		// ::
-	PlusPlus,		// ++
-	MinusMinus,		// --
-	TwoAmpersands,	// &&
-	PipePipe,		// ||
-	EqualEqual,		// ==
-	BangEqual,		// !=
-	LessEqual,		// <=
-	GreaterEqual,	// >=
-	StarStar,		// **
-	TwoLeftAngles,	// <<
-	TwoRightAngles, // >>
-	PlusEqual,		// +=
-	MinusEqual,		// -=
-	StarEqual,		// *=
-	SlashEqual,		// /=
-	PercentEqual,	// %=
-	AmpersandEqual, // &=
-	PipeEqual,		// |=
-	TildeEqual,		// ~=
+	ThinArrow,		  // ->
+	ThickArrow,		  // =>
+	ColonColon,		  // ::
+	PlusPlus,		  // ++
+	MinusMinus,		  // --
+	DoubleAmpersand,  // &&
+	PipePipe,		  // ||
+	EqualEqual,		  // ==
+	BangEqual,		  // !=
+	LessEqual,		  // <=
+	GreaterEqual,	  // >=
+	StarStar,		  // **
+	DoubleLeftAngle,  // <<
+	DoubleRightAngle, // >>
+	PlusEqual,		  // +=
+	MinusEqual,		  // -=
+	StarEqual,		  // *=
+	SlashEqual,		  // /=
+	PercentEqual,	  // %=
+	AmpersandEqual,	  // &=
+	PipeEqual,		  // |=
+	TildeEqual,		  // ~=
 
 	// Three-character tokens
-	Spaceship,			// <=>
-	Ellipsis,			// ...
-	StarStarEqual,		// **=
-	TwoLeftAngleEqual,	// <<=
-	TwoRightAngleEqual, // >>=
-	BracketedCaret,		// [^]
+	Spaceship,			   // <=>
+	Ellipsis,			   // ...
+	StarStarEqual,		   // **=
+	DoubleLeftAngleEqual,  // <<=
+	DoubleRightAngleEqual, // >>=
+	BracketedCaret,		   // [^]
 
 	// Keywords
 	As,
@@ -132,6 +132,7 @@ constexpr uint8_t get_token_length(TokenKind kind)
 		case Name:
 		case LineComment:
 		case BlockComment:
+		case DocComment:
 		case DecIntLiteral:
 		case HexIntLiteral:
 		case BinIntLiteral:
@@ -172,8 +173,7 @@ constexpr uint8_t get_token_length(TokenKind kind)
 		case QuestionMark:
 		case At:
 		case Dollar:
-		case Hash:
-		case Underscore: return 1;
+		case Hash: return 1;
 
 		// Two-character tokens
 		case ThinArrow:
@@ -181,15 +181,15 @@ constexpr uint8_t get_token_length(TokenKind kind)
 		case ColonColon:
 		case PlusPlus:
 		case MinusMinus:
-		case TwoAmpersands:
+		case DoubleAmpersand:
 		case PipePipe:
 		case EqualEqual:
 		case BangEqual:
 		case LessEqual:
 		case GreaterEqual:
 		case StarStar:
-		case TwoLeftAngles:
-		case TwoRightAngles:
+		case DoubleLeftAngle:
+		case DoubleRightAngle:
 		case PlusEqual:
 		case MinusEqual:
 		case StarEqual:
@@ -203,8 +203,8 @@ constexpr uint8_t get_token_length(TokenKind kind)
 		case Spaceship:
 		case Ellipsis:
 		case StarStarEqual:
-		case TwoLeftAngleEqual:
-		case TwoRightAngleEqual:
+		case DoubleLeftAngleEqual:
+		case DoubleRightAngleEqual:
 		case BracketedCaret: return 3;
 
 		// Keywords

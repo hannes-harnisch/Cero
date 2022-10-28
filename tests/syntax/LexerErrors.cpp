@@ -65,7 +65,7 @@ TEST_CASE("StringTooLong")
 	source.append("\"");
 
 	ExhaustiveReporter r(std::move(source));
-	CHECK(r.pop_report(Message::TokenTooLong, {1, 16777624}));
+	CHECK(r.pop_report(Message::TokenTooLong, {1, 16777623}));
 }
 
 TEST_CASE("CommentTooLong")

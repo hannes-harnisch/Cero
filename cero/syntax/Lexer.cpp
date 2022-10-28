@@ -117,7 +117,7 @@ private:
 
 	void next_token()
 	{
-		uint32_t offset = static_cast<uint32_t>(cursor - begin);
+		uint32_t fixup = 0;
 
 		UnplacedToken t;
 		switch (*cursor++)
@@ -127,6 +127,69 @@ private:
 			case '\t':
 			case '\r': return;
 			case '\n': t = NewLine; break;
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9': t = lex_number(); break;
+			case '_':
+			case 'a':
+			case 'b':
+			case 'c':
+			case 'd':
+			case 'e':
+			case 'f':
+			case 'g':
+			case 'h':
+			case 'i':
+			case 'j':
+			case 'k':
+			case 'l':
+			case 'm':
+			case 'n':
+			case 'o':
+			case 'p':
+			case 'q':
+			case 'r':
+			case 's':
+			case 't':
+			case 'u':
+			case 'v':
+			case 'w':
+			case 'x':
+			case 'y':
+			case 'z':
+			case 'A':
+			case 'B':
+			case 'C':
+			case 'D':
+			case 'E':
+			case 'F':
+			case 'G':
+			case 'H':
+			case 'I':
+			case 'J':
+			case 'K':
+			case 'L':
+			case 'M':
+			case 'N':
+			case 'O':
+			case 'P':
+			case 'Q':
+			case 'R':
+			case 'S':
+			case 'T':
+			case 'U':
+			case 'V':
+			case 'W':
+			case 'X':
+			case 'Y':
+			case 'Z': t = lex_word(); break;
 			case '.': t = match_dot(); break;
 			case ':': t = match_colon(); break;
 			case ',': t = Comma; break;
@@ -154,22 +217,20 @@ private:
 			case '@': t = At; break;
 			case '$': t = Dollar; break;
 			case '#': t = Hash; break;
-			case '"': t = lex_string(); break;
-			case '\'': t = lex_character(); break;
+			case '"':
+				t	  = lex_string();
+				fixup = 1;
+				break;
+			case '\'':
+				t	  = lex_character();
+				fixup = 1;
+				break;
 			case '\\': t = lex_escaped_keyword(); break;
-			case '0':
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9': t = lex_number(); break;
-			default: t = lex_alphabetic(); break;
+			default: t = lex_unicode(); break;
 		}
-		tokens.append({t.kind, t.length, offset});
+
+		uint32_t offset = static_cast<uint32_t>(cursor - begin - t.length);
+		tokens.append({t.kind, t.length, offset - fixup});
 	}
 
 	bool match(char expected)
@@ -202,7 +263,7 @@ private:
 	UnplacedToken lex_number()
 	{
 		auto num_begin = cursor - 1;
-		auto kind	   = determine_number_literal_kind();
+		auto kind	   = identify_number_literal();
 
 		auto length = cursor - num_begin;
 		if (length > Token::MAX_LENGTH)
@@ -211,7 +272,7 @@ private:
 		return {kind, static_cast<uint32_t>(length)};
 	}
 
-	TokenKind determine_number_literal_kind()
+	TokenKind identify_number_literal()
 	{
 		char first = cursor[-1];
 		if (first == '.')
@@ -219,25 +280,36 @@ private:
 			eat_number_literal<is_dec_digit>();
 			return TokenKind::DecFloatLiteral;
 		}
-		else if (first == '0' && cursor != end)
+
+		if (first == '0' && cursor != end)
 		{
 			switch (*cursor)
 			{
-				case 'x': eat_number_literal<is_hex_digit>(); return TokenKind::HexIntLiteral;
-				case 'b': eat_number_literal<is_bin_digit>(); return TokenKind::BinIntLiteral;
-				case 'o': eat_number_literal<is_oct_digit>(); return TokenKind::OctIntLiteral;
+				case 'x':
+					++cursor;
+					eat_number_literal<is_hex_digit>();
+					return TokenKind::HexIntLiteral;
+				case 'b':
+					++cursor;
+					eat_number_literal<is_bin_digit>();
+					return TokenKind::BinIntLiteral;
+				case 'o':
+					++cursor;
+					eat_number_literal<is_oct_digit>();
+					return TokenKind::OctIntLiteral;
 			}
 		}
 
 		auto kind = TokenKind::DecIntLiteral;
 		while (cursor != end)
 		{
-			char ch = *cursor++;
-			if (ch == '.')
-				kind = TokenKind::DecFloatLiteral; // TODO incorrect
-
-			if (!is_dec_digit(ch) && !is_ignored_whitespace(ch))
+			char it = *cursor;
+			if (it == '.')
+				kind = TokenKind::DecFloatLiteral; // TODO: maybe refactor this so it's cleaner
+			else if (!is_dec_digit(it) && !is_ignored_whitespace(it))
 				break;
+
+			++cursor;
 		}
 		return kind;
 	}
@@ -247,9 +319,11 @@ private:
 	{
 		while (cursor != end)
 		{
-			char ch = *cursor++;
-			if (!CHAR_PREDICATE(ch) && !is_ignored_whitespace(ch))
+			char it = *cursor;
+			if (!CHAR_PREDICATE(it) && !is_ignored_whitespace(it))
 				break;
+
+			++cursor;
 		}
 	}
 
@@ -278,11 +352,11 @@ private:
 		if (match('<'))
 		{
 			if (match('='))
-				return TokenKind::TwoLeftAngleEqual;
+				return TokenKind::DoubleLeftAngleEqual;
 
-			return TokenKind::TwoLeftAngles;
+			return TokenKind::DoubleLeftAngle;
 		}
-		else if (match('='))
+		if (match('='))
 		{
 			if (match('>'))
 				return TokenKind::Spaceship;
@@ -297,11 +371,11 @@ private:
 		if (match('>'))
 		{
 			if (match('='))
-				return TokenKind::TwoRightAngleEqual;
+				return TokenKind::DoubleRightAngleEqual;
 
-			return TokenKind::TwoRightAngles;
+			return TokenKind::DoubleRightAngle;
 		}
-		else if (match('='))
+		if (match('='))
 			return TokenKind::GreaterEqual;
 
 		return TokenKind::RightAngle;
@@ -311,7 +385,7 @@ private:
 	{
 		if (match('='))
 			return TokenKind::EqualEqual;
-		else if (match('>'))
+		if (match('>'))
 			return TokenKind::ThickArrow;
 
 		return TokenKind::Equal;
@@ -321,7 +395,7 @@ private:
 	{
 		if (match('+'))
 			return TokenKind::PlusPlus;
-		else if (match('='))
+		if (match('='))
 			return TokenKind::PlusEqual;
 
 		return TokenKind::Plus;
@@ -331,9 +405,9 @@ private:
 	{
 		if (match('>'))
 			return TokenKind::ThinArrow;
-		else if (match('-'))
+		if (match('-'))
 			return TokenKind::MinusMinus;
-		else if (match('='))
+		if (match('='))
 			return TokenKind::MinusEqual;
 
 		return TokenKind::Minus;
@@ -348,7 +422,7 @@ private:
 
 			return TokenKind::StarStar;
 		}
-		else if (match('='))
+		if (match('='))
 			return TokenKind::StarEqual;
 
 		return TokenKind::Star;
@@ -358,7 +432,11 @@ private:
 	{
 		if (match('/'))
 			return lex_line_comment();
-		else if (match('='))
+		if (match('!'))
+			to_do(); // doc comments
+		if (match('*'))
+			to_do(); // block comments
+		if (match('='))
 			return TokenKind::SlashEqual;
 
 		return TokenKind::Slash;
@@ -379,7 +457,7 @@ private:
 		if (length > Token::MAX_LENGTH)
 			report<Message::TokenTooLong>(cursor);
 
-		return {TokenKind::LineComment, static_cast<unsigned>(length)};
+		return {TokenKind::LineComment, static_cast<uint32_t>(length)};
 	}
 
 	UnplacedToken match_percent()
@@ -401,8 +479,8 @@ private:
 	UnplacedToken match_ampersand()
 	{
 		if (match('&'))
-			return TokenKind::TwoAmpersands;
-		else if (match('='))
+			return TokenKind::DoubleAmpersand;
+		if (match('='))
 			return TokenKind::AmpersandEqual;
 
 		return TokenKind::Ampersand;
@@ -412,7 +490,7 @@ private:
 	{
 		if (match('|'))
 			return TokenKind::PipePipe;
-		else if (match('='))
+		if (match('='))
 			return TokenKind::PipeEqual;
 
 		return TokenKind::Pipe;
@@ -438,32 +516,56 @@ private:
 
 	uint32_t lex_quoted_sequence(char quote)
 	{
-		auto sequence_begin = cursor - 1;
+		auto sequence_begin = cursor;
 
 		bool ignore_quote = false;
 		while (cursor != end)
 		{
-			char ch = *cursor++;
+			char it = *cursor;
 
-			if (ch == '\\')
+			if (it == '\\')
 				ignore_quote ^= true;
-			else if (ch == quote && !ignore_quote)
+			else if (it == quote && !ignore_quote)
 				break;
 			else if (ignore_quote)
 				ignore_quote = false;
 
-			if (ch == '\n')
+			if (it == '\n')
 			{
-				report<Message::MissingClosingQuote>(--cursor);
+				report<Message::MissingClosingQuote>(cursor);
 				break;
 			}
+
+			++cursor;
 		}
 
 		auto length = cursor - sequence_begin;
 		if (length > Token::MAX_LENGTH)
 			report<Message::TokenTooLong>(cursor);
 
+		++cursor; // TODO: maybe refactor this so it's cleaner
 		return static_cast<uint32_t>(length);
+	}
+
+	UnplacedToken lex_word()
+	{
+		auto word_begin = cursor - 1;
+		while (cursor != end)
+		{
+			if (!is_word_char(*cursor))
+				break;
+
+			++cursor;
+		}
+
+		auto length = cursor - word_begin;
+		if (length > Token::MAX_LENGTH)
+			report<Message::TokenTooLong>(cursor);
+
+		std::string_view lexeme(word_begin, cursor);
+
+		auto kind = identify_word_lexeme(lexeme);
+		return {kind, static_cast<uint32_t>(length)};
 	}
 
 	UnplacedToken lex_escaped_keyword()
@@ -486,7 +588,7 @@ private:
 		return {TokenKind::Name, static_cast<uint32_t>(lexeme.length())};
 	}
 
-	UnplacedToken lex_alphabetic()
+	UnplacedToken lex_unicode()
 	{
 		char first_char = cursor[-1];
 		if (can_begin_names(first_char))
@@ -494,27 +596,6 @@ private:
 
 		report<Message::IllegalChar>(cursor - 1, static_cast<int>(first_char));
 		return {TokenKind::Name, 1}; // treat unknown character as name for better parsing
-	}
-
-	UnplacedToken lex_word()
-	{
-		auto word_begin = cursor - 1;
-		while (cursor != end)
-		{
-			if (!is_word_char(*cursor))
-				break;
-
-			++cursor;
-		}
-
-		auto length = cursor - word_begin;
-		if (length > Token::MAX_LENGTH)
-			report<Message::TokenTooLong>(cursor);
-
-		std::string_view lexeme(word_begin, cursor);
-
-		auto kind = identify_word_lexeme(lexeme);
-		return {kind, static_cast<uint32_t>(length)};
 	}
 
 	template<Message MESSAGE, typename... Ts>
