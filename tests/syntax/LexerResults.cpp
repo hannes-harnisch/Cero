@@ -79,14 +79,31 @@ TEST_CASE("StringLiteralsWithEscapes")
 	CHECK(all_kinds_match(tokens, {NewLine, StringLiteral, NewLine, StringLiteral, NewLine, StringLiteral, NewLine,
 								   StringLiteral, NewLine, StringLiteral, NewLine, StringLiteral, NewLine, StringLiteral,
 								   NewLine, StringLiteral, NewLine, EndOfFile}));
-	CHECK(tokens.at(1).get_lexeme(src) == "123\\\"");
-	CHECK(tokens.at(3).get_lexeme(src) == "\\\"");
-	CHECK(tokens.at(5).get_lexeme(src) == "");
-	CHECK(tokens.at(7).get_lexeme(src) == "\\\\");
-	CHECK(tokens.at(9).get_lexeme(src) == "\\a");
-	CHECK(tokens.at(11).get_lexeme(src) == "\\np");
-	CHECK(tokens.at(13).get_lexeme(src) == "\\\"\\\\a\\a");
-	CHECK(tokens.at(15).get_lexeme(src) == "\\\"\\\\\\\"\\\\\\\\a\\\\a\\\"");
+	CHECK(tokens.at(1).get_lexeme(src) == "\"123\\\"\"");
+	CHECK(tokens.at(3).get_lexeme(src) == "\"\\\"\"");
+	CHECK(tokens.at(5).get_lexeme(src) == "\"\"");
+	CHECK(tokens.at(7).get_lexeme(src) == "\"\\\\\"");
+	CHECK(tokens.at(9).get_lexeme(src) == "\"\\a\"");
+	CHECK(tokens.at(11).get_lexeme(src) == "\"\\np\"");
+	CHECK(tokens.at(13).get_lexeme(src) == "\"\\\"\\\\a\\a\"");
+	CHECK(tokens.at(15).get_lexeme(src) == "\"\\\"\\\\\\\"\\\\\\\\a\\\\a\\\"\"");
+}
+
+TEST_CASE("Comments")
+{
+	Source src(R"_____(
+//
+// 
+// abc
+// //
+)_____");
+	auto   tokens = lex_exhaustive(src);
+	CHECK(all_kinds_match(tokens, {NewLine, LineComment, NewLine, LineComment, NewLine, LineComment, NewLine, LineComment,
+								   NewLine, EndOfFile}));
+	CHECK(tokens.at(1).get_lexeme(src) == "//");
+	CHECK(tokens.at(3).get_lexeme(src) == "// ");
+	CHECK(tokens.at(5).get_lexeme(src) == "// abc");
+	CHECK(tokens.at(7).get_lexeme(src) == "// //");
 }
 
 TEST_CASE("DotDot")

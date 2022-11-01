@@ -1,58 +1,57 @@
 #include "CharUtils.hpp"
 
-char to_upper_ascii(char ch)
+char to_upper_ascii(char c)
 {
-	if (ch >= 'a' && ch <= 'z')
-		return ch - 32;
+	if (c >= 'a' && c <= 'z')
+		return c - 32;
 
-	return ch;
+	return c;
 }
 
-char to_lower_ascii(char ch)
+char to_lower_ascii(char c)
 {
-	if (ch >= 'A' && ch <= 'Z')
-		return ch + 32;
+	if (c >= 'A' && c <= 'Z')
+		return c + 32;
 
-	return ch;
+	return c;
 }
 
-bool is_ignored_whitespace(char ch)
+bool is_breaking_whitespace(char c)
 {
-	switch (ch)
-	{
-		case ' ':
-		case '\t':
-		case '\r': return true;
-	}
-	return false;
+	return c == '\n' || c == '\v' || c == '\f' || c == '\r';
 }
 
-bool is_word_char(char ch)
+bool is_non_breaking_whitespace(char c)
 {
-	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || is_dec_digit(ch) || ch == '_';
+	return c == ' ' || c == '\t';
 }
 
-bool can_begin_names(char ch)
+bool is_word_char(char c)
 {
-	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_';
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || is_dec_digit(c) || c == '_';
 }
 
-bool is_dec_digit(char ch)
+bool can_begin_names(char c)
 {
-	return ch >= '0' && ch <= '9';
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
 }
 
-bool is_hex_digit(char ch)
+bool is_dec_digit(char c)
 {
-	return is_dec_digit(ch) || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
+	return c >= '0' && c <= '9';
 }
 
-bool is_oct_digit(char ch)
+bool is_hex_digit(char c)
 {
-	return ch >= '0' && ch <= '7';
+	return is_dec_digit(c) || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
 }
 
-bool is_bin_digit(char ch)
+bool is_oct_digit(char c)
 {
-	return ch == '0' || ch == '1';
+	return c >= '0' && c <= '7';
+}
+
+bool is_bin_digit(char c)
+{
+	return c == '0' || c == '1';
 }

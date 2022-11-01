@@ -22,7 +22,7 @@ static const char* to_string(Severity severity)
 
 static Severity get_severity(Message)
 {
-	// TODO: add severities for specific warnings and notes (not errors) here
+	// add severities for specific warnings and notes (not errors) here
 	return Severity::Error;
 }
 
