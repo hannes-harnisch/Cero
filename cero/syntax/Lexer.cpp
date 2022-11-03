@@ -12,40 +12,11 @@ TokenKind identify_word_lexeme(std::string_view lexeme)
 	};
 	using enum TokenKind;
 	static constexpr Keyword KEYWORDS[] {
-		{"as", As},
-		{"async", Async},
-		{"await", Await},
-		{"break", Break},
-		{"catch", Catch},
-		{"const", Const},
-		{"continue", Continue},
-		{"do", Do},
-		{"else", Else},
-		{"enum", Enum},
-		{"for", For},
-		{"if", If},
-		{"in", In},
-		{"let", Let},
-		{"out", Out},
-		{"override", Override},
-		{"private", Private},
-		{"protected", Protected},
-		{"public", Public},
-		{"raw", Raw},
-		{"return", Return},
-		{"sealed", Sealed},
-		{"static", Static},
-		{"struct", Struct},
-		{"super", Super},
-		{"switch", Switch},
-		{"throw", Throw},
-		{"trait", Trait},
-		{"try", Try},
-		{"use", Use},
-		{"var", Var},
-		{"virtual", Virtual},
-		{"while", While},
-		{"yield", Yield},
+		{"await", Await},	{"break", Break},	{"catch", Catch},	{"const", Const},	{"continue", Continue},
+		{"do", Do},			{"else", Else},		{"enum", Enum},		{"for", For},		{"if", If},
+		{"in", In},			{"let", Let},		{"public", Public}, {"return", Return}, {"static", Static},
+		{"struct", Struct}, {"switch", Switch}, {"throw", Throw},	{"try", Try},		{"use", Use},
+		{"var", Var},		{"while", While},	{"yield", Yield},
 	};
 
 	for (auto& keyword : KEYWORDS)
@@ -57,7 +28,6 @@ TokenKind identify_word_lexeme(std::string_view lexeme)
 
 class Lexer
 {
-	TokenStream			   tokens;
 	const Source&		   source;
 	Reporter&			   reporter;
 	Source::Iterator	   cursor;
@@ -75,20 +45,22 @@ public:
 
 	TokenStream lex()
 	{
+		TokenStream tokens;
+
 		if (source.get_text().length() > Token::MAX_LENGTH)
-			report<Message::SourceInputTooLarge>(cursor);
+			report<Message::SourceInputTooLarge>(cursor, Token::MAX_LENGTH);
 		else
 		{
 			while (cursor != end)
-				next_token();
+				next_token(tokens);
 		}
 
 		tokens.append({TokenKind::EndOfFile, 0, 0});
-		return std::move(tokens);
+		return tokens;
 	}
 
 private:
-	void next_token()
+	void next_token(TokenStream& tokens)
 	{
 		auto token_begin = cursor;
 
@@ -394,9 +366,9 @@ private:
 		if (match('/'))
 			return lex_line_comment();
 		if (match('!'))
-			to_do(); // doc comments
+			return lex_doc_comment();
 		if (match('*'))
-			to_do(); // block comments
+			return lex_block_comment();
 		if (match('='))
 			return TokenKind::SlashEqual;
 
@@ -413,6 +385,39 @@ private:
 			++cursor;
 		}
 		return TokenKind::LineComment;
+	}
+
+	TokenKind lex_doc_comment()
+	{
+		to_do();
+		return TokenKind::DocComment;
+	}
+
+	TokenKind lex_block_comment()
+	{
+		auto comment_begin = cursor;
+
+		uint32_t nesting_count = 1;
+		while (cursor != end)
+		{
+			if (match('*'))
+			{
+				if (match('/') && --nesting_count == 0)
+					return TokenKind::BlockComment;
+			}
+			else if (match('/'))
+			{
+				if (match('*'))
+					++nesting_count;
+			}
+			else
+				++cursor;
+		}
+
+		if (nesting_count != 0)
+			report<Message::UnterminatedBlockComment>(comment_begin);
+
+		return TokenKind::BlockComment;
 	}
 
 	TokenKind match_percent()
@@ -535,7 +540,7 @@ private:
 		if (can_begin_names(first_char)) // TODO: use xid-start
 			return lex_word();
 
-		report<Message::IllegalChar>(cursor - 1, static_cast<int>(first_char));
+		report<Message::UnexpectedCharacter>(cursor - 1, static_cast<int>(first_char));
 		return TokenKind::Name; // treat unknown character as name for better parsing
 	}
 

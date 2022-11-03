@@ -89,7 +89,7 @@ TEST_CASE("StringLiteralsWithEscapes")
 	CHECK(tokens.at(15).get_lexeme(src) == "\"\\\"\\\\\\\"\\\\\\\\a\\\\a\\\"\"");
 }
 
-TEST_CASE("Comments")
+TEST_CASE("LineComments")
 {
 	Source src(R"_____(
 //
@@ -104,6 +104,40 @@ TEST_CASE("Comments")
 	CHECK(tokens.at(3).get_lexeme(src) == "// ");
 	CHECK(tokens.at(5).get_lexeme(src) == "// abc");
 	CHECK(tokens.at(7).get_lexeme(src) == "// //");
+}
+
+TEST_CASE("BlockComments")
+{
+	Source src(R"_____(
+/**/
+/* abc
+*/
+/*
+
+
+*/
+/*/**/*/
+/*a/*b*/c*/
+/*/*/**/*/*/
+/***/
+/* **** */
+/*/ */
+/*// */
+)_____");
+	auto   tokens = lex_exhaustive(src);
+	CHECK(all_kinds_match(tokens, {NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment,
+								   NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment,
+								   NewLine, BlockComment, NewLine, BlockComment, NewLine, EndOfFile}));
+	CHECK(tokens.at(1).get_lexeme(src) == "/**/");
+	CHECK(tokens.at(3).get_lexeme(src) == "/* abc\n*/");
+	CHECK(tokens.at(5).get_lexeme(src) == "/*\n\n\n*/");
+	CHECK(tokens.at(7).get_lexeme(src) == "/*/**/*/");
+	CHECK(tokens.at(9).get_lexeme(src) == "/*a/*b*/c*/");
+	CHECK(tokens.at(11).get_lexeme(src) == "/*/*/**/*/*/");
+	CHECK(tokens.at(13).get_lexeme(src) == "/***/");
+	CHECK(tokens.at(15).get_lexeme(src) == "/* **** */");
+	CHECK(tokens.at(17).get_lexeme(src) == "/*/ */");
+	CHECK(tokens.at(19).get_lexeme(src) == "/*// */");
 }
 
 TEST_CASE("DotDot")

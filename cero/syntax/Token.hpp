@@ -84,8 +84,6 @@ enum class TokenKind : uint32_t
 	BracketedCaret,		   // [^]
 
 	// Keywords
-	As,
-	Async,
 	Await,
 	Break,
 	Catch,
@@ -94,29 +92,19 @@ enum class TokenKind : uint32_t
 	Do,
 	Else,
 	Enum,
-	Extern,
 	For,
 	If,
 	In,
 	Let,
-	Out,
-	Override,
-	Private,
-	Protected,
 	Public,
-	Raw,
 	Return,
-	Sealed,
 	Static,
 	Struct,
-	Super,
 	Switch,
 	Throw,
-	Trait,
 	Try,
 	Use,
 	Var,
-	Virtual,
 	While,
 	Yield,
 
@@ -208,8 +196,6 @@ constexpr uint8_t get_token_length(TokenKind kind)
 		case BracketedCaret: return 3;
 
 		// Keywords
-		case As:
-		case Async:
 		case Await:
 		case Break:
 		case Catch:
@@ -218,29 +204,19 @@ constexpr uint8_t get_token_length(TokenKind kind)
 		case Do:
 		case Else:
 		case Enum:
-		case Extern:
 		case For:
 		case If:
 		case In:
 		case Let:
-		case Out:
-		case Override:
-		case Private:
-		case Protected:
 		case Public:
-		case Raw:
 		case Return:
-		case Sealed:
 		case Static:
 		case Struct:
-		case Super:
 		case Switch:
 		case Throw:
-		case Trait:
 		case Try:
 		case Use:
 		case Var:
-		case Virtual:
 		case While:
 		case Yield: return static_cast<uint8_t>(magic_enum::enum_name(kind).length());
 	}

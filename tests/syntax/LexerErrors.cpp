@@ -1,11 +1,12 @@
 #include "util/ExhaustiveReporter.hpp"
 
+#include <cero/syntax/Token.hpp>
 #include <doctest/doctest.h>
 
 TEST_CASE("SourceTooLarge")
 {
 	ExhaustiveReporter r(std::string(16779000, ' '));
-	CHECK(r.pop_report(Message::SourceInputTooLarge, {1, 1}));
+	CHECK(r.pop_report(Message::SourceInputTooLarge, {1, 1}, Token::MAX_LENGTH));
 }
 
 TEST_CASE("IllegalChar")
@@ -16,7 +17,7 @@ main() -> i32
 	return 0 
 }
 )_____");
-	CHECK(r.pop_report(Message::IllegalChar, {5, 2}, 7));
+	CHECK(r.pop_report(Message::UnexpectedCharacter, {5, 2}, 7));
 }
 
 TEST_CASE("MissingClosingQuote")
@@ -39,4 +40,12 @@ TEST_CASE("EscapedNonKeyword")
 {}
 )_____");
 	CHECK(r.pop_report(Message::EscapedNonKeyword, {2, 2}, "foo"));
+}
+
+TEST_CASE("UnterminatedBlockComment")
+{
+	ExhaustiveReporter r(R"_____(
+/* abc
+)_____");
+	CHECK(r.pop_report(Message::UnterminatedBlockComment, {2, 3}));
 }
