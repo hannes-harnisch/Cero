@@ -38,8 +38,12 @@ TEST_CASE("EscapedNonKeyword")
 	ExhaustiveReporter r(R"_____(
 \foo()
 {}
+
+\()
+{}
 )_____");
 	CHECK(r.pop_report(Message::EscapedNonKeyword, {2, 2}, "foo"));
+	CHECK(r.pop_report(Message::EscapedNonKeyword, {5, 2}, ""));
 }
 
 TEST_CASE("UnterminatedBlockComment")

@@ -77,7 +77,7 @@ IncludeCategories:
 IncludeIsMainRegex: ""
 IncludeIsMainSourceRegex: ""
 IndentAccessModifiers: false
-IndentCaseBlocks: true
+IndentCaseBlocks: false
 IndentCaseLabels: true
 IndentExternBlock: Indent
 IndentGotoLabels: true

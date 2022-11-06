@@ -1,7 +1,7 @@
 #include "Lexer.hpp"
 
 #include "driver/Message.hpp"
-#include "syntax/CharUtils.hpp"
+#include "syntax/Encoding.hpp"
 
 TokenKind identify_word_lexeme(std::string_view lexeme)
 {
@@ -64,16 +64,18 @@ private:
 	{
 		auto token_begin = cursor;
 
-		TokenKind t;
-		switch (*cursor++)
+		TokenKind kind;
+
+		char current = *cursor++;
+		switch (current)
 		{
 			using enum TokenKind;
 			case ' ':
-			case '\t': return;
-			case '\n':
+			case '\t':
 			case '\v':
 			case '\f':
-			case '\r': t = NewLine; break;
+			case '\r': return;
+			case '\n': kind = NewLine; break;
 			case '0':
 			case '1':
 			case '2':
@@ -83,7 +85,7 @@ private:
 			case '6':
 			case '7':
 			case '8':
-			case '9': t = lex_number(); break;
+			case '9': kind = lex_number(current); break;
 			case '_':
 			case 'a':
 			case 'b':
@@ -136,46 +138,64 @@ private:
 			case 'W':
 			case 'X':
 			case 'Y':
-			case 'Z': t = lex_word(); break;
-			case '.': t = match_dot(); break;
-			case ':': t = match_colon(); break;
-			case ',': t = Comma; break;
-			case ';': t = Semicolon; break;
-			case '{': t = LeftBrace; break;
-			case '}': t = RightBrace; break;
-			case '(': t = LeftParen; break;
-			case ')': t = RightParen; break;
-			case '[': t = match_left_bracket(); break;
-			case ']': t = RightBracket; break;
-			case '<': t = match_left_angle(); break;
-			case '>': t = match_right_angle(); break;
-			case '=': t = match_equal(); break;
-			case '+': t = match_plus(); break;
-			case '-': t = match_minus(); break;
-			case '*': t = match_star(); break;
-			case '/': t = match_slash(); break;
-			case '%': t = match_percent(); break;
-			case '!': t = match_bang(); break;
-			case '&': t = match_ampersand(); break;
-			case '|': t = match_pipe(); break;
-			case '~': t = match_tilde(); break;
-			case '^': t = Caret; break;
-			case '?': t = QuestionMark; break;
-			case '@': t = At; break;
-			case '$': t = Dollar; break;
-			case '#': t = Hash; break;
-			case '"': t = lex_string(); break;
-			case '\'': t = lex_character(); break;
-			case '\\':
-				++token_begin;
-				t = lex_escaped_keyword();
+			case 'Z': kind = lex_word(); break;
+			case '.': kind = match_dot(); break;
+			case ':': kind = match_colon(); break;
+			case ',': kind = Comma; break;
+			case ';': kind = Semicolon; break;
+			case '{': kind = LeftBrace; break;
+			case '}': kind = RightBrace; break;
+			case '(': kind = LeftParen; break;
+			case ')': kind = RightParen; break;
+			case '[': kind = match_left_bracket(); break;
+			case ']': kind = RightBracket; break;
+			case '<': kind = match_left_angle(); break;
+			case '>': kind = match_right_angle(); break;
+			case '=': kind = match_equal(); break;
+			case '+': kind = match_plus(); break;
+			case '-': kind = match_minus(); break;
+			case '*': kind = match_star(); break;
+			case '/': kind = match_slash(); break;
+			case '%': kind = match_percent(); break;
+			case '!': kind = match_bang(); break;
+			case '&': kind = match_ampersand(); break;
+			case '|': kind = match_pipe(); break;
+			case '~': kind = match_tilde(); break;
+			case '^': kind = Caret; break;
+			case '?': kind = QuestionMark; break;
+			case '@': kind = At; break;
+			case '$': kind = Dollar; break;
+			case '#': kind = Hash; break;
+			case '"':
+			{
+				eat_quoted_sequence('"');
+				kind = StringLiteral;
 				break;
-			default: t = lex_unicode(); break;
+			}
+			case '\'':
+			{
+				eat_quoted_sequence('\'');
+				kind = CharLiteral;
+				break;
+			}
+			case '\\':
+			{
+				++token_begin;
+				eat_escaped_keyword();
+				kind = Name;
+				break;
+			}
+			default:
+			{
+				eat_unicode_token(current);
+				kind = Name;
+				break;
+			}
 		}
 
 		uint32_t length = static_cast<uint32_t>(cursor - token_begin);
 		uint32_t offset = static_cast<uint32_t>(token_begin - begin);
-		tokens.append({t, length, offset});
+		tokens.append({kind, length, offset});
 	}
 
 	bool match(char expected)
@@ -200,20 +220,16 @@ private:
 			--cursor; // step back to ensure the extra dot is not skipped
 		}
 		else if (is_dec_digit(*cursor))
-			return lex_number();
-
-		return TokenKind::Dot;
-	}
-
-	TokenKind lex_number()
-	{
-		char first = cursor[-1];
-		if (first == '.')
 		{
 			eat_number_literal<is_dec_digit>();
 			return TokenKind::DecFloatLiteral;
 		}
 
+		return TokenKind::Dot;
+	}
+
+	TokenKind lex_number(char first)
+	{
 		if (first == '0' && cursor != end)
 		{
 			switch (*cursor)
@@ -224,27 +240,25 @@ private:
 					return TokenKind::HexIntLiteral;
 				case 'b':
 					++cursor;
-					eat_number_literal<is_bin_digit>();
+					eat_number_literal<is_dec_digit>();
 					return TokenKind::BinIntLiteral;
 				case 'o':
 					++cursor;
-					eat_number_literal<is_oct_digit>();
+					eat_number_literal<is_dec_digit>();
 					return TokenKind::OctIntLiteral;
 			}
 		}
 
-		auto kind = TokenKind::DecIntLiteral;
-		while (cursor != end)
-		{
-			char it = *cursor;
-			if (it == '.')
-				kind = TokenKind::DecFloatLiteral; // TODO: maybe refactor this so it's cleaner
-			else if (!is_dec_digit(it) && !is_non_breaking_whitespace(it))
-				break;
+		eat_number_literal<is_dec_digit>();
 
+		if (cursor != end && *cursor == '.')
+		{
 			++cursor;
+			eat_number_literal<is_dec_digit>();
+			return TokenKind::DecFloatLiteral;
 		}
-		return kind;
+
+		return TokenKind::DecIntLiteral;
 	}
 
 	template<bool (*CHAR_PREDICATE)(char)>
@@ -253,7 +267,7 @@ private:
 		while (cursor != end)
 		{
 			char it = *cursor;
-			if (!CHAR_PREDICATE(it) && !is_non_breaking_whitespace(it))
+			if (!CHAR_PREDICATE(it) && it != ' ' && it != '\t')
 				break;
 
 			++cursor;
@@ -364,36 +378,43 @@ private:
 	TokenKind match_slash()
 	{
 		if (match('/'))
-			return lex_line_comment();
+		{
+			eat_line_comment();
+			return TokenKind::LineComment;
+		}
 		if (match('!'))
-			return lex_doc_comment();
+		{
+			eat_doc_comment();
+			return TokenKind::DocComment;
+		}
 		if (match('*'))
-			return lex_block_comment();
+		{
+			eat_block_comment();
+			return TokenKind::BlockComment;
+		}
 		if (match('='))
 			return TokenKind::SlashEqual;
 
 		return TokenKind::Slash;
 	}
 
-	TokenKind lex_line_comment()
+	void eat_line_comment()
 	{
 		while (cursor != end)
 		{
-			if (is_breaking_whitespace(*cursor))
+			if (*cursor == '\n')
 				break;
 
 			++cursor;
 		}
-		return TokenKind::LineComment;
 	}
 
-	TokenKind lex_doc_comment()
+	void eat_doc_comment()
 	{
 		to_do();
-		return TokenKind::DocComment;
 	}
 
-	TokenKind lex_block_comment()
+	void eat_block_comment()
 	{
 		auto comment_begin = cursor;
 
@@ -403,7 +424,7 @@ private:
 			if (match('*'))
 			{
 				if (match('/') && --nesting_count == 0)
-					return TokenKind::BlockComment;
+					return;
 			}
 			else if (match('/'))
 			{
@@ -416,8 +437,6 @@ private:
 
 		if (nesting_count != 0)
 			report<Message::UnterminatedBlockComment>(comment_begin);
-
-		return TokenKind::BlockComment;
 	}
 
 	TokenKind match_percent()
@@ -464,25 +483,13 @@ private:
 		return TokenKind::Tilde;
 	}
 
-	TokenKind lex_string()
-	{
-		eat_quoted_sequence('"');
-		return TokenKind::StringLiteral;
-	}
-
-	TokenKind lex_character()
-	{
-		eat_quoted_sequence('\'');
-		return TokenKind::CharLiteral;
-	}
-
 	void eat_quoted_sequence(char quote)
 	{
 		bool ignore_quote = false;
 		while (cursor != end)
 		{
 			char it = *cursor;
-			if (is_breaking_whitespace(it))
+			if (it == '\n')
 			{
 				report<Message::MissingClosingQuote>(cursor);
 				break;
@@ -491,7 +498,7 @@ private:
 			++cursor;
 
 			if (it == '\\')
-				ignore_quote ^= true;
+				ignore_quote ^= true; // bool gets flipped so we correctly handle an escaped backslash within the literal
 			else if (it == quote && !ignore_quote)
 				break;
 			else if (ignore_quote)
@@ -502,27 +509,26 @@ private:
 	TokenKind lex_word()
 	{
 		auto word_begin = cursor - 1;
-		while (cursor != end)
-		{
-			if (!is_word_char(*cursor))
-				break;
-
-			++cursor;
-		}
+		eat_word_token_rest();
 
 		std::string_view lexeme(word_begin, cursor);
 		return identify_word_lexeme(lexeme);
 	}
 
-	TokenKind lex_escaped_keyword()
+	void eat_escaped_keyword()
 	{
 		auto name_begin = cursor;
-		while (cursor != end)
-		{
-			if (!is_word_char(*cursor))
-				break;
 
+		char it = *cursor;
+		if (is_ascii_word_character(it))
+		{
 			++cursor;
+			eat_word_token_rest();
+		}
+		else if (!is_standard_ascii(it))
+		{
+			++cursor;
+			eat_unicode_token(it);
 		}
 
 		std::string_view lexeme(name_begin, cursor);
@@ -530,18 +536,57 @@ private:
 		auto kind = identify_word_lexeme(lexeme);
 		if (kind == TokenKind::Name)
 			report<Message::EscapedNonKeyword>(name_begin, lexeme);
-
-		return TokenKind::Name;
 	}
 
-	TokenKind lex_unicode()
+	void eat_unicode_token(char first)
 	{
-		char first_char = cursor[-1];
-		if (can_begin_names(first_char)) // TODO: use xid-start
-			return lex_word();
+		if (check_multibyte_utf8_value<is_utf8_xid_start>(first))
+			eat_word_token_rest();
+	}
 
-		report<Message::UnexpectedCharacter>(cursor - 1, static_cast<int>(first_char));
-		return TokenKind::Name; // treat unknown character as name for better parsing
+	void eat_word_token_rest()
+	{
+		while (cursor != end)
+		{
+			char it = *cursor;
+			if (is_standard_ascii(it))
+			{
+				if (!is_ascii_word_character(it))
+					break;
+			}
+			else
+			{
+				if (!check_multibyte_utf8_value<is_utf8_xid_continue>(it))
+					break;
+			}
+			++cursor;
+		}
+	}
+
+	template<bool (*UTF8_PREDICATE)(uint32_t)>
+	bool check_multibyte_utf8_value(char first)
+	{
+		const uint8_t  leading_byte = static_cast<uint8_t>(first);
+		const uint32_t leading_ones = static_cast<uint32_t>(std::countl_one(leading_byte));
+
+		uint32_t encoding = leading_byte;
+
+		bool valid = false;
+		if (leading_ones >= 2 && leading_ones <= 4)
+		{
+			const uint32_t bytes_to_read = leading_ones - 1;
+
+			uint8_t* encoding_byte_ptr = reinterpret_cast<uint8_t*>(&encoding) + 1;
+			for (uint32_t i = 0; i != bytes_to_read && cursor != end; ++i)
+				*encoding_byte_ptr++ = static_cast<uint8_t>(*cursor++);
+
+			valid = UTF8_PREDICATE(encoding);
+		}
+
+		if (!valid)
+			report<Message::UnexpectedCharacter>(cursor - 1, encoding);
+
+		return valid;
 	}
 
 	template<Message MESSAGE, typename... Ts>

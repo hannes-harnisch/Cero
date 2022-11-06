@@ -15,9 +15,9 @@ enum class Message
 
 constexpr std::string_view get_format(Message message)
 {
-	using enum Message;
 	switch (message)
 	{
+		using enum Message;
 		case SourceInputTooLarge: return "source input is too large, limit is {} bytes";
 		case UnexpectedCharacter: return "unexpected character `0x{:x}`";
 		case MissingClosingQuote: return "missing closing quote";
