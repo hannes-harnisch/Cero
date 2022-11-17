@@ -9,20 +9,29 @@
 
 enum class Command
 {
+	None,
+	Help,
 	Build,
 	Clean,
 	Run,
-	Eval
+	Eval,
+	Invalid
 };
-
-class Option
-{};
 
 struct Config
 {
-	Command						  command;
-	std::vector<std::string_view> file_paths;
-	std::vector<Option>			  options;
+	static constexpr uint32_t DEFAULT_TAB_SIZE = 4;
 
-	static std::expected<Config, ExitCode> from(std::span<std::string_view> args);
+	Command						  command = Command::None;
+	std::vector<std::string_view> file_paths;
+
+	uint32_t tab_size			= DEFAULT_TAB_SIZE;
+	bool	 warnings_as_errors = false;
+
+	Config() = default;
+	Config(std::span<std::string_view> args);
+
+private:
+	void set_command(std::string_view arg);
+	void set_option(std::string_view arg);
 };

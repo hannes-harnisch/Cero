@@ -3,59 +3,63 @@
 #include "driver/Message.hpp"
 #include "syntax/Encoding.hpp"
 
-TokenKind identify_word_lexeme(std::string_view lexeme)
+namespace
 {
-	struct Keyword
+	TokenKind identify_word_lexeme(std::string_view lexeme)
 	{
-		std::string_view word;
-		TokenKind		 token_kind;
-	};
-	using enum TokenKind;
-	static constexpr Keyword KEYWORDS[] {
-		{"await", Await},	{"break", Break},	{"catch", Catch},	{"const", Const},	{"continue", Continue},
-		{"do", Do},			{"else", Else},		{"enum", Enum},		{"for", For},		{"if", If},
-		{"in", In},			{"let", Let},		{"public", Public}, {"return", Return}, {"static", Static},
-		{"struct", Struct}, {"switch", Switch}, {"throw", Throw},	{"try", Try},		{"use", Use},
-		{"var", Var},		{"while", While},	{"yield", Yield},
-	};
+		struct Keyword
+		{
+			std::string_view word;
+			TokenKind		 token_kind;
+		};
+		using enum TokenKind;
+		static constexpr Keyword KEYWORDS[] {
+			{"break", Break},	{"catch", Catch},	{"const", Const},	{"continue", Continue},
+			{"else", Else},		{"enum", Enum},		{"for", For},		{"if", If},
+			{"in", In},			{"let", Let},		{"public", Public}, {"return", Return},
+			{"static", Static}, {"struct", Struct}, {"switch", Switch}, {"throw", Throw},
+			{"try", Try},		{"use", Use},		{"var", Var},		{"while", While},
+		};
 
-	for (auto& keyword : KEYWORDS)
-		if (lexeme == keyword.word)
-			return keyword.token_kind;
+		for (auto& keyword : KEYWORDS)
+			if (lexeme == keyword.word)
+				return keyword.token_kind;
 
-	return Name;
-}
+		return Name;
+	}
+} // namespace
 
 class Lexer
 {
 	const Source&		   source;
 	Reporter&			   reporter;
 	Source::Iterator	   cursor;
-	const Source::Iterator begin;
-	const Source::Iterator end;
+	const Source::Iterator source_begin;
+	const Source::Iterator source_end;
 
 public:
 	Lexer(const Source& source, Reporter& reporter) :
 		source(source),
 		reporter(reporter),
 		cursor(source.begin()),
-		begin(cursor),
-		end(source.end())
+		source_begin(cursor),
+		source_end(source.end())
 	{}
 
 	TokenStream lex()
 	{
 		TokenStream tokens;
 
-		if (source.get_text().length() > Token::MAX_LENGTH)
-			report<Message::SourceInputTooLarge>(cursor, Token::MAX_LENGTH);
+		size_t source_length = source.get_text().length();
+		if (source_length > Token::MAX_LENGTH)
+			report(Message::SourceInputTooLarge, cursor, Token::MAX_LENGTH);
 		else
 		{
-			while (cursor != end)
+			while (cursor != source_end)
 				next_token(tokens);
 		}
 
-		tokens.append({TokenKind::EndOfFile, 0, 0});
+		tokens.append({TokenKind::EndOfFile, 0, static_cast<uint32_t>(source_length)});
 		return tokens;
 	}
 
@@ -194,13 +198,13 @@ private:
 		}
 
 		uint32_t length = static_cast<uint32_t>(cursor - token_begin);
-		uint32_t offset = static_cast<uint32_t>(token_begin - begin);
+		uint32_t offset = static_cast<uint32_t>(token_begin - source_begin);
 		tokens.append({kind, length, offset});
 	}
 
 	bool match(char expected)
 	{
-		if (cursor == end)
+		if (cursor == source_end)
 			return false;
 
 		if (*cursor != expected)
@@ -221,7 +225,7 @@ private:
 		}
 		else if (is_dec_digit(*cursor))
 		{
-			eat_number_literal<is_dec_digit>();
+			eat_number_literal(is_dec_digit);
 			return TokenKind::DecFloatLiteral;
 		}
 
@@ -230,44 +234,45 @@ private:
 
 	TokenKind lex_number(char first)
 	{
-		if (first == '0' && cursor != end)
+		// TODO: trim whitespace
+		// TODO: disallow `1.`
+		if (first == '0' && cursor != source_end)
 		{
 			switch (*cursor)
 			{
 				case 'x':
 					++cursor;
-					eat_number_literal<is_hex_digit>();
+					eat_number_literal(is_hex_digit);
 					return TokenKind::HexIntLiteral;
 				case 'b':
 					++cursor;
-					eat_number_literal<is_dec_digit>();
+					eat_number_literal(is_dec_digit);
 					return TokenKind::BinIntLiteral;
 				case 'o':
 					++cursor;
-					eat_number_literal<is_dec_digit>();
+					eat_number_literal(is_dec_digit);
 					return TokenKind::OctIntLiteral;
 			}
 		}
 
-		eat_number_literal<is_dec_digit>();
+		eat_number_literal(is_dec_digit);
 
-		if (cursor != end && *cursor == '.')
+		if (cursor != source_end && *cursor == '.')
 		{
 			++cursor;
-			eat_number_literal<is_dec_digit>();
+			eat_number_literal(is_dec_digit);
 			return TokenKind::DecFloatLiteral;
 		}
 
 		return TokenKind::DecIntLiteral;
 	}
 
-	template<bool (*CHAR_PREDICATE)(char)>
-	void eat_number_literal()
+	void eat_number_literal(bool (*char_predicate)(char))
 	{
-		while (cursor != end)
+		while (cursor != source_end)
 		{
 			char it = *cursor;
-			if (!CHAR_PREDICATE(it) && it != ' ' && it != '\t')
+			if (!char_predicate(it) && it != ' ' && it != '\t')
 				break;
 
 			++cursor;
@@ -304,12 +309,8 @@ private:
 			return TokenKind::DoubleLeftAngle;
 		}
 		if (match('='))
-		{
-			if (match('>'))
-				return TokenKind::Spaceship;
+			return TokenKind::LeftAngleEqual;
 
-			return TokenKind::LessEqual;
-		}
 		return TokenKind::LeftAngle;
 	}
 
@@ -323,7 +324,7 @@ private:
 			return TokenKind::DoubleRightAngle;
 		}
 		if (match('='))
-			return TokenKind::GreaterEqual;
+			return TokenKind::RightAngleEqual;
 
 		return TokenKind::RightAngle;
 	}
@@ -382,11 +383,6 @@ private:
 			eat_line_comment();
 			return TokenKind::LineComment;
 		}
-		if (match('!'))
-		{
-			eat_doc_comment();
-			return TokenKind::DocComment;
-		}
 		if (match('*'))
 		{
 			eat_block_comment();
@@ -400,7 +396,7 @@ private:
 
 	void eat_line_comment()
 	{
-		while (cursor != end)
+		while (cursor != source_end)
 		{
 			if (*cursor == '\n')
 				break;
@@ -409,17 +405,12 @@ private:
 		}
 	}
 
-	void eat_doc_comment()
-	{
-		to_do();
-	}
-
 	void eat_block_comment()
 	{
 		auto comment_begin = cursor;
 
 		uint32_t nesting_count = 1;
-		while (cursor != end)
+		while (cursor != source_end)
 		{
 			if (match('*'))
 			{
@@ -436,7 +427,7 @@ private:
 		}
 
 		if (nesting_count != 0)
-			report<Message::UnterminatedBlockComment>(comment_begin);
+			report(Message::UnterminatedBlockComment, comment_begin);
 	}
 
 	TokenKind match_percent()
@@ -486,12 +477,12 @@ private:
 	void eat_quoted_sequence(char quote)
 	{
 		bool ignore_quote = false;
-		while (cursor != end)
+		while (cursor != source_end)
 		{
 			char it = *cursor;
 			if (it == '\n')
 			{
-				report<Message::MissingClosingQuote>(cursor);
+				report(Message::MissingClosingQuote, cursor);
 				break;
 			}
 
@@ -535,18 +526,18 @@ private:
 
 		auto kind = identify_word_lexeme(lexeme);
 		if (kind == TokenKind::Name)
-			report<Message::EscapedNonKeyword>(name_begin, lexeme);
+			report(Message::EscapedNonKeyword, name_begin, lexeme);
 	}
 
 	void eat_unicode_token(char first)
 	{
-		if (check_multibyte_utf8_value<is_utf8_xid_start>(first))
+		if (check_multibyte_utf8_value(first, is_utf8_xid_start))
 			eat_word_token_rest();
 	}
 
 	void eat_word_token_rest()
 	{
-		while (cursor != end)
+		while (cursor != source_end)
 		{
 			char it = *cursor;
 			if (is_standard_ascii(it))
@@ -556,15 +547,14 @@ private:
 			}
 			else
 			{
-				if (!check_multibyte_utf8_value<is_utf8_xid_continue>(it))
+				if (!check_multibyte_utf8_value(it, is_utf8_xid_continue))
 					break;
 			}
 			++cursor;
 		}
 	}
 
-	template<bool (*UTF8_PREDICATE)(uint32_t)>
-	bool check_multibyte_utf8_value(char first)
+	bool check_multibyte_utf8_value(char first, bool (*utf8_predicate)(uint32_t))
 	{
 		const uint8_t  leading_byte = static_cast<uint8_t>(first);
 		const uint32_t leading_ones = static_cast<uint32_t>(std::countl_one(leading_byte));
@@ -577,22 +567,22 @@ private:
 			const uint32_t bytes_to_read = leading_ones - 1;
 
 			uint8_t* encoding_byte_ptr = reinterpret_cast<uint8_t*>(&encoding) + 1;
-			for (uint32_t i = 0; i != bytes_to_read && cursor != end; ++i)
+			for (uint32_t i = 0; i != bytes_to_read && cursor != source_end; ++i)
 				*encoding_byte_ptr++ = static_cast<uint8_t>(*cursor++);
 
-			valid = UTF8_PREDICATE(encoding);
+			valid = utf8_predicate(encoding);
 		}
 
 		if (!valid)
-			report<Message::UnexpectedCharacter>(cursor - 1, encoding);
+			report(Message::UnexpectedCharacter, cursor - 1, encoding);
 
 		return valid;
 	}
 
-	template<Message MESSAGE, typename... Ts>
-	void report(Source::Iterator cursor, Ts&&... ts) const
+	template<typename... Args>
+	void report(CheckedMessage<Args...> message, Source::Iterator cursor, Args&&... args) const
 	{
-		reporter.report<MESSAGE>(source.locate(cursor), std::forward<Ts>(ts)...);
+		reporter.report(message, source.locate(cursor), std::forward<Args>(args)...);
 	}
 };
 

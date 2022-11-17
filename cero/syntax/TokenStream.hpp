@@ -14,6 +14,6 @@ public:
 	void				   append(Token token);
 	std::string			   to_string(const Source& source) const;
 	std::span<const Token> get_slice() const;
-	Token				   at(size_t index) const;
+	Token				   at(uint32_t index) const;
 	void				   print(const Source& source) const;
 };

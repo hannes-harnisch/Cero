@@ -1,5 +1,6 @@
 #pragma once
 
+// Helper base class for making a class immovable and uncopyable.
 class Immovable
 {
 public:

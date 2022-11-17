@@ -2,8 +2,6 @@
 
 #include <cstdint>
 
-char to_upper_ascii(char c);
-char to_lower_ascii(char c);
 bool is_dec_digit(char c);
 bool is_hex_digit(char c);
 bool is_standard_ascii(char c);

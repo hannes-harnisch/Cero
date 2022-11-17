@@ -12,10 +12,12 @@ public:
 	static ExhaustiveReporter from(std::string_view file_path);
 
 	ExhaustiveReporter() = default;
-	ExhaustiveReporter(std::string source_text);
+	ExhaustiveReporter(std::string source_text, std::source_location loc = std::source_location::current());
 
 	~ExhaustiveReporter();
 
 private:
 	ExhaustiveReporter(const Source& source);
 };
+
+const char* test_name(std::source_location loc = std::source_location::current());

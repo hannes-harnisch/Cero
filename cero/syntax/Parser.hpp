@@ -1,6 +1,8 @@
 #pragma once
 
 #include "driver/Reporter.hpp"
+#include "driver/Source.hpp"
+#include "syntax/SyntaxTree.hpp"
 #include "syntax/TokenStream.hpp"
 
-void parse(const TokenStream& tokens, Reporter& reporter);
+SyntaxTree parse(const TokenStream& tokens, const Source& source, Reporter& reporter);

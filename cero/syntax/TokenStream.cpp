@@ -26,7 +26,7 @@ std::span<const Token> TokenStream::get_slice() const
 	return tokens;
 }
 
-Token TokenStream::at(size_t index) const
+Token TokenStream::at(uint32_t index) const
 {
 	return tokens.at(index);
 }

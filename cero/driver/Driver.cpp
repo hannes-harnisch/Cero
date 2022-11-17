@@ -3,46 +3,73 @@
 #include "driver/Config.hpp"
 #include "driver/Source.hpp"
 #include "syntax/Lexer.hpp"
+#include "syntax/Parser.hpp"
 #include "util/Fail.hpp"
 
-static ExitCode perform_build(const Config& config)
+namespace
 {
-	auto exit_code = ExitCode::Success;
+	void print_help()
+	{}
 
-	for (auto file_path : config.file_paths)
+	ExitCode on_no_command()
 	{
-		auto source = Source::from(file_path);
-		if (!source.has_value())
-			return ExitCode::NoInput;
-
-		auto reporter = build_file(*source);
-		if (reporter.has_reports())
-			exit_code = ExitCode::DataError;
+		std::cout << "No parameters specified." << std::endl;
+		print_help();
+		return ExitCode::Usage;
 	}
 
-	return exit_code;
-}
-
-static ExitCode perform_command(const Config& config)
-{
-	switch (config.command)
+	ExitCode on_help_command()
 	{
-		case Command::Build: return perform_build(config);
-		case Command::Clean:
-		case Command::Run:
-		case Command::Eval: to_do();
+		print_help();
+		return ExitCode::Success;
 	}
-	return ExitCode::InternalError;
-}
+
+	ExitCode on_build_command(const Config& config)
+	{
+		auto exit_code = ExitCode::Success;
+
+		for (auto file_path : config.file_paths)
+		{
+			auto source = Source::from_file(file_path, config);
+			if (!source.has_value())
+				return ExitCode::NoInput;
+
+			auto reporter = build_file(*source);
+			if (reporter.has_reports())
+				exit_code = ExitCode::DataError;
+		}
+
+		return exit_code;
+	}
+
+	ExitCode on_invalid_command()
+	{
+		std::cout << "Unknown command." << std::endl;
+		print_help();
+		return ExitCode::Usage;
+	}
+
+	ExitCode perform_command(const Config& config)
+	{
+		using enum Command;
+		switch (config.command)
+		{
+			case None: return on_no_command();
+			case Help: return on_help_command();
+			case Build: return on_build_command(config);
+			case Clean:
+			case Run:
+			case Eval: to_do();
+			case Invalid: return on_invalid_command();
+		}
+		fail_unreachable();
+	}
+} // namespace
 
 ExitCode run_driver(std::span<std::string_view> args)
 {
-	auto config = Config::from(args);
-
-	if (!config.has_value())
-		return config.error();
-
-	return perform_command(*config);
+	Config config(args);
+	return perform_command(config);
 }
 
 Reporter build_file(const Source& source)
@@ -50,7 +77,7 @@ Reporter build_file(const Source& source)
 	Reporter reporter;
 
 	auto tokens = lex(source, reporter);
-	// TODO: add stages
+	auto ast	= parse(tokens, source, reporter);
 
 	return reporter;
 }

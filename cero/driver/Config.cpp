@@ -1,83 +1,53 @@
 #include "Config.hpp"
 
-static void print_help()
+Config::Config(std::span<std::string_view> args)
 {
-	std::cout << "No parameters specified."; // TODO: Print args info here.
-}
+	std::queue args_queue(std::deque(args.begin(), args.end()));
 
-static std::optional<Command> read_command(std::string_view arg)
-{
-	if (arg == "build")
-		return Command::Build;
-	if (arg == "clean")
-		return Command::Clean;
-	if (arg == "run")
-		return Command::Run;
-	if (arg == "eval")
-		return Command::Eval;
-
-	return {};
-}
-
-static bool is_file_path(std::string_view arg)
-{
-	return !arg.starts_with("-"); // TODO
-}
-
-static std::optional<Option> read_option(std::string_view)
-{
-	return {};
-}
-
-std::expected<Config, ExitCode> Config::from(std::span<std::string_view> args)
-{
-	if (args.empty())
+	if (!args_queue.empty())
 	{
-		print_help();
-		return std::unexpected(ExitCode::Usage);
+		set_command(args_queue.front());
+		args_queue.pop();
 	}
-
-	std::deque deque(args.begin(), args.end());
-	std::queue args_queue(deque);
-
-	auto first = args_queue.front();
-	if (first == "help" || first == "--help" || first == "-h")
-	{
-		print_help();
-		return std::unexpected(ExitCode::Success);
-	}
-
-	auto cmd = read_command(first);
-	args_queue.pop();
-	if (!cmd.has_value())
-	{
-		std::cout << "Unknown command." << std::endl;
-		print_help();
-		return std::unexpected(ExitCode::Usage);
-	}
-
-	Config config {.command = *cmd};
 
 	while (!args_queue.empty())
 	{
-		while (true)
-		{
-			auto arg = args_queue.front();
-			if (!is_file_path(arg))
-				break;
-
-			config.file_paths.emplace_back(arg);
-			args_queue.pop();
-		}
-		while (true)
-		{
-			auto option = read_option(args_queue.front());
-			if (!option.has_value())
-				break;
-
-			config.options.emplace_back(std::move(*option));
-			args_queue.pop();
-		}
+		set_option(args_queue.front());
+		args_queue.pop();
 	}
-	return config;
+}
+
+void Config::set_command(std::string_view arg)
+{
+	using enum Command;
+
+	if (arg == "help" || arg == "--help" || arg == "-h")
+		command = Help;
+	else if (arg == "build")
+		command = Build;
+	else if (arg == "clean")
+		command = Clean;
+	else if (arg == "run")
+		command = Run;
+	else if (arg == "eval")
+		command = Eval;
+	else
+		command = Invalid;
+}
+
+namespace
+{
+	bool is_file_path(std::string_view arg)
+	{
+		// TODO: this just treats everything as an input file path that doesn't start with a dash...
+		return !arg.starts_with("-");
+	}
+} // namespace
+
+void Config::set_option(std::string_view arg)
+{
+	if (is_file_path(arg))
+		file_paths.emplace_back(arg);
+
+	// check for all other options here in the future
 }

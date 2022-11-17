@@ -1,26 +1,26 @@
 #include "util/ExhaustiveReporter.hpp"
+#include "util/Test.hpp"
 
 #include <cero/syntax/Token.hpp>
-#include <doctest/doctest.h>
 
-TEST_CASE("SourceTooLarge")
+TEST(SourceTooLarge)
 {
 	ExhaustiveReporter r(std::string(16779000, ' '));
-	CHECK(r.pop_report(Message::SourceInputTooLarge, {1, 1}, Token::MAX_LENGTH));
+	CHECK(r.pop_report(Message::SourceInputTooLarge, {1, 1, test_name()}, Token::MAX_LENGTH));
 }
 
-TEST_CASE("IllegalChar")
+TEST(IllegalChar)
 {
 	ExhaustiveReporter r(R"_____(
-main() -> i32
-{
-	return 0 
-}
+main()
+{}
+
+() {}
 )_____");
-	CHECK(r.pop_report(Message::UnexpectedCharacter, {5, 2}, 7));
+	CHECK(r.pop_report(Message::UnexpectedCharacter, {5, 1, test_name()}, 7));
 }
 
-TEST_CASE("MissingClosingQuote")
+TEST(MissingClosingQuote)
 {
 	ExhaustiveReporter r(R"_____(
 foo()
@@ -29,11 +29,11 @@ foo()
 	let ch = 'x
 }
 )_____");
-	CHECK(r.pop_report(Message::MissingClosingQuote, {4, 24}));
-	CHECK(r.pop_report(Message::MissingClosingQuote, {5, 13}));
+	CHECK(r.pop_report(Message::MissingClosingQuote, {4, 27, test_name()}));
+	CHECK(r.pop_report(Message::MissingClosingQuote, {5, 16, test_name()}));
 }
 
-TEST_CASE("EscapedNonKeyword")
+TEST(EscapedNonKeyword)
 {
 	ExhaustiveReporter r(R"_____(
 \foo()
@@ -42,14 +42,14 @@ TEST_CASE("EscapedNonKeyword")
 \()
 {}
 )_____");
-	CHECK(r.pop_report(Message::EscapedNonKeyword, {2, 2}, "foo"));
-	CHECK(r.pop_report(Message::EscapedNonKeyword, {5, 2}, ""));
+	CHECK(r.pop_report(Message::EscapedNonKeyword, {2, 2, test_name()}, "foo"));
+	CHECK(r.pop_report(Message::EscapedNonKeyword, {5, 2, test_name()}, ""));
 }
 
-TEST_CASE("UnterminatedBlockComment")
+TEST(UnterminatedBlockComment)
 {
 	ExhaustiveReporter r(R"_____(
 /* abc
 )_____");
-	CHECK(r.pop_report(Message::UnterminatedBlockComment, {2, 3}));
+	CHECK(r.pop_report(Message::UnterminatedBlockComment, {2, 3, test_name()}));
 }
