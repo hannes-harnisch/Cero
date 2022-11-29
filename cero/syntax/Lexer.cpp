@@ -182,13 +182,6 @@ private:
 				kind = CharLiteral;
 				break;
 			}
-			case '\\':
-			{
-				++token_begin;
-				eat_escaped_keyword();
-				kind = Name;
-				break;
-			}
 			default:
 			{
 				eat_unicode_token(current);
@@ -409,24 +402,24 @@ private:
 	{
 		auto comment_begin = cursor;
 
-		uint32_t nesting_count = 1;
+		uint32_t unclosed_count = 1;
 		while (cursor != source_end)
 		{
 			if (match('*'))
 			{
-				if (match('/') && --nesting_count == 0)
+				if (match('/') && --unclosed_count == 0)
 					return;
 			}
 			else if (match('/'))
 			{
 				if (match('*'))
-					++nesting_count;
+					++unclosed_count;
 			}
 			else
 				++cursor;
 		}
 
-		if (nesting_count != 0)
+		if (unclosed_count != 0)
 			report(Message::UnterminatedBlockComment, comment_begin);
 	}
 
@@ -504,29 +497,6 @@ private:
 
 		std::string_view lexeme(word_begin, cursor);
 		return identify_word_lexeme(lexeme);
-	}
-
-	void eat_escaped_keyword()
-	{
-		auto name_begin = cursor;
-
-		char it = *cursor;
-		if (is_ascii_word_character(it))
-		{
-			++cursor;
-			eat_word_token_rest();
-		}
-		else if (!is_standard_ascii(it))
-		{
-			++cursor;
-			eat_unicode_token(it);
-		}
-
-		std::string_view lexeme(name_begin, cursor);
-
-		auto kind = identify_word_lexeme(lexeme);
-		if (kind == TokenKind::Name)
-			report(Message::EscapedNonKeyword, name_begin, lexeme);
 	}
 
 	void eat_unicode_token(char first)

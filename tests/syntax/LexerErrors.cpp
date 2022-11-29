@@ -33,19 +33,6 @@ foo()
 	CHECK(r.pop_report(Message::MissingClosingQuote, {5, 16, test_name()}));
 }
 
-TEST(EscapedNonKeyword)
-{
-	ExhaustiveReporter r(R"_____(
-\foo()
-{}
-
-\()
-{}
-)_____");
-	CHECK(r.pop_report(Message::EscapedNonKeyword, {2, 2, test_name()}, "foo"));
-	CHECK(r.pop_report(Message::EscapedNonKeyword, {5, 2, test_name()}, ""));
-}
-
 TEST(UnterminatedBlockComment)
 {
 	ExhaustiveReporter r(R"_____(

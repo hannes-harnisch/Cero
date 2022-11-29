@@ -40,8 +40,23 @@ struct TypeExpression
 
 struct Identifier
 {
+	std::string_view name;
+};
+
+struct GenericIdentifier
+{
 	std::string_view		name;
 	std::vector<Expression> generic_args;
+};
+
+struct CharLiteral
+{
+	std::string value;
+};
+
+struct StringLiteral
+{
+	std::string value;
 };
 
 struct LetBinding
@@ -145,6 +160,9 @@ struct RightShiftAssignment : BinaryExpression {};
 // clang-format on
 
 using ExpressionNode = std::variant<Identifier,
+									GenericIdentifier,
+									CharLiteral,
+									StringLiteral,
 									LetBinding,
 									VarBinding,
 									BlockExpression,
