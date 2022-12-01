@@ -27,6 +27,8 @@ foo()
 {
 	let string = "Oh no...
 	let ch = 'x
+
+	a + b * c >> d
 }
 )_____");
 	CHECK(r.pop_report(Message::MissingClosingQuote, {4, 27, test_name()}));

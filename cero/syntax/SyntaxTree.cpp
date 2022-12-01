@@ -11,3 +11,6 @@ Definition SyntaxTree::add(DefinitionNode def)
 	definition_nodes.emplace_back(std::move(def));
 	return {static_cast<Index>(definition_nodes.size())};
 }
+
+void SyntaxTree::print() const
+{}

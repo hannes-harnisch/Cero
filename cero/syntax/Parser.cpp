@@ -1,15 +1,8 @@
 #include "Parser.hpp"
 
 #include "syntax/Literal.hpp"
+#include "util/Defer.hpp"
 #include "util/LookupTable.hpp"
-
-struct ParseError : std::exception
-{
-	const char* what() const override
-	{
-		return "parse error";
-	}
-};
 
 enum class Precedence : uint8_t
 {
@@ -25,13 +18,16 @@ enum class Precedence : uint8_t
 	Primary
 };
 
+struct ParseError
+{};
+
 class Parser
 {
 	SyntaxTree		   ast;
-	const TokenStream& tokens;
+	const TokenStream& token_stream;
 	const Source&	   source;
 	Reporter&		   reporter;
-	uint32_t		   token_index	   = 0;
+	uint32_t		   cursor		   = 0;
 	uint32_t		   unclosed_parens = 0;
 	uint32_t		   unclosed_angles = 0;
 
@@ -39,8 +35,8 @@ class Parser
 	using NonPrefixParse = Expression (Parser::*)(Expression);
 
 public:
-	Parser(const TokenStream& tokens, const Source& source, Reporter& reporter) :
-		tokens(tokens),
+	Parser(const TokenStream& token_stream, const Source& source, Reporter& reporter) :
+		token_stream(token_stream),
 		source(source),
 		reporter(reporter)
 	{}
@@ -49,32 +45,46 @@ public:
 	{
 		while (!match(TokenKind::EndOfFile))
 		{
-			try
-			{
-				parse_definition();
-			}
-			catch (ParseError)
-			{}
+			bool parsed = parse_definition();
+			if (!parsed)
+				synchronize_definition();
 		}
-
 		return std::move(ast);
 	}
 
 private:
 	using enum TokenKind;
 
-	void parse_definition()
+	bool parse_definition()
 	{
-		if (auto token = match_any({Struct, Enum, Name}))
+		if (match(Name))
+			parse_function();
+		else if (match(Struct))
+			parse_struct();
+		else if (match(Enum))
+			parse_enum();
+		else
 		{
-			switch (token->kind)
-			{
-				case Name: parse_function(*token); return;
-				case Struct: parse_struct(); return;
-				case Enum: parse_enum(); return;
-			}
+			report_expectation(Message::ExpectFuncStructEnum, peek());
+			return false;
 		}
-		report_expectation(Message::ExpectFuncStructEnum, peek());
+
+		return true;
+	}
+
+	void synchronize_definition()
+	{
+		auto token = peek();
+		while (token.kind != Name && token.kind != Struct && token.kind != Enum)
+		{
+			while (token.kind != NewLine)
+			{
+				advance();
+				token = peek();
+			}
+			advance();
+			token = peek();
+		}
 	}
 
 	void parse_struct()
@@ -87,16 +97,16 @@ private:
 		to_do();
 	}
 
-	void parse_function(Token token)
+	void parse_function()
 	{
-		auto name = token.get_lexeme_from(source);
+		auto name = previous().get_lexeme(source);
 		expect(LeftParen, Message::ExpectParenAfterFuncName);
 
 		auto parameters = parse_parameter_list();
 		auto returns	= parse_return_list();
 		expect(LeftBrace, Message::ExpectBraceBeforeFuncBody);
 
-		auto statements = finish_block();
+		auto statements = parse_block();
 		ast.add(Function(name, std::move(parameters), std::move(returns), std::move(statements)));
 	}
 
@@ -150,12 +160,12 @@ private:
 
 		std::string_view name;
 		if (auto token = match(Name))
-			name = token->get_lexeme_from(source);
+			name = token->get_lexeme(source);
 
 		return {type, name};
 	}
 
-	std::vector<Expression> finish_block()
+	std::vector<Expression> parse_block()
 	{
 		uint32_t saved_parens = unclosed_parens;
 		uint32_t saved_angles = unclosed_angles;
@@ -172,12 +182,7 @@ private:
 			}
 			catch (ParseError)
 			{
-				auto token = peek();
-				while (token.kind != NewLine && token.kind != RightBrace)
-				{
-					++token_index;
-					token = peek();
-				}
+				synchronize_statement();
 			}
 		}
 
@@ -189,7 +194,7 @@ private:
 	Expression parse_expression(Precedence precedence = {})
 	{
 		auto token = next_breakable();
-		++token_index;
+		advance();
 
 		auto parse_prefix = PREFIX_PARSES[token.kind];
 		if (parse_prefix == nullptr)
@@ -213,23 +218,34 @@ private:
 		bool across_lines = next_is_new_line();
 		auto token		  = next_breakable();
 
-		if (precedence < NON_PREFIX_PRECEDENCES[token.kind])
+		if (precedence >= NON_PREFIX_PRECEDENCES[token.kind])
 			return nullptr;
 
 		if (across_lines && unclosed_parens == 0 && is_unbreakable_operator(token.kind))
 			return nullptr;
 
+		advance();
 		return NON_PREFIX_PARSES[token.kind];
 	}
 
-	static bool is_unbreakable_operator(TokenKind kind)
+	static bool is_unbreakable_operator(TokenKind t)
 	{
-		return kind == LeftParen || kind == LeftBracket || kind == PlusPlus || kind == MinusMinus;
+		return t == LeftParen || t == LeftBracket || t == PlusPlus || t == MinusMinus;
+	}
+
+	void synchronize_statement()
+	{
+		auto token = peek();
+		while (token.kind != NewLine && token.kind != RightBrace)
+		{
+			advance();
+			token = peek();
+		}
 	}
 
 	Expression parse_identifier()
 	{
-		auto name = previous().get_lexeme_from(source);
+		auto name = previous().get_lexeme(source);
 		if (match(LeftAngle))
 			return parse_generic_identifier(name);
 
@@ -239,6 +255,10 @@ private:
 	Expression parse_generic_identifier(std::string_view name)
 	{
 		++unclosed_angles;
+		defer
+		{
+			--unclosed_angles;
+		};
 
 		std::vector<Expression> generic_args;
 		if (!match(RightAngle))
@@ -247,8 +267,6 @@ private:
 				generic_args.emplace_back(parse_expression());
 			while (match(Comma));
 		} // Definitely unfinished
-
-		--unclosed_angles;
 		return ast.add(GenericIdentifier(name, std::move(generic_args)));
 	}
 
@@ -284,13 +302,13 @@ private:
 
 	Expression parse_char_literal()
 	{
-		auto lexeme = previous().get_lexeme_from(source);
+		auto lexeme = previous().get_lexeme(source);
 		return ast.add(::CharLiteral(evaluate_char_literal(lexeme)));
 	}
 
 	Expression parse_string_literal()
 	{
-		auto lexeme = previous().get_lexeme_from(source);
+		auto lexeme = previous().get_lexeme(source);
 		return ast.add(::StringLiteral(evaluate_string_literal(lexeme)));
 	}
 
@@ -307,15 +325,15 @@ private:
 
 	LetBinding parse_binding()
 	{
-		uint32_t saved = token_index;
+		uint32_t saved = cursor;
 		if (auto name = match(Name))
 		{
 			if (match(Equal))
 			{
 				auto initializer = parse_expression();
-				return {name->get_lexeme_from(source), {}, initializer};
+				return {name->get_lexeme(source), {}, initializer};
 			}
-			token_index = saved;
+			cursor = saved;
 		}
 
 		auto type = parse_type();
@@ -330,7 +348,7 @@ private:
 
 	Expression parse_block_expression()
 	{
-		return ast.add(BlockExpression(finish_block()));
+		return ast.add(BlockExpression(parse_block()));
 	}
 
 	Expression parse_parenthesized()
@@ -338,12 +356,14 @@ private:
 		uint32_t saved	= unclosed_angles;
 		unclosed_angles = 0;
 		++unclosed_parens;
+		defer
+		{
+			--unclosed_parens;
+			unclosed_angles = saved;
+		};
 
 		auto expression = parse_expression();
 		expect(RightParen, Message::ExpectParenAfterExpr);
-
-		--unclosed_parens;
-		unclosed_angles = saved;
 		return expression;
 	}
 
@@ -454,7 +474,7 @@ private:
 	{
 		if (unclosed_angles != 0)
 		{
-			--token_index;
+			--cursor;
 			return left;
 		}
 
@@ -478,22 +498,8 @@ private:
 		auto token = next_breakable();
 		if (token.kind == kind)
 		{
-			++token_index;
+			advance();
 			return token;
-		}
-		return {};
-	}
-
-	std::optional<Token> match_any(std::initializer_list<TokenKind> kinds)
-	{
-		auto token = next_breakable();
-		for (auto kind : kinds)
-		{
-			if (token.kind == kind)
-			{
-				++token_index;
-				return token;
-			}
 		}
 		return {};
 	}
@@ -502,7 +508,7 @@ private:
 	{
 		auto token = next_breakable();
 		if (token.kind == kind)
-			++token_index;
+			advance();
 		else
 			report_expectation(message, token);
 	}
@@ -512,8 +518,8 @@ private:
 		auto token = next_breakable();
 		if (token.kind == Name)
 		{
-			++token_index;
-			return token.get_lexeme_from(source);
+			advance();
+			return token.get_lexeme(source);
 		}
 
 		report_expectation(message, token);
@@ -525,7 +531,7 @@ private:
 		Token token = peek();
 		while (token.kind == NewLine || token.kind == LineComment || token.kind == BlockComment)
 		{
-			++token_index;
+			advance();
 			token = peek();
 		}
 		return token;
@@ -536,26 +542,31 @@ private:
 		Token token = peek();
 		while (token.kind == LineComment || token.kind == BlockComment)
 		{
-			++token_index;
+			advance();
 			token = peek();
 		}
 		return token.kind == NewLine;
 	}
 
+	void advance()
+	{
+		++cursor;
+	}
+
 	Token peek() const
 	{
-		return tokens.at(token_index);
+		return token_stream.at(cursor);
 	}
 
 	Token previous() const
 	{
-		return tokens.at(token_index - 1);
+		return token_stream.at(cursor - 1);
 	}
 
 	void report_expectation(CheckedMessage<std::string> message, Token unexpected)
 	{
 		auto location = unexpected.locate_in(source);
-		reporter.report(message, location, unexpected.describe_for_message(source));
+		reporter.report(message, location, unexpected.to_message_string(source));
 	}
 
 	static constexpr LookupTable<TokenKind, PrefixParse> PREFIX_PARSES = []
@@ -687,8 +698,8 @@ private:
 	}();
 };
 
-SyntaxTree parse(const TokenStream& tokens, const Source& source, Reporter& reporter)
+SyntaxTree parse(const TokenStream& token_stream, const Source& source, Reporter& reporter)
 {
-	Parser parser(tokens, source, reporter);
+	Parser parser(token_stream, source, reporter);
 	return parser.parse();
 }

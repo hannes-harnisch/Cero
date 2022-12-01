@@ -9,8 +9,8 @@ namespace
 	{
 		struct Keyword
 		{
-			std::string_view word;
-			TokenKind		 token_kind;
+			std::string_view lexeme;
+			TokenKind		 kind;
 		};
 		using enum TokenKind;
 		static constexpr Keyword KEYWORDS[] {
@@ -22,8 +22,8 @@ namespace
 		};
 
 		for (auto& keyword : KEYWORDS)
-			if (lexeme == keyword.word)
-				return keyword.token_kind;
+			if (lexeme == keyword.lexeme)
+				return keyword.kind;
 
 		return Name;
 	}
@@ -48,7 +48,7 @@ public:
 
 	TokenStream lex()
 	{
-		TokenStream tokens;
+		TokenStream stream;
 
 		size_t source_length = source.get_text().length();
 		if (source_length > Token::MAX_LENGTH)
@@ -56,15 +56,15 @@ public:
 		else
 		{
 			while (cursor != source_end)
-				next_token(tokens);
+				next_token(stream);
 		}
 
-		tokens.append({TokenKind::EndOfFile, 0, static_cast<uint32_t>(source_length)});
-		return tokens;
+		stream.append({TokenKind::EndOfFile, 0, static_cast<uint32_t>(source_length)});
+		return stream;
 	}
 
 private:
-	void next_token(TokenStream& tokens)
+	void next_token(TokenStream& stream)
 	{
 		auto token_begin = cursor;
 
@@ -192,7 +192,7 @@ private:
 
 		uint32_t length = static_cast<uint32_t>(cursor - token_begin);
 		uint32_t offset = static_cast<uint32_t>(token_begin - source_begin);
-		tokens.append({kind, length, offset});
+		stream.append({kind, length, offset});
 	}
 
 	bool match(char expected)

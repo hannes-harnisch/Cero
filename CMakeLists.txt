@@ -10,12 +10,13 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}${CMAKE_FILES_DIRECTORY}/b
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}${CMAKE_FILES_DIRECTORY}/bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}${CMAKE_FILES_DIRECTORY}/bin)
 set(CMAKE_CXX_STANDARD_LIBRARIES "")
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 set(CMAKE_VS_JUST_MY_CODE_DEBUGGING ON)
 
 if(MSVC)
-  add_compile_options(/W4)
+	add_compile_options(/W4)
 else()
-  add_compile_options(-Wall -Wextra -Wpedantic)
+	add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 add_subdirectory(cero)

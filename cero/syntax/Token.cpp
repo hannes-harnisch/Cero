@@ -6,12 +6,12 @@
 
 namespace
 {
-	bool is_variable_length_token(TokenKind k)
+	bool is_variable_length_token(TokenKind t)
 	{
 		using enum TokenKind;
-		return k == Name || k == LineComment || k == BlockComment || k == DecIntLiteral || k == HexIntLiteral
-			   || k == BinIntLiteral || k == OctIntLiteral || k == DecFloatLiteral || k == HexFloatLiteral || k == CharLiteral
-			   || k == StringLiteral;
+		return t == Name || t == LineComment || t == BlockComment || t == DecIntLiteral || t == HexIntLiteral
+			   || t == BinIntLiteral || t == OctIntLiteral || t == DecFloatLiteral || t == HexFloatLiteral || t == CharLiteral
+			   || t == StringLiteral;
 	}
 
 	std::string_view get_token_message_format(TokenKind kind)
@@ -37,22 +37,22 @@ namespace
 	}
 } // namespace
 
-std::string_view Token::get_lexeme_from(const Source& source) const
+std::string_view Token::get_lexeme(const Source& source) const
 {
 	return source.get_text().substr(offset, length);
 }
 
-std::string Token::describe_for_message(const Source& source) const
+std::string Token::to_message_string(const Source& source) const
 {
-	return std::vformat(get_token_message_format(kind), std::make_format_args(get_lexeme_from(source)));
+	return std::vformat(get_token_message_format(kind), std::make_format_args(get_lexeme(source)));
 }
 
-std::string Token::to_string(const Source& source) const
+std::string Token::to_debug_string(const Source& source) const
 {
 	auto token_kind = magic_enum::enum_name(kind);
 
 	if (is_variable_length_token(kind))
-		return std::format("{}(`{}`)", token_kind, get_lexeme_from(source));
+		return std::format("{}(`{}`)", token_kind, get_lexeme(source));
 
 	return std::string(token_kind);
 }

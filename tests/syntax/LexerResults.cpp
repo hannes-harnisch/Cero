@@ -10,13 +10,13 @@ TokenStream lex_exhaustive(const Source& source)
 	return lex(source, reporter);
 }
 
-bool all_kinds_match(const TokenStream& token_stream, std::initializer_list<TokenKind> kinds)
+bool all_tokens_match(const TokenStream& token_stream, std::initializer_list<TokenKind> tokens)
 {
-	auto tokens = token_stream.get_slice();
-	CHECK(tokens.size() == kinds.size());
+	auto lexemes = token_stream.get_tokens();
+	CHECK(lexemes.size() == tokens.size());
 
-	for (size_t i = 0; i != tokens.size(); ++i)
-		if (tokens[i].kind != kinds.begin()[i])
+	for (size_t i = 0; i != lexemes.size(); ++i)
+		if (lexemes[i].kind != tokens.begin()[i])
 			return false;
 
 	return true;
@@ -28,7 +28,7 @@ TEST(EmptySource)
 {
 	TestSource src("");
 	auto	   tokens = lex_exhaustive(src);
-	CHECK(all_kinds_match(tokens, {EndOfFile}));
+	CHECK(all_tokens_match(tokens, {EndOfFile}));
 }
 
 TEST(IntegerLiterals)
@@ -47,23 +47,23 @@ TEST(IntegerLiterals)
 0o 124 22115 2736
 )_____");
 	auto	   tokens = lex_exhaustive(src);
-	CHECK(all_kinds_match(tokens, {NewLine,		  DecIntLiteral, NewLine,		DecIntLiteral, NewLine,
-								   DecIntLiteral, NewLine,		 DecIntLiteral, NewLine,	   HexIntLiteral,
-								   NewLine,		  HexIntLiteral, NewLine,		HexIntLiteral, Name,
-								   NewLine,		  BinIntLiteral, NewLine,		BinIntLiteral, NewLine,
-								   OctIntLiteral, NewLine,		 OctIntLiteral, NewLine,	   EndOfFile}));
-	CHECK(tokens.at(1).get_lexeme_from(src) == "0");
-	CHECK(tokens.at(3).get_lexeme_from(src) == "123");
-	CHECK(tokens.at(5).get_lexeme_from(src) == "123 456");
-	CHECK(tokens.at(7).get_lexeme_from(src) == "1234 5678");
-	CHECK(tokens.at(9).get_lexeme_from(src) == "0x123 456 eaeAEB234 32 B");
-	CHECK(tokens.at(11).get_lexeme_from(src) == "0x AB3235");
-	CHECK(tokens.at(13).get_lexeme_from(src) == "0x AB3235");
-	CHECK(tokens.at(14).get_lexeme_from(src) == "i");
-	CHECK(tokens.at(16).get_lexeme_from(src) == "0b010110111");
-	CHECK(tokens.at(18).get_lexeme_from(src) == "0b 0110 11101 110");
-	CHECK(tokens.at(20).get_lexeme_from(src) == "0o1125417245");
-	CHECK(tokens.at(22).get_lexeme_from(src) == "0o 124 22115 2736");
+	CHECK(all_tokens_match(tokens, {NewLine,	   DecIntLiteral, NewLine,		 DecIntLiteral, NewLine,
+									DecIntLiteral, NewLine,		  DecIntLiteral, NewLine,		HexIntLiteral,
+									NewLine,	   HexIntLiteral, NewLine,		 HexIntLiteral, Name,
+									NewLine,	   BinIntLiteral, NewLine,		 BinIntLiteral, NewLine,
+									OctIntLiteral, NewLine,		  OctIntLiteral, NewLine,		EndOfFile}));
+	CHECK(tokens.at(1).get_lexeme(src) == "0");
+	CHECK(tokens.at(3).get_lexeme(src) == "123");
+	CHECK(tokens.at(5).get_lexeme(src) == "123 456");
+	CHECK(tokens.at(7).get_lexeme(src) == "1234 5678");
+	CHECK(tokens.at(9).get_lexeme(src) == "0x123 456 eaeAEB234 32 B");
+	CHECK(tokens.at(11).get_lexeme(src) == "0x AB3235");
+	CHECK(tokens.at(13).get_lexeme(src) == "0x AB3235");
+	CHECK(tokens.at(14).get_lexeme(src) == "i");
+	CHECK(tokens.at(16).get_lexeme(src) == "0b010110111");
+	CHECK(tokens.at(18).get_lexeme(src) == "0b 0110 11101 110");
+	CHECK(tokens.at(20).get_lexeme(src) == "0o1125417245");
+	CHECK(tokens.at(22).get_lexeme(src) == "0o 124 22115 2736");
 }
 
 TEST(FloatLiterals)
@@ -80,31 +80,31 @@ TEST(FloatLiterals)
 1.0.a
 )_____");
 	auto	   tokens = lex_exhaustive(src);
-	CHECK(all_kinds_match(tokens, {NewLine, DecFloatLiteral,
-								   NewLine, DecFloatLiteral,
-								   NewLine, DecFloatLiteral,
-								   NewLine, DecFloatLiteral,
-								   NewLine, DecFloatLiteral,
-								   NewLine, DecFloatLiteral,
-								   NewLine, DecFloatLiteral,
-								   NewLine, DecFloatLiteral,
-								   Dot,		Name,
-								   NewLine, DecFloatLiteral,
-								   Dot,		Name,
-								   NewLine, EndOfFile}));
-	CHECK(tokens.at(1).get_lexeme_from(src) == "1.0");
-	CHECK(tokens.at(3).get_lexeme_from(src) == "1.");
-	CHECK(tokens.at(5).get_lexeme_from(src) == ".4");
-	CHECK(tokens.at(7).get_lexeme_from(src) == ".045");
-	CHECK(tokens.at(9).get_lexeme_from(src) == "100 000.000 231");
-	CHECK(tokens.at(11).get_lexeme_from(src) == "123 .456 7");
-	CHECK(tokens.at(13).get_lexeme_from(src) == "234 5 . 23 948");
-	CHECK(tokens.at(15).get_lexeme_from(src) == "1.");
-	CHECK(tokens.at(16).get_lexeme_from(src) == ".");
-	CHECK(tokens.at(17).get_lexeme_from(src) == "z");
-	CHECK(tokens.at(19).get_lexeme_from(src) == "1.0");
-	CHECK(tokens.at(20).get_lexeme_from(src) == ".");
-	CHECK(tokens.at(21).get_lexeme_from(src) == "a");
+	CHECK(all_tokens_match(tokens, {NewLine, DecFloatLiteral,
+									NewLine, DecFloatLiteral,
+									NewLine, DecFloatLiteral,
+									NewLine, DecFloatLiteral,
+									NewLine, DecFloatLiteral,
+									NewLine, DecFloatLiteral,
+									NewLine, DecFloatLiteral,
+									NewLine, DecFloatLiteral,
+									Dot,	 Name,
+									NewLine, DecFloatLiteral,
+									Dot,	 Name,
+									NewLine, EndOfFile}));
+	CHECK(tokens.at(1).get_lexeme(src) == "1.0");
+	CHECK(tokens.at(3).get_lexeme(src) == "1.");
+	CHECK(tokens.at(5).get_lexeme(src) == ".4");
+	CHECK(tokens.at(7).get_lexeme(src) == ".045");
+	CHECK(tokens.at(9).get_lexeme(src) == "100 000.000 231");
+	CHECK(tokens.at(11).get_lexeme(src) == "123 .456 7");
+	CHECK(tokens.at(13).get_lexeme(src) == "234 5 . 23 948");
+	CHECK(tokens.at(15).get_lexeme(src) == "1.");
+	CHECK(tokens.at(16).get_lexeme(src) == ".");
+	CHECK(tokens.at(17).get_lexeme(src) == "z");
+	CHECK(tokens.at(19).get_lexeme(src) == "1.0");
+	CHECK(tokens.at(20).get_lexeme(src) == ".");
+	CHECK(tokens.at(21).get_lexeme(src) == "a");
 }
 
 TEST(StringLiteralsWithEscapes)
@@ -120,17 +120,17 @@ TEST(StringLiteralsWithEscapes)
 "\"\\\"\\\\a\\a\""
 )_____");
 	auto	   tokens = lex_exhaustive(src);
-	CHECK(all_kinds_match(tokens, {NewLine, StringLiteral, NewLine, StringLiteral, NewLine, StringLiteral, NewLine,
-								   StringLiteral, NewLine, StringLiteral, NewLine, StringLiteral, NewLine, StringLiteral,
-								   NewLine, StringLiteral, NewLine, EndOfFile}));
-	CHECK(tokens.at(1).get_lexeme_from(src) == "\"123\\\"\"");
-	CHECK(tokens.at(3).get_lexeme_from(src) == "\"\\\"\"");
-	CHECK(tokens.at(5).get_lexeme_from(src) == "\"\"");
-	CHECK(tokens.at(7).get_lexeme_from(src) == "\"\\\\\"");
-	CHECK(tokens.at(9).get_lexeme_from(src) == "\"\\a\"");
-	CHECK(tokens.at(11).get_lexeme_from(src) == "\"\\np\"");
-	CHECK(tokens.at(13).get_lexeme_from(src) == "\"\\\"\\\\a\\a\"");
-	CHECK(tokens.at(15).get_lexeme_from(src) == "\"\\\"\\\\\\\"\\\\\\\\a\\\\a\\\"\"");
+	CHECK(all_tokens_match(tokens, {NewLine, StringLiteral, NewLine, StringLiteral, NewLine, StringLiteral, NewLine,
+									StringLiteral, NewLine, StringLiteral, NewLine, StringLiteral, NewLine, StringLiteral,
+									NewLine, StringLiteral, NewLine, EndOfFile}));
+	CHECK(tokens.at(1).get_lexeme(src) == "\"123\\\"\"");
+	CHECK(tokens.at(3).get_lexeme(src) == "\"\\\"\"");
+	CHECK(tokens.at(5).get_lexeme(src) == "\"\"");
+	CHECK(tokens.at(7).get_lexeme(src) == "\"\\\\\"");
+	CHECK(tokens.at(9).get_lexeme(src) == "\"\\a\"");
+	CHECK(tokens.at(11).get_lexeme(src) == "\"\\np\"");
+	CHECK(tokens.at(13).get_lexeme(src) == "\"\\\"\\\\a\\a\"");
+	CHECK(tokens.at(15).get_lexeme(src) == "\"\\\"\\\\\\\"\\\\\\\\a\\\\a\\\"\"");
 }
 
 TEST(LineComments)
@@ -142,12 +142,12 @@ TEST(LineComments)
 // //
 )_____");
 	auto	   tokens = lex_exhaustive(src);
-	CHECK(all_kinds_match(tokens, {NewLine, LineComment, NewLine, LineComment, NewLine, LineComment, NewLine, LineComment,
-								   NewLine, EndOfFile}));
-	CHECK(tokens.at(1).get_lexeme_from(src) == "//");
-	CHECK(tokens.at(3).get_lexeme_from(src) == "// ");
-	CHECK(tokens.at(5).get_lexeme_from(src) == "// abc");
-	CHECK(tokens.at(7).get_lexeme_from(src) == "// //");
+	CHECK(all_tokens_match(tokens, {NewLine, LineComment, NewLine, LineComment, NewLine, LineComment, NewLine, LineComment,
+									NewLine, EndOfFile}));
+	CHECK(tokens.at(1).get_lexeme(src) == "//");
+	CHECK(tokens.at(3).get_lexeme(src) == "// ");
+	CHECK(tokens.at(5).get_lexeme(src) == "// abc");
+	CHECK(tokens.at(7).get_lexeme(src) == "// //");
 }
 
 TEST(BlockComments)
@@ -169,19 +169,19 @@ TEST(BlockComments)
 /*// */
 )_____");
 	auto	   tokens = lex_exhaustive(src);
-	CHECK(all_kinds_match(tokens, {NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment,
-								   NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment,
-								   NewLine, BlockComment, NewLine, BlockComment, NewLine, EndOfFile}));
-	CHECK(tokens.at(1).get_lexeme_from(src) == "/**/");
-	CHECK(tokens.at(3).get_lexeme_from(src) == "/* abc\n*/");
-	CHECK(tokens.at(5).get_lexeme_from(src) == "/*\n\n\n*/");
-	CHECK(tokens.at(7).get_lexeme_from(src) == "/*/**/*/");
-	CHECK(tokens.at(9).get_lexeme_from(src) == "/*a/*b*/c*/");
-	CHECK(tokens.at(11).get_lexeme_from(src) == "/*/*/**/*/*/");
-	CHECK(tokens.at(13).get_lexeme_from(src) == "/***/");
-	CHECK(tokens.at(15).get_lexeme_from(src) == "/* **** */");
-	CHECK(tokens.at(17).get_lexeme_from(src) == "/*/ */");
-	CHECK(tokens.at(19).get_lexeme_from(src) == "/*// */");
+	CHECK(all_tokens_match(tokens, {NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment,
+									NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment,
+									NewLine, BlockComment, NewLine, BlockComment, NewLine, EndOfFile}));
+	CHECK(tokens.at(1).get_lexeme(src) == "/**/");
+	CHECK(tokens.at(3).get_lexeme(src) == "/* abc\n*/");
+	CHECK(tokens.at(5).get_lexeme(src) == "/*\n\n\n*/");
+	CHECK(tokens.at(7).get_lexeme(src) == "/*/**/*/");
+	CHECK(tokens.at(9).get_lexeme(src) == "/*a/*b*/c*/");
+	CHECK(tokens.at(11).get_lexeme(src) == "/*/*/**/*/*/");
+	CHECK(tokens.at(13).get_lexeme(src) == "/***/");
+	CHECK(tokens.at(15).get_lexeme(src) == "/* **** */");
+	CHECK(tokens.at(17).get_lexeme(src) == "/*/ */");
+	CHECK(tokens.at(19).get_lexeme(src) == "/*// */");
 }
 
 TEST(DotDot)
@@ -190,7 +190,7 @@ TEST(DotDot)
 ..
 )_____");
 	auto	   tokens = lex_exhaustive(src);
-	CHECK(all_kinds_match(tokens, {NewLine, Dot, Dot, NewLine, EndOfFile}));
+	CHECK(all_tokens_match(tokens, {NewLine, Dot, Dot, NewLine, EndOfFile}));
 }
 
 TEST(BracketCaret)
@@ -199,7 +199,7 @@ TEST(BracketCaret)
 [^
 )_____");
 	auto	   tokens = lex_exhaustive(src);
-	CHECK(all_kinds_match(tokens, {NewLine, LeftBracket, Caret, NewLine, EndOfFile}));
+	CHECK(all_tokens_match(tokens, {NewLine, LeftBracket, Caret, NewLine, EndOfFile}));
 }
 
 TEST(UnicodeNames)
@@ -209,6 +209,6 @@ TEST(UnicodeNames)
 {}
 )_____");
 	auto	   tokens = lex_exhaustive(src);
-	CHECK(all_kinds_match(tokens, {NewLine, Name, LeftParen, RightParen, NewLine, LeftBrace, RightBrace, NewLine, EndOfFile}));
-	CHECK(tokens.at(1).get_lexeme_from(src) == "𖭽");
+	CHECK(all_tokens_match(tokens, {NewLine, Name, LeftParen, RightParen, NewLine, LeftBrace, RightBrace, NewLine, EndOfFile}));
+	CHECK(tokens.at(1).get_lexeme(src) == "𖭽");
 }

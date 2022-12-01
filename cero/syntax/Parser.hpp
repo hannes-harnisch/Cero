@@ -5,4 +5,4 @@
 #include "syntax/SyntaxTree.hpp"
 #include "syntax/TokenStream.hpp"
 
-SyntaxTree parse(const TokenStream& tokens, const Source& source, Reporter& reporter);
+SyntaxTree parse(const TokenStream& token_stream, const Source& source, Reporter& reporter);

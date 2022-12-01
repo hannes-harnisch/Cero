@@ -11,7 +11,7 @@ std::string TokenStream::to_string(const Source& source) const
 
 	for (auto token : tokens)
 	{
-		str << token.to_string(source);
+		str << token.to_debug_string(source);
 		if (token.kind == TokenKind::NewLine)
 			str << '\n';
 		else
@@ -21,7 +21,7 @@ std::string TokenStream::to_string(const Source& source) const
 	return str.str();
 }
 
-std::span<const Token> TokenStream::get_slice() const
+std::span<const Token> TokenStream::get_tokens() const
 {
 	return tokens;
 }

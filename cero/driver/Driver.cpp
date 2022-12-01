@@ -76,8 +76,8 @@ Reporter build_file(const Source& source)
 {
 	Reporter reporter;
 
-	auto tokens = lex(source, reporter);
-	auto ast	= parse(tokens, source, reporter);
+	auto stream = lex(source, reporter);
+	auto ast	= parse(stream, source, reporter);
 
 	return reporter;
 }
