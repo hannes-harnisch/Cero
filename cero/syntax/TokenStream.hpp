@@ -1,6 +1,6 @@
 #pragma once
 
-#include "syntax/Token.hpp"
+#include "syntax/LexicalToken.hpp"
 
 #include <span>
 #include <string>
@@ -8,12 +8,12 @@
 
 class TokenStream
 {
-	std::vector<Token> tokens;
+	std::vector<LexicalToken> tokens;
 
 public:
-	void				   append(Token token);
-	std::string			   to_string(const Source& source) const;
-	std::span<const Token> get_tokens() const;
-	Token				   at(uint32_t index) const;
-	void				   print(const Source& source) const;
+	void						  append(LexicalToken token);
+	std::string					  to_string(const Source& source) const;
+	std::span<const LexicalToken> get_tokens() const;
+	LexicalToken				  at(uint32_t index) const;
+	void						  print(const Source& source) const;
 };

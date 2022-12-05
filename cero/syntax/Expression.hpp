@@ -1,5 +1,7 @@
 #pragma once
 
+#include "syntax/Literal.hpp"
+
 #include <cstdint>
 #include <string_view>
 #include <variant>
@@ -33,11 +35,6 @@ struct BinaryExpression
 	Expression right_expr;
 };
 
-struct TypeExpression
-{
-	Expression expr;
-};
-
 struct Identifier
 {
 	std::string_view name;
@@ -49,14 +46,19 @@ struct GenericIdentifier
 	std::vector<Expression> generic_args;
 };
 
-struct CharLiteral
+enum class VarSpecifier : uint8_t
 {
-	std::string value;
+	None,
+	VarDefault,
+	VarFinite,
+	VarInfinite
 };
 
-struct StringLiteral
+struct PointerTypeExpression
 {
-	std::string value;
+	VarSpecifier			var_specifier;
+	Expression				type_expr;
+	std::vector<Expression> invalidation_layers;
 };
 
 struct LetBinding
@@ -168,7 +170,8 @@ struct RightShiftAssignment : BinaryExpression {};
 
 using ExpressionNode = std::variant<Identifier,
 									GenericIdentifier,
-									CharLiteral,
+									PointerTypeExpression,
+									NumericLiteral,
 									StringLiteral,
 									LetBinding,
 									VarBinding,

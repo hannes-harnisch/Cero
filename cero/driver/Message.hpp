@@ -13,6 +13,7 @@ enum class Message : uint8_t
 	UnterminatedBlockComment,
 	ExpectFuncStructEnum,
 	ExpectParenAfterFuncName,
+	ExpectType,
 	ExpectParamName,
 	ExpectParenAfterParams,
 	ExpectBraceBeforeFuncBody,
@@ -38,18 +39,19 @@ constexpr inline LookupTable<Message, std::string_view> MESSAGE_FORMATS = []
 	t[MissingClosingQuote]		   = "missing closing quote";
 	t[UnterminatedBlockComment]	   = "block comment must be closed with `*/`";
 	t[ExpectFuncStructEnum]		   = "expected function, struct or enum, but found {}";
-	t[ExpectParenAfterFuncName]	   = "expected a `(` after function name, but found {}";
+	t[ExpectParenAfterFuncName]	   = "expected `(` after function name, but found {}";
+	t[ExpectType]				   = "expected a type, but found {}";
 	t[ExpectParamName]			   = "expected a parameter name, but found {}";
-	t[ExpectParenAfterParams]	   = "expected a `)` after parameters, but found {}";
-	t[ExpectBraceBeforeFuncBody]   = "expected a `{{` before function body, but found {}";
+	t[ExpectParenAfterParams]	   = "expected `)` after parameters, but found {}";
+	t[ExpectBraceBeforeFuncBody]   = "expected `{{` before function body, but found {}";
 	t[ExpectNameAfterDeclType]	   = "expected a name after type in declaration, but found {}";
 	t[ExpectExpr]				   = "expected an expression, but found {}";
 	t[ExpectNameAfterDot]		   = "expected a member name after `.`, but found {}";
-	t[ExpectColonAfterCondition]   = "expected a `:` after condition, but found {}";
+	t[ExpectColonAfterCondition]   = "expected `:` after condition, but found {}";
 	t[UnnecessaryColonBeforeBlock] = "`:` between condition and block is unnecessary";
-	t[ExpectParenAfterExpr]		   = "expected a `)` after expression, but found {}";
-	t[ExpectParenAfterCall]		   = "expected a `)` after function call, but found {}";
-	t[ExpectBracketAfterIndex]	   = "expected a `]` after indexing, but found {}";
+	t[ExpectParenAfterExpr]		   = "expected `)` after expression, but found {}";
+	t[ExpectParenAfterCall]		   = "expected `)` after function call, but found {}";
+	t[ExpectBracketAfterIndex]	   = "expected `]` after indexing, but found {}";
 	t[IllegalOperatorChaining]	   = "chaining the `{}` operator is not allowed";
 	t[IllegalOperatorMixing]	   = "mixing the `{}` and `{}` operators is ambiguous, could be {} or {}, consider adding "
 									 "parentheses";

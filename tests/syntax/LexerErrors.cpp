@@ -1,12 +1,12 @@
 #include "util/ExhaustiveReporter.hpp"
 #include "util/Test.hpp"
 
-#include <cero/syntax/Token.hpp>
+#include <cero/syntax/LexicalToken.hpp>
 
 TEST(SourceTooLarge)
 {
 	ExhaustiveReporter r(std::string(16779000, ' '));
-	CHECK(r.pop_report(Message::SourceInputTooLarge, {1, 1, test_name()}, Token::MAX_LENGTH));
+	CHECK(r.pop_report(Message::SourceInputTooLarge, {1, 1, test_name()}, LexicalToken::MAX_LENGTH));
 }
 
 TEST(IllegalChar)

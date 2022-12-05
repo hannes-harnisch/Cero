@@ -43,47 +43,48 @@ public:
 
 	SyntaxTree parse()
 	{
-		while (!match(TokenKind::EndOfFile))
+		while (!match(Token::EndOfFile))
 		{
-			bool parsed = parse_definition();
-			if (!parsed)
+			try
+			{
+				parse_definition();
+			}
+			catch (ParseError)
+			{
 				synchronize_definition();
+			}
 		}
 		return std::move(ast);
 	}
 
 private:
-	using enum TokenKind;
-
-	bool parse_definition()
+	void parse_definition()
 	{
-		if (match(Name))
+		if (match(Token::Name))
 			parse_function();
-		else if (match(Struct))
+		else if (match(Token::Struct))
 			parse_struct();
-		else if (match(Enum))
+		else if (match(Token::Enum))
 			parse_enum();
 		else
 		{
 			report_expectation(Message::ExpectFuncStructEnum, peek());
-			return false;
+			throw ParseError();
 		}
-
-		return true;
 	}
 
 	void synchronize_definition()
 	{
-		auto token = peek();
-		while (token.kind != Name && token.kind != Struct && token.kind != Enum)
+		auto kind = peek().kind;
+		while (kind != Token::Name && kind != Token::Struct && kind != Token::Enum && kind != Token::EndOfFile)
 		{
-			while (token.kind != NewLine)
+			while (kind != Token::NewLine)
 			{
 				advance();
-				token = peek();
+				kind = peek().kind;
 			}
 			advance();
-			token = peek();
+			kind = peek().kind;
 		}
 	}
 
@@ -100,11 +101,11 @@ private:
 	void parse_function()
 	{
 		auto name = previous().get_lexeme(source);
-		expect(LeftParen, Message::ExpectParenAfterFuncName);
+		expect(Token::LeftParen, Message::ExpectParenAfterFuncName);
 
 		auto parameters = parse_parameter_list();
 		auto returns	= parse_return_list();
-		expect(LeftBrace, Message::ExpectBraceBeforeFuncBody);
+		expect(Token::LeftBrace, Message::ExpectBraceBeforeFuncBody);
 
 		auto statements = parse_block();
 		ast.add(Function(name, std::move(parameters), std::move(returns), std::move(statements)));
@@ -113,13 +114,12 @@ private:
 	std::vector<Parameter> parse_parameter_list()
 	{
 		std::vector<Parameter> parameters;
-		if (!match(RightParen))
+		if (!match(Token::RightParen))
 		{
 			do
 				parameters.emplace_back(parse_parameter());
-			while (match(Comma));
-
-			expect(RightParen, Message::ExpectParenAfterParams);
+			while (match(Token::Comma));
+			expect(Token::RightParen, Message::ExpectParenAfterParams);
 		}
 		return parameters;
 	}
@@ -127,16 +127,18 @@ private:
 	Parameter parse_parameter()
 	{
 		auto kind = ParameterKind::In;
-		if (match(Let))
+		if (match(Token::Let))
 			kind = ParameterKind::Let;
-		else if (match(Var))
+		else if (match(Token::Var))
 			kind = ParameterKind::Var;
 
 		auto type = parse_type();
 		auto name = expect_name(Message::ExpectParamName);
+		if (name.empty())
+			throw ParseError();
 
 		Expression default_argument;
-		if (match(Equal))
+		if (match(Token::Equal))
 			default_argument = parse_expression();
 
 		return {kind, name, type, default_argument};
@@ -145,11 +147,11 @@ private:
 	std::vector<ReturnValue> parse_return_list()
 	{
 		std::vector<ReturnValue> returns;
-		if (match(ThinArrow))
+		if (match(Token::ThinArrow))
 		{
 			do
 				returns.emplace_back(parse_return_value());
-			while (match(Comma));
+			while (match(Token::Comma));
 		}
 		return returns;
 	}
@@ -159,7 +161,7 @@ private:
 		auto type = parse_type();
 
 		std::string_view name;
-		if (auto token = match(Name))
+		if (auto token = match(Token::Name))
 			name = token->get_lexeme(source);
 
 		return {type, name};
@@ -174,7 +176,7 @@ private:
 		unclosed_angles = 0;
 
 		std::vector<Expression> statements;
-		while (!match(RightBrace))
+		while (!match(Token::RightBrace))
 		{
 			try
 			{
@@ -206,9 +208,8 @@ private:
 		auto expression = (this->*parse_prefix)();
 		while (auto parse = get_next_non_prefix_parse(precedence))
 		{
-			auto right = (this->*parse)(expression);
+			expression = (this->*parse)(expression);
 			// filter here
-			expression = right;
 		}
 		return expression;
 	}
@@ -228,25 +229,30 @@ private:
 		return NON_PREFIX_PARSES[token.kind];
 	}
 
-	static bool is_unbreakable_operator(TokenKind t)
+	static bool is_unbreakable_operator(Token t)
 	{
-		return t == LeftParen || t == LeftBracket || t == PlusPlus || t == MinusMinus;
+		return t == Token::LeftParen || t == Token::LeftBracket || t == Token::PlusPlus || t == Token::MinusMinus;
 	}
 
 	void synchronize_statement()
 	{
-		auto token = peek();
-		while (token.kind != NewLine && token.kind != RightBrace)
+		auto kind = peek().kind;
+		while (kind != Token::NewLine && kind != Token::RightBrace)
 		{
 			advance();
-			token = peek();
+			kind = peek().kind;
 		}
 	}
 
-	Expression parse_identifier()
+	Expression parse_name()
 	{
 		auto name = previous().get_lexeme(source);
-		if (match(LeftAngle))
+		return parse_identifier(name);
+	}
+
+	Expression parse_identifier(std::string_view name)
+	{
+		if (match(Token::LeftAngle))
 			return parse_generic_identifier(name);
 
 		return ast.add(Identifier(name));
@@ -261,55 +267,26 @@ private:
 		};
 
 		std::vector<Expression> generic_args;
-		if (!match(RightAngle))
+		if (!match(Token::RightAngle))
 		{
 			do
 				generic_args.emplace_back(parse_expression());
-			while (match(Comma));
+			while (match(Token::Comma));
 		} // Definitely unfinished
 		return ast.add(GenericIdentifier(name, std::move(generic_args)));
 	}
 
-	Expression parse_dec_int_literal()
-	{
-		to_do();
-	}
-
-	Expression parse_hex_int_literal()
-	{
-		to_do();
-	}
-
-	Expression parse_bin_int_literal()
-	{
-		to_do();
-	}
-
-	Expression parse_oct_int_literal()
-	{
-		to_do();
-	}
-
-	Expression parse_dec_float_literal()
-	{
-		to_do();
-	}
-
-	Expression parse_hex_float_literal()
-	{
-		to_do();
-	}
-
-	Expression parse_char_literal()
+	template<NumericLiteral (*EVALUATE)(std::string_view)>
+	Expression parse_numeric_literal()
 	{
 		auto lexeme = previous().get_lexeme(source);
-		return ast.add(::CharLiteral(evaluate_char_literal(lexeme)));
+		return ast.add(EVALUATE(lexeme));
 	}
 
 	Expression parse_string_literal()
 	{
 		auto lexeme = previous().get_lexeme(source);
-		return ast.add(::StringLiteral(evaluate_string_literal(lexeme)));
+		return ast.add(StringLiteral(lexeme));
 	}
 
 	Expression parse_let_binding()
@@ -326,9 +303,9 @@ private:
 	LetBinding parse_binding()
 	{
 		uint32_t saved = cursor;
-		if (auto name = match(Name))
+		if (auto name = match(Token::Name))
 		{
-			if (match(Equal))
+			if (match(Token::Equal))
 			{
 				auto initializer = parse_expression();
 				return {name->get_lexeme(source), {}, initializer};
@@ -340,7 +317,7 @@ private:
 		auto name = expect_name(Message::ExpectNameAfterDeclType);
 
 		Expression initializer;
-		if (match(Equal))
+		if (match(Token::Equal))
 			initializer = parse_expression();
 
 		return {name, type, initializer};
@@ -363,18 +340,18 @@ private:
 		};
 
 		auto expression = parse_expression();
-		expect(RightParen, Message::ExpectParenAfterExpr);
+		expect(Token::RightParen, Message::ExpectParenAfterExpr);
 		return expression;
 	}
 
 	Expression parse_if()
 	{
 		auto condition = parse_expression();
-		expect(Colon, Message::ExpectColonAfterCondition); // warn on colon with blocks
+		expect(Token::Colon, Message::ExpectColonAfterCondition); // warn on colon with blocks
 		auto then_expr = parse_expression();
 
 		Expression else_expr;
-		if (match(Else))
+		if (match(Token::Else))
 			else_expr = parse_expression();
 
 		return ast.add(IfExpression(condition, then_expr, else_expr));
@@ -447,12 +424,12 @@ private:
 	Expression parse_call(Expression left)
 	{
 		std::vector<Expression> arguments;
-		if (!match(RightParen))
+		if (!match(Token::RightParen))
 		{
 			do
 				arguments.emplace_back(parse_expression());
-			while (match(Comma));
-			expect(RightParen, Message::ExpectParenAfterCall);
+			while (match(Token::Comma));
+			expect(Token::RightParen, Message::ExpectParenAfterCall);
 		}
 		return ast.add(Call(left, std::move(arguments)));
 	}
@@ -460,12 +437,12 @@ private:
 	Expression parse_indexing(Expression left)
 	{
 		std::vector<Expression> arguments;
-		if (!match(RightBracket))
+		if (!match(Token::RightBracket))
 		{
 			do
 				arguments.emplace_back(parse_expression());
-			while (match(Comma));
-			expect(RightBracket, Message::ExpectBracketAfterIndex);
+			while (match(Token::Comma));
+			expect(Token::RightBracket, Message::ExpectBracketAfterIndex);
 		}
 		return ast.add(Indexing(left, std::move(arguments)));
 	}
@@ -490,10 +467,24 @@ private:
 
 	Expression parse_type()
 	{
-		to_do();
+		if (match(Token::Caret))
+			return parse_pointer_type();
+
+		auto name = expect_name(Message::ExpectType);
+		return parse_identifier(name);
 	}
 
-	std::optional<Token> match(TokenKind kind)
+	Expression parse_pointer_type()
+	{
+		auto var_specifier = VarSpecifier::None;
+		if (match(Token::Var))
+			var_specifier = VarSpecifier::VarDefault;
+
+		auto type = parse_type();
+		return ast.add(PointerTypeExpression(var_specifier, type, {}));
+	}
+
+	std::optional<LexicalToken> match(Token kind)
 	{
 		auto token = next_breakable();
 		if (token.kind == kind)
@@ -504,19 +495,22 @@ private:
 		return {};
 	}
 
-	void expect(TokenKind kind, CheckedMessage<std::string> message)
+	void expect(Token kind, CheckedMessage<std::string> message)
 	{
 		auto token = next_breakable();
 		if (token.kind == kind)
 			advance();
 		else
+		{
 			report_expectation(message, token);
+			throw ParseError();
+		}
 	}
 
 	std::string_view expect_name(CheckedMessage<std::string> message)
 	{
 		auto token = next_breakable();
-		if (token.kind == Name)
+		if (token.kind == Token::Name)
 		{
 			advance();
 			return token.get_lexeme(source);
@@ -526,10 +520,10 @@ private:
 		return {};
 	}
 
-	Token next_breakable()
+	LexicalToken next_breakable()
 	{
-		Token token = peek();
-		while (token.kind == NewLine || token.kind == LineComment || token.kind == BlockComment)
+		auto token = peek();
+		while (token.kind == Token::NewLine || token.kind == Token::LineComment || token.kind == Token::BlockComment)
 		{
 			advance();
 			token = peek();
@@ -539,13 +533,13 @@ private:
 
 	bool next_is_new_line()
 	{
-		Token token = peek();
-		while (token.kind == LineComment || token.kind == BlockComment)
+		auto kind = peek().kind;
+		while (kind == Token::LineComment || kind == Token::BlockComment)
 		{
 			advance();
-			token = peek();
+			kind = peek().kind;
 		}
-		return token.kind == NewLine;
+		return kind == Token::NewLine;
 	}
 
 	void advance()
@@ -553,63 +547,63 @@ private:
 		++cursor;
 	}
 
-	Token peek() const
+	LexicalToken peek() const
 	{
 		return token_stream.at(cursor);
 	}
 
-	Token previous() const
+	LexicalToken previous() const
 	{
 		return token_stream.at(cursor - 1);
 	}
 
-	void report_expectation(CheckedMessage<std::string> message, Token unexpected)
+	void report_expectation(CheckedMessage<std::string> message, LexicalToken unexpected)
 	{
 		auto location = unexpected.locate_in(source);
 		reporter.report(message, location, unexpected.to_message_string(source));
 	}
 
-	static constexpr LookupTable<TokenKind, PrefixParse> PREFIX_PARSES = []
+	static constexpr LookupTable<Token, PrefixParse> PREFIX_PARSES = []
 	{
-		using enum TokenKind;
+		using enum Token;
 		using enum Precedence;
 
-		LookupTable<TokenKind, PrefixParse> t(nullptr);
-		t[Name]			   = &Parser::parse_identifier;
-		t[DecIntLiteral]   = &Parser::parse_dec_int_literal;
-		t[HexIntLiteral]   = &Parser::parse_hex_int_literal;
-		t[BinIntLiteral]   = &Parser::parse_bin_int_literal;
-		t[OctIntLiteral]   = &Parser::parse_oct_int_literal;
-		t[DecFloatLiteral] = &Parser::parse_dec_float_literal;
-		t[HexFloatLiteral] = &Parser::parse_hex_float_literal;
-		t[CharLiteral]	   = &Parser::parse_char_literal;
-		t[StringLiteral]   = &Parser::parse_string_literal;
-		t[Let]			   = &Parser::parse_let_binding;
-		t[Var]			   = &Parser::parse_var_binding;
-		t[LeftBrace]	   = &Parser::parse_block_expression;
-		t[LeftParen]	   = &Parser::parse_parenthesized;
-		t[If]			   = &Parser::parse_if;
-		t[While]		   = &Parser::parse_while_loop;
-		t[For]			   = &Parser::parse_for_loop;
-		t[Break]		   = &Parser::parse_break;
-		t[Continue]		   = &Parser::parse_continue;
-		t[Return]		   = &Parser::parse_return;
-		t[Throw]		   = &Parser::parse_throw;
-		t[Try]			   = &Parser::parse_prefix<TryExpression, Statement>;
-		t[Ampersand]	   = &Parser::parse_prefix<AddressOf, Prefix>;
-		t[Minus]		   = &Parser::parse_prefix<Negation, Prefix>;
-		t[Bang]			   = &Parser::parse_prefix<LogicalNot, Prefix>;
-		t[Tilde]		   = &Parser::parse_prefix<BitwiseNot, Prefix>;
-		t[PlusPlus]		   = &Parser::parse_prefix<PreIncrement, Prefix>;
-		t[MinusMinus]	   = &Parser::parse_prefix<PreDecrement, Prefix>;
+		LookupTable<Token, PrefixParse> t(nullptr);
+		t[Name]			 = &Parser::parse_name;
+		t[DecIntLiteral] = &Parser::parse_numeric_literal<evaluate_dec_int_literal>;
+		t[HexIntLiteral] = &Parser::parse_numeric_literal<evaluate_hex_int_literal>;
+		t[BinIntLiteral] = &Parser::parse_numeric_literal<evaluate_bin_int_literal>;
+		t[OctIntLiteral] = &Parser::parse_numeric_literal<evaluate_oct_int_literal>;
+		t[FloatLiteral]	 = &Parser::parse_numeric_literal<evaluate_float_literal>;
+		t[CharLiteral]	 = &Parser::parse_numeric_literal<evaluate_char_literal>;
+		t[StringLiteral] = &Parser::parse_string_literal;
+		t[Let]			 = &Parser::parse_let_binding;
+		t[Var]			 = &Parser::parse_var_binding;
+		t[LeftBrace]	 = &Parser::parse_block_expression;
+		t[LeftParen]	 = &Parser::parse_parenthesized;
+		t[If]			 = &Parser::parse_if;
+		t[While]		 = &Parser::parse_while_loop;
+		t[For]			 = &Parser::parse_for_loop;
+		t[Break]		 = &Parser::parse_break;
+		t[Continue]		 = &Parser::parse_continue;
+		t[Return]		 = &Parser::parse_return;
+		t[Throw]		 = &Parser::parse_throw;
+		t[Try]			 = &Parser::parse_prefix<TryExpression, Statement>;
+		t[Ampersand]	 = &Parser::parse_prefix<AddressOf, Prefix>;
+		t[Minus]		 = &Parser::parse_prefix<Negation, Prefix>;
+		t[Bang]			 = &Parser::parse_prefix<LogicalNot, Prefix>;
+		t[Tilde]		 = &Parser::parse_prefix<BitwiseNot, Prefix>;
+		t[PlusPlus]		 = &Parser::parse_prefix<PreIncrement, Prefix>;
+		t[MinusMinus]	 = &Parser::parse_prefix<PreDecrement, Prefix>;
 		return t;
 	}();
 
-	static constexpr LookupTable<TokenKind, Precedence> NON_PREFIX_PRECEDENCES = []
+	static constexpr LookupTable<Token, Precedence> NON_PREFIX_PRECEDENCES = []
 	{
+		using enum Token;
 		using enum Precedence;
 
-		LookupTable<TokenKind, Precedence> t(Statement);
+		LookupTable<Token, Precedence> t(Statement);
 		t[Equal]				 = Assignment;
 		t[PlusEqual]			 = Assignment;
 		t[MinusEqual]			 = Assignment;
@@ -651,12 +645,12 @@ private:
 		return t;
 	}();
 
-	static constexpr LookupTable<TokenKind, NonPrefixParse> NON_PREFIX_PARSES = []
+	static constexpr LookupTable<Token, NonPrefixParse> NON_PREFIX_PARSES = []
 	{
-		using enum TokenKind;
+		using enum Token;
 		using enum Precedence;
 
-		LookupTable<TokenKind, NonPrefixParse> t(nullptr);
+		LookupTable<Token, NonPrefixParse> t(nullptr);
 		t[Dot]					 = &Parser::parse_access;
 		t[LeftParen]			 = &Parser::parse_call;
 		t[LeftBracket]			 = &Parser::parse_indexing;

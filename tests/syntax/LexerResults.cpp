@@ -10,19 +10,19 @@ TokenStream lex_exhaustive(const Source& source)
 	return lex(source, reporter);
 }
 
-bool all_tokens_match(const TokenStream& token_stream, std::initializer_list<TokenKind> tokens)
+bool all_tokens_match(const TokenStream& token_stream, std::initializer_list<Token> kinds)
 {
-	auto lexemes = token_stream.get_tokens();
-	CHECK(lexemes.size() == tokens.size());
+	auto tokens = token_stream.get_tokens();
+	CHECK(tokens.size() == kinds.size());
 
-	for (size_t i = 0; i != lexemes.size(); ++i)
-		if (lexemes[i].kind != tokens.begin()[i])
+	for (size_t i = 0; i != tokens.size(); ++i)
+		if (tokens[i].kind != kinds.begin()[i])
 			return false;
 
 	return true;
 }
 
-using enum TokenKind;
+using enum Token;
 
 TEST(EmptySource)
 {
@@ -80,18 +80,9 @@ TEST(FloatLiterals)
 1.0.a
 )_____");
 	auto	   tokens = lex_exhaustive(src);
-	CHECK(all_tokens_match(tokens, {NewLine, DecFloatLiteral,
-									NewLine, DecFloatLiteral,
-									NewLine, DecFloatLiteral,
-									NewLine, DecFloatLiteral,
-									NewLine, DecFloatLiteral,
-									NewLine, DecFloatLiteral,
-									NewLine, DecFloatLiteral,
-									NewLine, DecFloatLiteral,
-									Dot,	 Name,
-									NewLine, DecFloatLiteral,
-									Dot,	 Name,
-									NewLine, EndOfFile}));
+	CHECK(all_tokens_match(tokens, {NewLine, FloatLiteral, NewLine, FloatLiteral, NewLine, FloatLiteral, NewLine, FloatLiteral,
+									NewLine, FloatLiteral, NewLine, FloatLiteral, NewLine, FloatLiteral, NewLine, FloatLiteral,
+									Dot,	 Name,		   NewLine, FloatLiteral, Dot,	   Name,		 NewLine, EndOfFile}));
 	CHECK(tokens.at(1).get_lexeme(src) == "1.0");
 	CHECK(tokens.at(3).get_lexeme(src) == "1.");
 	CHECK(tokens.at(5).get_lexeme(src) == ".4");
