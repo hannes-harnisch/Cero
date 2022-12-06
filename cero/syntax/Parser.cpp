@@ -75,8 +75,12 @@ private:
 
 	void synchronize_definition()
 	{
+		// TODO: all of this needs better EOF handling
 		auto kind = peek().kind;
-		while (kind != Token::Name && kind != Token::Struct && kind != Token::Enum && kind != Token::EndOfFile)
+		if (kind == Token::EndOfFile)
+			return;
+
+		do
 		{
 			while (kind != Token::NewLine)
 			{
@@ -86,6 +90,7 @@ private:
 			advance();
 			kind = peek().kind;
 		}
+		while (kind != Token::Name && kind != Token::Struct && kind != Token::Enum && kind != Token::EndOfFile);
 	}
 
 	void parse_struct()
@@ -195,16 +200,16 @@ private:
 
 	Expression parse_expression(Precedence precedence = {})
 	{
-		auto token = next_breakable();
-		advance();
+		auto next = next_breakable();
 
-		auto parse_prefix = PREFIX_PARSES[token.kind];
+		auto parse_prefix = PREFIX_PARSES[next.kind];
 		if (parse_prefix == nullptr)
 		{
-			report_expectation(Message::ExpectExpr, token);
+			report_expectation(Message::ExpectExpr, next);
 			throw ParseError();
 		}
 
+		advance();
 		auto expression = (this->*parse_prefix)();
 		while (auto parse = get_next_non_prefix_parse(precedence))
 		{
@@ -237,7 +242,7 @@ private:
 	void synchronize_statement()
 	{
 		auto kind = peek().kind;
-		while (kind != Token::NewLine && kind != Token::RightBrace)
+		while (kind != Token::NewLine && kind != Token::RightBrace && kind != Token::EndOfFile)
 		{
 			advance();
 			kind = peek().kind;
@@ -340,14 +345,25 @@ private:
 		};
 
 		auto expression = parse_expression();
-		expect(Token::RightParen, Message::ExpectParenAfterExpr);
+		expect(Token::RightParen, Message::ExpectParenAfterGroup);
 		return expression;
 	}
 
 	Expression parse_if()
 	{
 		auto condition = parse_expression();
-		expect(Token::Colon, Message::ExpectColonAfterCondition); // warn on colon with blocks
+		if (auto colon = match(Token::Colon))
+		{
+			auto next = next_breakable();
+			if (next.kind == Token::LeftBrace)
+				reporter.report(Message::UnnecessaryColonBeforeBlock, colon->locate_in(source));
+		}
+		else
+		{
+			auto next = next_breakable();
+			if (next.kind != Token::LeftBrace)
+				report_expectation(Message::ExpectColonAfterCondition, next);
+		}
 		auto then_expr = parse_expression();
 
 		Expression else_expr;
@@ -467,11 +483,21 @@ private:
 
 	Expression parse_type()
 	{
+		if (match(Token::LeftBracket))
+			return parse_array_type();
 		if (match(Token::Caret))
 			return parse_pointer_type();
 
 		auto name = expect_name(Message::ExpectType);
 		return parse_identifier(name);
+	}
+
+	Expression parse_array_type()
+	{
+		auto count = parse_expression();
+		expect(Token::RightBracket, Message::ExpectBracketAfterArrayCount);
+		auto type = parse_type();
+		return ast.add(ArrayTypeExpression(count, type));
 	}
 
 	Expression parse_pointer_type()

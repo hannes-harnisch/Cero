@@ -22,9 +22,10 @@ enum class Message : uint8_t
 	ExpectNameAfterDot,
 	ExpectColonAfterCondition,
 	UnnecessaryColonBeforeBlock,
-	ExpectParenAfterExpr,
+	ExpectParenAfterGroup,
 	ExpectParenAfterCall,
 	ExpectBracketAfterIndex,
+	ExpectBracketAfterArrayCount,
 	IllegalOperatorChaining,
 	IllegalOperatorMixing,
 };
@@ -34,27 +35,28 @@ constexpr inline LookupTable<Message, std::string_view> MESSAGE_FORMATS = []
 	using enum Message;
 
 	LookupTable<Message, std::string_view> t({});
-	t[SourceInputTooLarge]		   = "source input is too large, limit is {} bytes";
-	t[UnexpectedCharacter]		   = "unexpected character `0x{:x}`";
-	t[MissingClosingQuote]		   = "missing closing quote";
-	t[UnterminatedBlockComment]	   = "block comment must be closed with `*/`";
-	t[ExpectFuncStructEnum]		   = "expected function, struct or enum, but found {}";
-	t[ExpectParenAfterFuncName]	   = "expected `(` after function name, but found {}";
-	t[ExpectType]				   = "expected a type, but found {}";
-	t[ExpectParamName]			   = "expected a parameter name, but found {}";
-	t[ExpectParenAfterParams]	   = "expected `)` after parameters, but found {}";
-	t[ExpectBraceBeforeFuncBody]   = "expected `{{` before function body, but found {}";
-	t[ExpectNameAfterDeclType]	   = "expected a name after type in declaration, but found {}";
-	t[ExpectExpr]				   = "expected an expression, but found {}";
-	t[ExpectNameAfterDot]		   = "expected a member name after `.`, but found {}";
-	t[ExpectColonAfterCondition]   = "expected `:` after condition, but found {}";
-	t[UnnecessaryColonBeforeBlock] = "`:` between condition and block is unnecessary";
-	t[ExpectParenAfterExpr]		   = "expected `)` after expression, but found {}";
-	t[ExpectParenAfterCall]		   = "expected `)` after function call, but found {}";
-	t[ExpectBracketAfterIndex]	   = "expected `]` after indexing, but found {}";
-	t[IllegalOperatorChaining]	   = "chaining the `{}` operator is not allowed";
-	t[IllegalOperatorMixing]	   = "mixing the `{}` and `{}` operators is ambiguous, could be {} or {}, consider adding "
-									 "parentheses";
+	t[SourceInputTooLarge]			= "source input is too large, limit is {} bytes";
+	t[UnexpectedCharacter]			= "unexpected character `0x{:x}`";
+	t[MissingClosingQuote]			= "missing closing quote";
+	t[UnterminatedBlockComment]		= "block comment must be closed with `*/`";
+	t[ExpectFuncStructEnum]			= "expected function, struct or enum, but found {}";
+	t[ExpectParenAfterFuncName]		= "expected `(` after function name, but found {}";
+	t[ExpectType]					= "expected a type, but found {}";
+	t[ExpectParamName]				= "expected a parameter name, but found {}";
+	t[ExpectParenAfterParams]		= "expected `)` after parameters, but found {}";
+	t[ExpectBraceBeforeFuncBody]	= "expected `{{` before function body, but found {}";
+	t[ExpectNameAfterDeclType]		= "expected a name after type in declaration, but found {}";
+	t[ExpectExpr]					= "expected an expression, but found {}";
+	t[ExpectNameAfterDot]			= "expected a member name after `.`, but found {}";
+	t[ExpectColonAfterCondition]	= "expected `:` after condition, but found {}";
+	t[UnnecessaryColonBeforeBlock]	= "`:` between condition and block is unnecessary";
+	t[ExpectParenAfterGroup]		= "expected `)` after grouping expression, but found {}";
+	t[ExpectParenAfterCall]			= "expected `)` after call expression, but found {}";
+	t[ExpectBracketAfterIndex]		= "expected `]` after index expression, but found {}";
+	t[ExpectBracketAfterArrayCount] = "expected `]` after count in array type, but found {}";
+	t[IllegalOperatorChaining]		= "chaining the `{}` operator is not allowed";
+	t[IllegalOperatorMixing]		= "mixing the `{}` and `{}` operators is ambiguous, could be {} or {}, consider adding "
+									  "parentheses";
 	return t;
 }();
 

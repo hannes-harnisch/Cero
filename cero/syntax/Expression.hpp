@@ -46,6 +46,12 @@ struct GenericIdentifier
 	std::vector<Expression> generic_args;
 };
 
+struct ArrayTypeExpression
+{
+	Expression count_expr;
+	Expression element_type;
+};
+
 enum class VarSpecifier : uint8_t
 {
 	None,
@@ -170,6 +176,7 @@ struct RightShiftAssignment : BinaryExpression {};
 
 using ExpressionNode = std::variant<Identifier,
 									GenericIdentifier,
+									ArrayTypeExpression,
 									PointerTypeExpression,
 									NumericLiteral,
 									StringLiteral,
