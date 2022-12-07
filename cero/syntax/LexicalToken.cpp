@@ -45,7 +45,7 @@ std::string LexicalToken::to_message_string(const Source& source) const
 	return std::vformat(get_token_message_format(kind), std::make_format_args(get_lexeme(source)));
 }
 
-std::string LexicalToken::to_debug_string(const Source& source) const
+std::string LexicalToken::to_log_string(const Source& source) const
 {
 	auto token_kind = magic_enum::enum_name(kind);
 

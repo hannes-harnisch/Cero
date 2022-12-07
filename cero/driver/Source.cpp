@@ -10,7 +10,9 @@ namespace
 
 		std::string content;
 		in.seekg(0, std::ios::end);
-		content.resize_and_overwrite(in.tellg(), [&](char* buffer, size_t size) {
+		content.resize_and_overwrite(in.tellg(),
+									 [&](char* buffer, size_t size)
+									 {
 			in.seekg(0, std::ios::beg);
 			in.read(buffer, size);
 			return size;
@@ -24,15 +26,15 @@ std::optional<Source> Source::from_file(std::string_view path, const Config& con
 	auto source_text = get_file_content(path);
 
 	if (source_text.has_value())
-		return Source(std::move(*source_text), path, config.tab_size);
+		return Source(std::move(*source_text), path, config);
 
 	return {};
 }
 
-Source::Source(std::string source_text, std::string_view path_for_messages, uint32_t tab_size) :
+Source::Source(std::string source_text, std::string_view path, const Config& config) :
 	text(std::move(source_text)),
-	path(path_for_messages),
-	tab_size(tab_size)
+	path(path),
+	tab_size(config.tab_size)
 {}
 
 SourceLocation Source::locate(Source::Iterator cursor) const

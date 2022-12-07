@@ -41,6 +41,18 @@ bool Reporter::has_reports() const
 	return !reports.empty();
 }
 
+bool Reporter::pop_report(Message message, SourceLocation location, std::format_args args)
+{
+	Report target(message, location, std::vformat(MESSAGE_FORMATS[message], args));
+
+	auto it = std::find(reports.begin(), reports.end(), target);
+	if (it == reports.end())
+		return false;
+
+	reports.erase(it);
+	return true;
+}
+
 void Reporter::write(Message message, SourceLocation location, std::format_args args)
 {
 	auto severity = get_severity(message);
@@ -53,16 +65,4 @@ void Reporter::write(Message message, SourceLocation location, std::format_args 
 				 message_text.data());
 
 	reports.emplace_back(message, location, std::move(message_text));
-}
-
-bool Reporter::do_pop_report(Message message, SourceLocation location, std::format_args args)
-{
-	Report target(message, location, std::vformat(MESSAGE_FORMATS[message], args));
-
-	auto it = std::find(reports.begin(), reports.end(), target);
-	if (it == reports.end())
-		return false;
-
-	reports.erase(it);
-	return true;
 }

@@ -48,6 +48,10 @@ void Config::set_option(std::string_view arg)
 {
 	if (is_file_path(arg))
 		file_paths.emplace_back(arg);
+	else if (arg == "--log-tokens")
+		log_tokens = true;
+	else if (arg == "--log-ast")
+		log_ast = true;
 
 	// check for all other options here in the future
 }

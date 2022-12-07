@@ -1,12 +1,11 @@
 #include "util/ExhaustiveReporter.hpp"
 #include "util/Test.hpp"
-#include "util/TestSource.hpp"
 
 #include <cero/syntax/Lexer.hpp>
 
 TokenStream lex_exhaustive(const Source& source)
 {
-	ExhaustiveReporter reporter;
+	ExhaustiveReporter reporter(source.get_path());
 	return lex(source, reporter);
 }
 
@@ -26,14 +25,14 @@ using enum Token;
 
 TEST(EmptySource)
 {
-	TestSource src("");
-	auto	   tokens = lex_exhaustive(src);
+	auto src	= make_test_source("");
+	auto tokens = lex_exhaustive(src);
 	CHECK(all_tokens_match(tokens, {EndOfFile}));
 }
 
 TEST(IntegerLiterals)
 {
-	TestSource src(R"_____(
+	auto src	= make_test_source(R"_____(
 0
 123
 123 456
@@ -46,7 +45,7 @@ TEST(IntegerLiterals)
 0o1125417245
 0o 124 22115 2736
 )_____");
-	auto	   tokens = lex_exhaustive(src);
+	auto tokens = lex_exhaustive(src);
 	CHECK(all_tokens_match(tokens, {NewLine,	   DecIntLiteral, NewLine,		 DecIntLiteral, NewLine,
 									DecIntLiteral, NewLine,		  DecIntLiteral, NewLine,		HexIntLiteral,
 									NewLine,	   HexIntLiteral, NewLine,		 HexIntLiteral, Name,
@@ -68,7 +67,7 @@ TEST(IntegerLiterals)
 
 TEST(FloatLiterals)
 {
-	TestSource src(R"_____(
+	auto src	= make_test_source(R"_____(
 1.0
 1.
 .4
@@ -79,7 +78,7 @@ TEST(FloatLiterals)
 1..z
 1.0.a
 )_____");
-	auto	   tokens = lex_exhaustive(src);
+	auto tokens = lex_exhaustive(src);
 	CHECK(all_tokens_match(tokens, {NewLine, FloatLiteral, NewLine, FloatLiteral, NewLine, FloatLiteral, NewLine, FloatLiteral,
 									NewLine, FloatLiteral, NewLine, FloatLiteral, NewLine, FloatLiteral, NewLine, FloatLiteral,
 									Dot,	 Name,		   NewLine, FloatLiteral, Dot,	   Name,		 NewLine, EndOfFile}));
@@ -100,7 +99,7 @@ TEST(FloatLiterals)
 
 TEST(StringLiteralsWithEscapes)
 {
-	TestSource src(R"_____(
+	auto src	= make_test_source(R"_____(
 "123\""
 "\""
 ""
@@ -110,7 +109,7 @@ TEST(StringLiteralsWithEscapes)
 "\"\\a\a"
 "\"\\\"\\\\a\\a\""
 )_____");
-	auto	   tokens = lex_exhaustive(src);
+	auto tokens = lex_exhaustive(src);
 	CHECK(all_tokens_match(tokens, {NewLine, StringLiteral, NewLine, StringLiteral, NewLine, StringLiteral, NewLine,
 									StringLiteral, NewLine, StringLiteral, NewLine, StringLiteral, NewLine, StringLiteral,
 									NewLine, StringLiteral, NewLine, EndOfFile}));
@@ -126,13 +125,13 @@ TEST(StringLiteralsWithEscapes)
 
 TEST(LineComments)
 {
-	TestSource src(R"_____(
+	auto src	= make_test_source(R"_____(
 //
 // 
 // abc
 // //
 )_____");
-	auto	   tokens = lex_exhaustive(src);
+	auto tokens = lex_exhaustive(src);
 	CHECK(all_tokens_match(tokens, {NewLine, LineComment, NewLine, LineComment, NewLine, LineComment, NewLine, LineComment,
 									NewLine, EndOfFile}));
 	CHECK(tokens.at(1).get_lexeme(src) == "//");
@@ -143,7 +142,7 @@ TEST(LineComments)
 
 TEST(BlockComments)
 {
-	TestSource src(R"_____(
+	auto src	= make_test_source(R"_____(
 /**/
 /* abc
 */
@@ -159,7 +158,7 @@ TEST(BlockComments)
 /*/ */
 /*// */
 )_____");
-	auto	   tokens = lex_exhaustive(src);
+	auto tokens = lex_exhaustive(src);
 	CHECK(all_tokens_match(tokens, {NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment,
 									NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment,
 									NewLine, BlockComment, NewLine, BlockComment, NewLine, EndOfFile}));
@@ -177,29 +176,29 @@ TEST(BlockComments)
 
 TEST(DotDot)
 {
-	TestSource src(R"_____(
+	auto src	= make_test_source(R"_____(
 ..
 )_____");
-	auto	   tokens = lex_exhaustive(src);
+	auto tokens = lex_exhaustive(src);
 	CHECK(all_tokens_match(tokens, {NewLine, Dot, Dot, NewLine, EndOfFile}));
 }
 
 TEST(BracketCaret)
 {
-	TestSource src(R"_____(
+	auto src	= make_test_source(R"_____(
 [^
 )_____");
-	auto	   tokens = lex_exhaustive(src);
+	auto tokens = lex_exhaustive(src);
 	CHECK(all_tokens_match(tokens, {NewLine, LeftBracket, Caret, NewLine, EndOfFile}));
 }
 
 TEST(UnicodeNames)
 {
-	TestSource src(R"_____(
+	auto src	= make_test_source(R"_____(
 𖭽()
 {}
 )_____");
-	auto	   tokens = lex_exhaustive(src);
+	auto tokens = lex_exhaustive(src);
 	CHECK(all_tokens_match(tokens, {NewLine, Name, LeftParen, RightParen, NewLine, LeftBrace, RightBrace, NewLine, EndOfFile}));
 	CHECK(tokens.at(1).get_lexeme(src) == "𖭽");
 }

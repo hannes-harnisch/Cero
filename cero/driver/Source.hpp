@@ -17,8 +17,7 @@ public:
 
 	static std::optional<Source> from_file(std::string_view path, const Config& config);
 
-	// primarily intended for testing
-	Source(std::string source_text, std::string_view path_for_messages, uint32_t tab_size = Config::DEFAULT_TAB_SIZE);
+	Source(std::string source_text, std::string_view path, const Config& config);
 
 	SourceLocation	 locate(Source::Iterator cursor) const;
 	Iterator		 begin() const;

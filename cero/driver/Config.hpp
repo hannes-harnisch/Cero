@@ -27,6 +27,8 @@ struct Config
 
 	uint32_t tab_size			= DEFAULT_TAB_SIZE;
 	bool	 warnings_as_errors = false;
+	bool	 log_tokens			= false;
+	bool	 log_ast			= false;
 
 	Config() = default;
 	Config(std::span<std::string_view> args);

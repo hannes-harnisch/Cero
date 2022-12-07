@@ -53,7 +53,7 @@ constexpr inline LookupTable<Message, std::string_view> MESSAGE_FORMATS = []
 	t[ExpectParenAfterGroup]		= "expected `)` after grouping expression, but found {}";
 	t[ExpectParenAfterCall]			= "expected `)` after call expression, but found {}";
 	t[ExpectBracketAfterIndex]		= "expected `]` after index expression, but found {}";
-	t[ExpectBracketAfterArrayCount] = "expected `]` after count in array type, but found {}";
+	t[ExpectBracketAfterArrayCount] = "expected `]` after array count, but found {}";
 	t[IllegalOperatorChaining]		= "chaining the `{}` operator is not allowed";
 	t[IllegalOperatorMixing]		= "mixing the `{}` and `{}` operators is ambiguous, could be {} or {}, consider adding "
 									  "parentheses";

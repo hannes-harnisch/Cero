@@ -12,5 +12,5 @@ Definition SyntaxTree::add(DefinitionNode def)
 	return {static_cast<Index>(definition_nodes.size() - 1)};
 }
 
-void SyntaxTree::print() const
+void SyntaxTree::log(const Source&) const
 {}

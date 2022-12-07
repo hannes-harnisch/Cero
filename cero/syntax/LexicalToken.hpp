@@ -19,6 +19,6 @@ struct LexicalToken
 
 	std::string_view get_lexeme(const Source& source) const;
 	std::string		 to_message_string(const Source& source) const;
-	std::string		 to_debug_string(const Source& source) const;
+	std::string		 to_log_string(const Source& source) const;
 	SourceLocation	 locate_in(const Source& source) const;
 };

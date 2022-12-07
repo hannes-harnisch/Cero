@@ -1,9 +1,8 @@
 #include "Driver.hpp"
 
+#include "driver/Build.hpp"
 #include "driver/Config.hpp"
 #include "driver/Source.hpp"
-#include "syntax/Lexer.hpp"
-#include "syntax/Parser.hpp"
 #include "util/Fail.hpp"
 
 namespace
@@ -34,7 +33,7 @@ namespace
 			if (!source.has_value())
 				return ExitCode::NoInput;
 
-			auto reporter = build_file(*source);
+			auto reporter = build_source(*source, config);
 			if (reporter.has_reports())
 				exit_code = ExitCode::DataError;
 		}
@@ -70,14 +69,4 @@ ExitCode run_driver(std::span<std::string_view> args)
 {
 	Config config(args);
 	return perform_command(config);
-}
-
-Reporter build_file(const Source& source)
-{
-	Reporter reporter;
-
-	auto stream = lex(source, reporter);
-	auto ast	= parse(stream, source, reporter);
-
-	return reporter;
 }

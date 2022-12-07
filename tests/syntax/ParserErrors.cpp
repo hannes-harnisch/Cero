@@ -3,7 +3,7 @@
 
 TEST(ExpectFuncStructEnum)
 {
-	ExhaustiveReporter r(R"_____(
+	auto r = build_test_source(R"_____(
 main()
 {}
 
@@ -13,44 +13,44 @@ main()
 foo()
 {}
 )_____");
-	CHECK(r.pop_report(Message::ExpectFuncStructEnum, {5, 1, test_name()}, "`(`"));
+	CHECK(r.pop_report(5, 1, Message::ExpectFuncStructEnum, "`(`"));
 }
 
 TEST(ExpectParenAfterFuncName)
 {
-	ExhaustiveReporter r(R"_____(
+	auto r = build_test_source(R"_____(
 main)
 {}
 )_____");
-	CHECK(r.pop_report(Message::ExpectParenAfterFuncName, {2, 5, test_name()}, "`)`"));
+	CHECK(r.pop_report(2, 5, Message::ExpectParenAfterFuncName, "`)`"));
 }
 
 TEST(MissingParameter)
 {
-	ExhaustiveReporter r(R"_____(
+	auto r = build_test_source(R"_____(
 foo(, bool x) -> bool
 {
 	return x
 }
 )_____");
-	CHECK(r.pop_report(Message::ExpectType, {2, 5, test_name()}, "`,`"));
-	CHECK(r.pop_report(Message::ExpectParamName, {2, 5, test_name()}, "`,`"));
+	CHECK(r.pop_report(2, 5, Message::ExpectType, "`,`"));
+	CHECK(r.pop_report(2, 5, Message::ExpectParamName, "`,`"));
 }
 
 TEST(MissingParameterName)
 {
-	ExhaustiveReporter r(R"_____(
+	auto r = build_test_source(R"_____(
 foo(bool, bool x) -> bool
 {
 	return x
 }
 )_____");
-	CHECK(r.pop_report(Message::ExpectParamName, {2, 9, test_name()}, "`,`"));
+	CHECK(r.pop_report(2, 9, Message::ExpectParamName, "`,`"));
 }
 
 TEST(MissingParameterWithUnexpectedToken)
 {
-	ExhaustiveReporter r(R"_____(
+	auto r = build_test_source(R"_____(
 foo(}, bool x) -> bool
 {
 	return x
@@ -61,15 +61,15 @@ goo(bool x, %) -> bool
 	return x
 }
 )_____");
-	CHECK(r.pop_report(Message::ExpectType, {2, 5, test_name()}, "`}`"));
-	CHECK(r.pop_report(Message::ExpectParamName, {2, 5, test_name()}, "`}`"));
-	CHECK(r.pop_report(Message::ExpectType, {7, 13, test_name()}, "`%`"));
-	CHECK(r.pop_report(Message::ExpectParamName, {7, 13, test_name()}, "`%`"));
+	CHECK(r.pop_report(2, 5, Message::ExpectType, "`}`"));
+	CHECK(r.pop_report(2, 5, Message::ExpectParamName, "`}`"));
+	CHECK(r.pop_report(7, 13, Message::ExpectType, "`%`"));
+	CHECK(r.pop_report(7, 13, Message::ExpectParamName, "`%`"));
 }
 
 TEST(MissingParenAfterParameters)
 {
-	ExhaustiveReporter r(R"_____(
+	auto r = build_test_source(R"_____(
 foo(bool x -> bool
 {
 	return x
@@ -80,13 +80,13 @@ goo(bool x} -> bool
 	return x
 }
 )_____");
-	CHECK(r.pop_report(Message::ExpectParenAfterParams, {2, 12, test_name()}, "`->`"));
-	CHECK(r.pop_report(Message::ExpectParenAfterParams, {7, 11, test_name()}, "`}`"));
+	CHECK(r.pop_report(2, 12, Message::ExpectParenAfterParams, "`->`"));
+	CHECK(r.pop_report(7, 11, Message::ExpectParenAfterParams, "`}`"));
 }
 
 TEST(MissingBraceBeforeFuncBody)
 {
-	ExhaustiveReporter r(R"_____(
+	auto r = build_test_source(R"_____(
 foo(bool x) -> bool
 
 	return x
@@ -98,14 +98,14 @@ goo() -> void
 hoo() -< void
 {}
 )_____");
-	CHECK(r.pop_report(Message::ExpectBraceBeforeFuncBody, {4, 5, test_name()}, "`return`"));
-	CHECK(r.pop_report(Message::ExpectBraceBeforeFuncBody, {8, 1, test_name()}, "`}`"));
-	CHECK(r.pop_report(Message::ExpectBraceBeforeFuncBody, {10, 7, test_name()}, "`-`"));
+	CHECK(r.pop_report(4, 5, Message::ExpectBraceBeforeFuncBody, "`return`"));
+	CHECK(r.pop_report(8, 1, Message::ExpectBraceBeforeFuncBody, "`}`"));
+	CHECK(r.pop_report(10, 7, Message::ExpectBraceBeforeFuncBody, "`-`"));
 }
 
 TEST(MissingNameInDeclaration)
 {
-	ExhaustiveReporter r(R"_____(
+	auto r = build_test_source(R"_____(
 main()
 {
     let bool x = true
@@ -114,13 +114,13 @@ main()
 	let ^bool   = &x
 }
 )_____");
-	CHECK(r.pop_report(Message::ExpectNameAfterDeclType, {5, 17, test_name()}, "`=`"));
-	CHECK(r.pop_report(Message::ExpectNameAfterDeclType, {7, 17, test_name()}, "`=`"));
+	CHECK(r.pop_report(5, 17, Message::ExpectNameAfterDeclType, "`=`"));
+	CHECK(r.pop_report(7, 17, Message::ExpectNameAfterDeclType, "`=`"));
 }
 
 TEST(ExpectExpr)
 {
-	ExhaustiveReporter r(R"_____(
+	auto r = build_test_source(R"_____(
 a()
 {
     ]
@@ -138,14 +138,14 @@ b()
 
 foo() {}
 )_____");
-	CHECK(r.pop_report(Message::ExpectExpr, {4, 5, test_name()}, "`]`"));
-	CHECK(r.pop_report(Message::ExpectExpr, {10, 1, test_name()}, "`}`"));
-	CHECK(r.pop_report(Message::ExpectExpr, {14, 5, test_name()}, "`+=`"));
+	CHECK(r.pop_report(4, 5, Message::ExpectExpr, "`]`"));
+	CHECK(r.pop_report(10, 1, Message::ExpectExpr, "`}`"));
+	CHECK(r.pop_report(14, 5, Message::ExpectExpr, "`+=`"));
 }
 
 TEST(MissingNameAfterDot)
 {
-	ExhaustiveReporter r(R"_____(
+	auto r = build_test_source(R"_____(
 f()
 {
     x.
@@ -155,13 +155,13 @@ f()
 	var z = 12
 }
 )_____");
-	CHECK(r.pop_report(Message::ExpectNameAfterDot, {5, 5, test_name()}, "`var`"));
-	CHECK(r.pop_report(Message::ExpectNameAfterDot, {7, 7, test_name()}, "`(`"));
+	CHECK(r.pop_report(5, 5, Message::ExpectNameAfterDot, "`var`"));
+	CHECK(r.pop_report(7, 7, Message::ExpectNameAfterDot, "`(`"));
 }
 
 TEST(MissingColonAfterIfCondition)
 {
-	ExhaustiveReporter r(R"_____(
+	auto r = build_test_source(R"_____(
 f(bool b) -> int32
 {
 	if b
@@ -180,12 +180,12 @@ g(bool b) -> int32
 		return 5
 }
 )_____");
-	CHECK(r.pop_report(Message::ExpectColonAfterCondition, {5, 9, test_name()}, "`return`"));
+	CHECK(r.pop_report(5, 9, Message::ExpectColonAfterCondition, "`return`"));
 }
 
 TEST(UnnecessaryColonBeforeBlock)
 {
-	ExhaustiveReporter r(R"_____(
+	auto r = build_test_source(R"_____(
 f(bool b) -> int32
 {
 	if b:
@@ -202,12 +202,12 @@ g(bool b) -> int32
 	}
 }
 )_____");
-	CHECK(r.pop_report(Message::UnnecessaryColonBeforeBlock, {4, 9, test_name()}));
+	CHECK(r.pop_report(4, 9, Message::UnnecessaryColonBeforeBlock));
 }
 
 TEST(MissingParenAfterGroupExpression)
 {
-	ExhaustiveReporter r(R"_____(
+	auto r = build_test_source(R"_____(
 f(bool a, bool b, bool c, bool d) -> bool
 {
 	return (a || b) && (c || d
@@ -218,12 +218,12 @@ g(bool a, bool b, bool c, bool d) -> bool
 	return (a || b) && (c || d)
 }
 )_____");
-	CHECK(r.pop_report(Message::ExpectParenAfterGroup, {5, 1, test_name()}, "`}`"));
+	CHECK(r.pop_report(5, 1, Message::ExpectParenAfterGroup, "`}`"));
 }
 
 TEST(MissingParenAfterFunctionCall)
 {
-	ExhaustiveReporter r(R"_____(
+	auto r = build_test_source(R"_____(
 foo(int32 _) {}
 
 f()
@@ -236,12 +236,12 @@ g()
 	foo(2)
 }
 )_____");
-	CHECK(r.pop_report(Message::ExpectParenAfterCall, {7, 1, test_name()}, "`}`"));
+	CHECK(r.pop_report(7, 1, Message::ExpectParenAfterCall, "`}`"));
 }
 
 TEST(MissingBracketAfterIndex)
 {
-	ExhaustiveReporter r(R"_____(
+	auto r = build_test_source(R"_____(
 f([4]int32 x) -> int32
 {
 	return x[0
@@ -252,12 +252,12 @@ g([4]int32 x) -> int32
 	return x[0]
 }
 )_____");
-	CHECK(r.pop_report(Message::ExpectBracketAfterIndex, {5, 1, test_name()}, "`}`"));
+	CHECK(r.pop_report(5, 1, Message::ExpectBracketAfterIndex, "`}`"));
 }
 
 TEST(MissingBracketAfterArrayCount)
 {
-	ExhaustiveReporter r(R"_____(
+	auto r = build_test_source(R"_____(
 f([4 int32 x) -> int32
 {
 	return x[0]
@@ -268,5 +268,5 @@ g([4]int32 x) -> int32
 	return x[0]
 }
 )_____");
-	CHECK(r.pop_report(Message::ExpectBracketAfterArrayCount, {2, 6, test_name()}, "name `int32`"));
+	CHECK(r.pop_report(2, 6, Message::ExpectBracketAfterArrayCount, "name `int32`"));
 }

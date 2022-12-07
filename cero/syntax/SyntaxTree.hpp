@@ -1,5 +1,6 @@
 #pragma once
 
+#include "driver/Source.hpp"
 #include "syntax/Definition.hpp"
 #include "syntax/Expression.hpp"
 
@@ -11,5 +12,5 @@ class SyntaxTree
 public:
 	Expression add(ExpressionNode expr);
 	Definition add(DefinitionNode def);
-	void	   print() const;
+	void	   log(const Source& source) const;
 };

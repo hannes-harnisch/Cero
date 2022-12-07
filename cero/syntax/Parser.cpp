@@ -75,15 +75,14 @@ private:
 
 	void synchronize_definition()
 	{
-		// TODO: all of this needs better EOF handling
 		auto kind = peek().kind;
-		if (kind == Token::EndOfFile)
-			return;
-
 		do
 		{
 			while (kind != Token::NewLine)
 			{
+				if (kind == Token::EndOfFile)
+					return;
+
 				advance();
 				kind = peek().kind;
 			}
