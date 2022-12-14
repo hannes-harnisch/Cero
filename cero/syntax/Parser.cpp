@@ -47,7 +47,7 @@ public:
 		{
 			try
 			{
-				parse_definition();
+				ast.add_to_root(parse_definition());
 			}
 			catch (ParseError)
 			{
@@ -58,19 +58,19 @@ public:
 	}
 
 private:
-	void parse_definition()
+	Definition parse_definition()
 	{
 		if (match(Token::Name))
-			parse_function();
-		else if (match(Token::Struct))
-			parse_struct();
-		else if (match(Token::Enum))
-			parse_enum();
-		else
-		{
-			report_expectation(Message::ExpectFuncStructEnum, peek());
-			throw ParseError();
-		}
+			return parse_function();
+
+		if (match(Token::Struct))
+			return parse_struct();
+
+		if (match(Token::Enum))
+			return parse_enum();
+
+		report_expectation(Message::ExpectFuncStructEnum, peek());
+		throw ParseError();
 	}
 
 	void synchronize_definition()
@@ -92,17 +92,17 @@ private:
 		while (kind != Token::Name && kind != Token::Struct && kind != Token::Enum && kind != Token::EndOfFile);
 	}
 
-	void parse_struct()
+	Definition parse_struct()
 	{
 		to_do();
 	}
 
-	void parse_enum()
+	Definition parse_enum()
 	{
 		to_do();
 	}
 
-	void parse_function()
+	Definition parse_function()
 	{
 		auto name = previous().get_lexeme(source);
 		expect(Token::LeftParen, Message::ExpectParenAfterFuncName);
@@ -112,7 +112,7 @@ private:
 		expect(Token::LeftBrace, Message::ExpectBraceBeforeFuncBody);
 
 		auto statements = parse_block();
-		ast.add(Function(name, std::move(parameters), std::move(returns), std::move(statements)));
+		return ast.add(Function(name, std::move(parameters), std::move(returns), std::move(statements)));
 	}
 
 	std::vector<Parameter> parse_parameter_list()
@@ -141,7 +141,7 @@ private:
 		if (name.empty())
 			throw ParseError();
 
-		Expression default_argument;
+		OptionalExpression default_argument;
 		if (match(Token::Equal))
 			default_argument = parse_expression();
 
@@ -320,7 +320,7 @@ private:
 		auto type = parse_type();
 		auto name = expect_name(Message::ExpectNameAfterDeclType);
 
-		Expression initializer;
+		OptionalExpression initializer;
 		if (match(Token::Equal))
 			initializer = parse_expression();
 
@@ -345,7 +345,7 @@ private:
 
 		auto expression = parse_expression();
 		expect(Token::RightParen, Message::ExpectParenAfterGroup);
-		return expression;
+		return ast.add(GroupExpression(expression));
 	}
 
 	Expression parse_if()
@@ -365,7 +365,7 @@ private:
 		}
 		auto then_expr = parse_expression();
 
-		Expression else_expr;
+		OptionalExpression else_expr;
 		if (match(Token::Else))
 			else_expr = parse_expression();
 
@@ -402,10 +402,10 @@ private:
 		return ast.add(ThrowExpression({parse_return_or_throw_operand()}));
 	}
 
-	Expression parse_return_or_throw_operand()
+	OptionalExpression parse_return_or_throw_operand()
 	{
 		if (next_is_new_line())
-			return Expression();
+			return OptionalExpression();
 
 		return parse_expression();
 	}
@@ -474,7 +474,7 @@ private:
 		return ast.add(Greater({left, right}));
 	}
 
-	Expression parse_double_right_angle(Expression left)
+	Expression parse_right_angle_angle(Expression left)
 	{
 		auto right = parse_expression(Precedence::Bitwise);
 		return ast.add(RightShift({left, right}));
@@ -629,44 +629,44 @@ private:
 		using enum Precedence;
 
 		LookupTable<Token, Precedence> t(Statement);
-		t[Equal]				 = Assignment;
-		t[PlusEqual]			 = Assignment;
-		t[MinusEqual]			 = Assignment;
-		t[StarEqual]			 = Assignment;
-		t[SlashEqual]			 = Assignment;
-		t[PercentEqual]			 = Assignment;
-		t[StarStarEqual]		 = Assignment;
-		t[AmpersandEqual]		 = Assignment;
-		t[PipeEqual]			 = Assignment;
-		t[TildeEqual]			 = Assignment;
-		t[DoubleLeftAngleEqual]	 = Assignment;
-		t[DoubleRightAngleEqual] = Assignment;
-		t[DoubleAmpersand]		 = Logical;
-		t[PipePipe]				 = Logical;
-		t[EqualEqual]			 = Comparison;
-		t[BangEqual]			 = Comparison;
-		t[LeftAngle]			 = Comparison;
-		t[RightAngle]			 = Comparison;
-		t[LeftAngleEqual]		 = Comparison;
-		t[RightAngleEqual]		 = Comparison;
-		t[Plus]					 = Additive;
-		t[Minus]				 = Additive;
-		t[Ampersand]			 = Bitwise;
-		t[Pipe]					 = Bitwise;
-		t[Tilde]				 = Bitwise;
-		t[DoubleLeftAngle]		 = Bitwise;
-		t[DoubleRightAngle]		 = Bitwise;
-		t[Star]					 = Multiplicative;
-		t[Slash]				 = Multiplicative;
-		t[Percent]				 = Multiplicative;
-		t[StarStar]				 = Prefix;
-		t[Dot]					 = Postfix;
-		t[ColonColon]			 = Postfix;
-		t[LeftParen]			 = Postfix;
-		t[LeftBracket]			 = Postfix;
-		t[Caret]				 = Postfix;
-		t[PlusPlus]				 = Postfix;
-		t[MinusMinus]			 = Postfix;
+		t[Equal]				= Assignment;
+		t[PlusEqual]			= Assignment;
+		t[MinusEqual]			= Assignment;
+		t[StarEqual]			= Assignment;
+		t[SlashEqual]			= Assignment;
+		t[PercentEqual]			= Assignment;
+		t[StarStarEqual]		= Assignment;
+		t[AmpersandEqual]		= Assignment;
+		t[PipeEqual]			= Assignment;
+		t[TildeEqual]			= Assignment;
+		t[LeftAngleAngleEqual]	= Assignment;
+		t[RightAngleAngleEqual] = Assignment;
+		t[DoubleAmpersand]		= Logical;
+		t[PipePipe]				= Logical;
+		t[EqualEqual]			= Comparison;
+		t[BangEqual]			= Comparison;
+		t[LeftAngle]			= Comparison;
+		t[RightAngle]			= Comparison;
+		t[LeftAngleEqual]		= Comparison;
+		t[RightAngleEqual]		= Comparison;
+		t[Plus]					= Additive;
+		t[Minus]				= Additive;
+		t[Ampersand]			= Bitwise;
+		t[Pipe]					= Bitwise;
+		t[Tilde]				= Bitwise;
+		t[LeftAngleAngle]		= Bitwise;
+		t[RightAngleAngle]		= Bitwise;
+		t[Star]					= Multiplicative;
+		t[Slash]				= Multiplicative;
+		t[Percent]				= Multiplicative;
+		t[StarStar]				= Prefix;
+		t[Dot]					= Postfix;
+		t[ColonColon]			= Postfix;
+		t[LeftParen]			= Postfix;
+		t[LeftBracket]			= Postfix;
+		t[Caret]				= Postfix;
+		t[PlusPlus]				= Postfix;
+		t[MinusMinus]			= Postfix;
 		return t;
 	}();
 
@@ -676,43 +676,43 @@ private:
 		using enum Precedence;
 
 		LookupTable<Token, NonPrefixParse> t(nullptr);
-		t[Dot]					 = &Parser::parse_access;
-		t[LeftParen]			 = &Parser::parse_call;
-		t[LeftBracket]			 = &Parser::parse_indexing;
-		t[Equal]				 = &Parser::parse_infix<::Assignment, Assignment>;
-		t[PlusEqual]			 = &Parser::parse_infix<AdditionAssignment, Assignment>;
-		t[MinusEqual]			 = &Parser::parse_infix<SubtractionAssignment, Assignment>;
-		t[StarEqual]			 = &Parser::parse_infix<MultiplicationAssignment, Assignment>;
-		t[SlashEqual]			 = &Parser::parse_infix<DivisionAssignment, Assignment>;
-		t[PercentEqual]			 = &Parser::parse_infix<RemainderAssignment, Assignment>;
-		t[StarStarEqual]		 = &Parser::parse_infix<ExponentiationAssignment, Assignment>;
-		t[AmpersandEqual]		 = &Parser::parse_infix<BitwiseAndAssignment, Assignment>;
-		t[PipeEqual]			 = &Parser::parse_infix<BitwiseOrAssignment, Assignment>;
-		t[TildeEqual]			 = &Parser::parse_infix<XorAssignment, Assignment>;
-		t[DoubleLeftAngleEqual]	 = &Parser::parse_infix<LeftShiftAssignment, Assignment>;
-		t[DoubleRightAngleEqual] = &Parser::parse_infix<RightShiftAssignment, Assignment>;
-		t[DoubleAmpersand]		 = &Parser::parse_infix<LogicalAnd, Logical>;
-		t[PipePipe]				 = &Parser::parse_infix<LogicalOr, Logical>;
-		t[EqualEqual]			 = &Parser::parse_infix<Equality, Comparison>;
-		t[BangEqual]			 = &Parser::parse_infix<Inequality, Comparison>;
-		t[LeftAngle]			 = &Parser::parse_infix<Less, Comparison>;
-		t[RightAngle]			 = &Parser::parse_right_angle;
-		t[LeftAngleEqual]		 = &Parser::parse_infix<LessEqual, Comparison>;
-		t[RightAngleEqual]		 = &Parser::parse_infix<GreaterEqual, Comparison>;
-		t[Plus]					 = &Parser::parse_infix<Addition, Additive>;
-		t[Minus]				 = &Parser::parse_infix<Subtraction, Additive>;
-		t[Star]					 = &Parser::parse_infix<Multiplication, Multiplicative>;
-		t[Slash]				 = &Parser::parse_infix<Division, Multiplicative>;
-		t[Percent]				 = &Parser::parse_infix<Remainder, Multiplicative>;
-		t[Ampersand]			 = &Parser::parse_infix<BitwiseAnd, Bitwise>;
-		t[Pipe]					 = &Parser::parse_infix<BitwiseOr, Bitwise>;
-		t[Tilde]				 = &Parser::parse_infix<Xor, Bitwise>;
-		t[DoubleLeftAngle]		 = &Parser::parse_infix<LeftShift, Bitwise>;
-		t[DoubleRightAngle]		 = &Parser::parse_double_right_angle;
-		t[StarStar]				 = &Parser::parse_infix<Exponentiation, Multiplicative>;
-		t[Caret]				 = &Parser::parse_postfix<Dereference>;
-		t[PlusPlus]				 = &Parser::parse_postfix<PostIncrement>;
-		t[MinusMinus]			 = &Parser::parse_postfix<PostDecrement>;
+		t[Dot]					= &Parser::parse_access;
+		t[LeftParen]			= &Parser::parse_call;
+		t[LeftBracket]			= &Parser::parse_indexing;
+		t[Equal]				= &Parser::parse_infix<::Assignment, Assignment>;
+		t[PlusEqual]			= &Parser::parse_infix<AdditionAssignment, Assignment>;
+		t[MinusEqual]			= &Parser::parse_infix<SubtractionAssignment, Assignment>;
+		t[StarEqual]			= &Parser::parse_infix<MultiplicationAssignment, Assignment>;
+		t[SlashEqual]			= &Parser::parse_infix<DivisionAssignment, Assignment>;
+		t[PercentEqual]			= &Parser::parse_infix<RemainderAssignment, Assignment>;
+		t[StarStarEqual]		= &Parser::parse_infix<ExponentiationAssignment, Assignment>;
+		t[AmpersandEqual]		= &Parser::parse_infix<BitwiseAndAssignment, Assignment>;
+		t[PipeEqual]			= &Parser::parse_infix<BitwiseOrAssignment, Assignment>;
+		t[TildeEqual]			= &Parser::parse_infix<XorAssignment, Assignment>;
+		t[LeftAngleAngleEqual]	= &Parser::parse_infix<LeftShiftAssignment, Assignment>;
+		t[RightAngleAngleEqual] = &Parser::parse_infix<RightShiftAssignment, Assignment>;
+		t[DoubleAmpersand]		= &Parser::parse_infix<LogicalAnd, Logical>;
+		t[PipePipe]				= &Parser::parse_infix<LogicalOr, Logical>;
+		t[EqualEqual]			= &Parser::parse_infix<Equality, Comparison>;
+		t[BangEqual]			= &Parser::parse_infix<Inequality, Comparison>;
+		t[LeftAngle]			= &Parser::parse_infix<Less, Comparison>;
+		t[RightAngle]			= &Parser::parse_right_angle;
+		t[LeftAngleEqual]		= &Parser::parse_infix<LessEqual, Comparison>;
+		t[RightAngleEqual]		= &Parser::parse_infix<GreaterEqual, Comparison>;
+		t[Plus]					= &Parser::parse_infix<Addition, Additive>;
+		t[Minus]				= &Parser::parse_infix<Subtraction, Additive>;
+		t[Star]					= &Parser::parse_infix<Multiplication, Multiplicative>;
+		t[Slash]				= &Parser::parse_infix<Division, Multiplicative>;
+		t[Percent]				= &Parser::parse_infix<Remainder, Multiplicative>;
+		t[Ampersand]			= &Parser::parse_infix<BitwiseAnd, Bitwise>;
+		t[Pipe]					= &Parser::parse_infix<BitwiseOr, Bitwise>;
+		t[Tilde]				= &Parser::parse_infix<Xor, Bitwise>;
+		t[LeftAngleAngle]		= &Parser::parse_infix<LeftShift, Bitwise>;
+		t[RightAngleAngle]		= &Parser::parse_right_angle_angle;
+		t[StarStar]				= &Parser::parse_infix<Exponentiation, Multiplicative>;
+		t[Caret]				= &Parser::parse_postfix<Dereference>;
+		t[PlusPlus]				= &Parser::parse_postfix<PostIncrement>;
+		t[MinusMinus]			= &Parser::parse_postfix<PostDecrement>;
 		return t;
 	}();
 };

@@ -4,19 +4,20 @@ namespace
 {
 	std::optional<std::string> get_file_content(std::string_view path_text)
 	{
-		std::ifstream in(std::string(path_text), std::ios::in | std::ios::binary);
-		if (in.fail())
+		std::ifstream file(std::string(path_text), std::ios::in | std::ios::binary);
+		if (file.fail())
 			return {};
 
 		std::string content;
-		in.seekg(0, std::ios::end);
-		content.resize_and_overwrite(in.tellg(),
-									 [&](char* buffer, size_t size)
-									 {
-			in.seekg(0, std::ios::beg);
-			in.read(buffer, size);
+		file.seekg(0, std::ios::end);
+
+		auto overwrite = [&](char* buffer, size_t size)
+		{
+			file.seekg(0, std::ios::beg);
+			file.read(buffer, size);
 			return size;
-		});
+		};
+		content.resize_and_overwrite(file.tellg(), overwrite);
 		return content;
 	}
 } // namespace

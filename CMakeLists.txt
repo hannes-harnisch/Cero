@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
 
-set(CMAKE_SUPPRESS_REGENERATION ON)
-
 project(Cero)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Tests)

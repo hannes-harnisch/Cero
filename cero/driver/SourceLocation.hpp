@@ -10,4 +10,6 @@ struct SourceLocation
 	std::string_view file;
 
 	bool operator==(const SourceLocation&) const = default;
+
+	std::string to_string() const;
 };

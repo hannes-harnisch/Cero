@@ -46,35 +46,35 @@ enum class Token : uint32_t
 	Hash,		  // #
 
 	// Two-character tokens
-	ThinArrow,		  // ->
-	ThickArrow,		  // =>
-	ColonColon,		  // ::
-	PlusPlus,		  // ++
-	MinusMinus,		  // --
-	DoubleAmpersand,  // &&
-	PipePipe,		  // ||
-	EqualEqual,		  // ==
-	BangEqual,		  // !=
-	LeftAngleEqual,	  // <=
-	RightAngleEqual,  // >=
-	StarStar,		  // **
-	DoubleLeftAngle,  // <<
-	DoubleRightAngle, // >>
-	PlusEqual,		  // +=
-	MinusEqual,		  // -=
-	StarEqual,		  // *=
-	SlashEqual,		  // /=
-	PercentEqual,	  // %=
-	AmpersandEqual,	  // &=
-	PipeEqual,		  // |=
-	TildeEqual,		  // ~=
+	ThinArrow,		 // ->
+	ThickArrow,		 // =>
+	ColonColon,		 // ::
+	PlusPlus,		 // ++
+	MinusMinus,		 // --
+	DoubleAmpersand, // &&
+	PipePipe,		 // ||
+	EqualEqual,		 // ==
+	BangEqual,		 // !=
+	LeftAngleEqual,	 // <=
+	RightAngleEqual, // >=
+	StarStar,		 // **
+	LeftAngleAngle,	 // <<
+	RightAngleAngle, // >>
+	PlusEqual,		 // +=
+	MinusEqual,		 // -=
+	StarEqual,		 // *=
+	SlashEqual,		 // /=
+	PercentEqual,	 // %=
+	AmpersandEqual,	 // &=
+	PipeEqual,		 // |=
+	TildeEqual,		 // ~=
 
 	// Three-character tokens
-	Ellipsis,			   // ...
-	StarStarEqual,		   // **=
-	DoubleLeftAngleEqual,  // <<=
-	DoubleRightAngleEqual, // >>=
-	BracketedCaret,		   // [^]
+	Ellipsis,			  // ...
+	StarStarEqual,		  // **=
+	LeftAngleAngleEqual,  // <<=
+	RightAngleAngleEqual, // >>=
+	BracketedCaret,		  // [^]
 
 	// Keywords
 	Break,

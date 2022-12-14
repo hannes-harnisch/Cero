@@ -1,4 +1,3 @@
-#include "util/ExhaustiveReporter.hpp"
 #include "util/Test.hpp"
 
 TEST(ExpectFuncStructEnum)

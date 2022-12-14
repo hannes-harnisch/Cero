@@ -14,6 +14,7 @@ public:
 	void						  append(LexicalToken token);
 	std::span<const LexicalToken> get_tokens() const;
 	LexicalToken				  at(uint32_t index) const;
-	std::string					  to_log_string(const Source& source) const;
-	void						  log(const Source& source) const;
+
+	std::string to_string(const Source& source) const;
+	void		log(const Source& source) const;
 };

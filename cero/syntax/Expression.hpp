@@ -9,11 +9,22 @@
 
 using Index = uint32_t;
 
-constexpr inline Index NULL_INDEX = ~0u;
-
-struct AstIndex
+struct Expression
 {
-	Index index = NULL_INDEX;
+	Index index;
+
+	Expression(Index index) :
+		index(index)
+	{}
+};
+
+struct OptionalExpression : Expression
+{
+	static constexpr Index NULL_INDEX = ~0u;
+
+	OptionalExpression(Expression expr = NULL_INDEX) :
+		Expression(expr)
+	{}
 
 	bool is_null() const
 	{
@@ -21,18 +32,10 @@ struct AstIndex
 	}
 };
 
-struct Expression : AstIndex
-{};
-
-struct UnaryExpression
-{
-	Expression expr;
-};
-
 struct BinaryExpression
 {
-	Expression left_expr;
-	Expression right_expr;
+	Expression left;
+	Expression right;
 };
 
 struct Identifier
@@ -48,7 +51,7 @@ struct GenericIdentifier
 
 struct ArrayTypeExpression
 {
-	Expression count_expr;
+	Expression count_expression;
 	Expression element_type;
 };
 
@@ -63,22 +66,22 @@ enum class VarSpecifier : uint8_t
 struct PointerTypeExpression
 {
 	VarSpecifier			var_specifier;
-	Expression				type_expr;
+	Expression				type;
 	std::vector<Expression> invalidation_layers;
 };
 
 struct LetBinding
 {
-	std::string_view name;
-	Expression		 type;
-	Expression		 initializer;
+	std::string_view   name;
+	OptionalExpression type;
+	OptionalExpression initializer;
 };
 
 struct VarBinding
 {
-	std::string_view name;
-	Expression		 type;
-	Expression		 initializer;
+	std::string_view   name;
+	OptionalExpression type;
+	OptionalExpression initializer;
 };
 
 struct BlockExpression
@@ -86,11 +89,16 @@ struct BlockExpression
 	std::vector<Expression> statements;
 };
 
+struct GroupExpression
+{
+	Expression expression;
+};
+
 struct IfExpression
 {
-	Expression condition;
-	Expression then_expression;
-	Expression else_expression;
+	Expression		   condition;
+	Expression		   then_expression;
+	OptionalExpression else_expression;
 };
 
 struct WhileLoop
@@ -101,7 +109,7 @@ struct WhileLoop
 
 struct ForLoop
 {
-	Expression _;
+	Expression binding;
 	Expression range_expression;
 	Expression statement;
 };
@@ -126,51 +134,51 @@ struct Indexing
 
 // clang-format off
 
-struct BreakExpression : UnaryExpression {};
-struct ContinueExpression : UnaryExpression {};
-struct ReturnExpression : UnaryExpression {};
-struct ThrowExpression : UnaryExpression {};
-struct TryExpression : UnaryExpression {};
-struct PreIncrement : UnaryExpression {};
-struct PreDecrement : UnaryExpression {};
-struct PostIncrement : UnaryExpression {};
-struct PostDecrement : UnaryExpression {};
-struct LogicalNot : UnaryExpression {};
-struct BitwiseNot : UnaryExpression {};
-struct Negation : UnaryExpression {};
-struct Dereference : UnaryExpression {};
-struct AddressOf : UnaryExpression {};
-struct Addition : BinaryExpression {};
-struct Subtraction : BinaryExpression {};
-struct Multiplication : BinaryExpression {};
-struct Division : BinaryExpression {};
-struct Remainder : BinaryExpression {};
-struct Exponentiation : BinaryExpression {};
-struct BitwiseAnd : BinaryExpression {};
-struct BitwiseOr : BinaryExpression {};
-struct Xor : BinaryExpression {};
-struct LeftShift : BinaryExpression {};
-struct RightShift : BinaryExpression {};
-struct LogicalAnd : BinaryExpression {};
-struct LogicalOr : BinaryExpression {};
-struct Equality : BinaryExpression {};
-struct Inequality : BinaryExpression {};
-struct Less : BinaryExpression {};
-struct Greater : BinaryExpression {};
-struct LessEqual : BinaryExpression {};
-struct GreaterEqual : BinaryExpression {};
-struct Assignment : BinaryExpression {};
-struct AdditionAssignment : BinaryExpression {};
-struct SubtractionAssignment : BinaryExpression {};
-struct MultiplicationAssignment : BinaryExpression {};
-struct DivisionAssignment : BinaryExpression {};
-struct RemainderAssignment : BinaryExpression {};
-struct ExponentiationAssignment : BinaryExpression {};
-struct BitwiseAndAssignment : BinaryExpression {};
-struct BitwiseOrAssignment : BinaryExpression {};
-struct XorAssignment : BinaryExpression {};
-struct LeftShiftAssignment : BinaryExpression {};
-struct RightShiftAssignment : BinaryExpression {};
+struct BreakExpression			: OptionalExpression {};
+struct ContinueExpression		: OptionalExpression {};
+struct ReturnExpression			: OptionalExpression {};
+struct ThrowExpression			: OptionalExpression {};
+struct TryExpression			: Expression {};
+struct PreIncrement				: Expression {};
+struct PreDecrement				: Expression {};
+struct PostIncrement			: Expression {};
+struct PostDecrement			: Expression {};
+struct LogicalNot				: Expression {};
+struct BitwiseNot				: Expression {};
+struct Negation					: Expression {};
+struct Dereference				: Expression {};
+struct AddressOf				: Expression {};
+struct Addition					: BinaryExpression {};
+struct Subtraction				: BinaryExpression {};
+struct Multiplication			: BinaryExpression {};
+struct Division					: BinaryExpression {};
+struct Remainder				: BinaryExpression {};
+struct Exponentiation			: BinaryExpression {};
+struct BitwiseAnd				: BinaryExpression {};
+struct BitwiseOr				: BinaryExpression {};
+struct Xor						: BinaryExpression {};
+struct LeftShift				: BinaryExpression {};
+struct RightShift				: BinaryExpression {};
+struct LogicalAnd				: BinaryExpression {};
+struct LogicalOr				: BinaryExpression {};
+struct Equality					: BinaryExpression {};
+struct Inequality				: BinaryExpression {};
+struct Less						: BinaryExpression {};
+struct Greater					: BinaryExpression {};
+struct LessEqual				: BinaryExpression {};
+struct GreaterEqual				: BinaryExpression {};
+struct Assignment				: BinaryExpression {};
+struct AdditionAssignment		: BinaryExpression {};
+struct SubtractionAssignment	: BinaryExpression {};
+struct MultiplicationAssignment	: BinaryExpression {};
+struct DivisionAssignment		: BinaryExpression {};
+struct RemainderAssignment		: BinaryExpression {};
+struct ExponentiationAssignment	: BinaryExpression {};
+struct BitwiseAndAssignment		: BinaryExpression {};
+struct BitwiseOrAssignment		: BinaryExpression {};
+struct XorAssignment			: BinaryExpression {};
+struct LeftShiftAssignment		: BinaryExpression {};
+struct RightShiftAssignment		: BinaryExpression {};
 
 // clang-format on
 
@@ -183,6 +191,7 @@ using ExpressionNode = std::variant<Identifier,
 									LetBinding,
 									VarBinding,
 									BlockExpression,
+									GroupExpression,
 									IfExpression,
 									WhileLoop,
 									ForLoop,

@@ -297,9 +297,9 @@ private:
 		if (match('<'))
 		{
 			if (match('='))
-				return Token::DoubleLeftAngleEqual;
+				return Token::LeftAngleAngleEqual;
 
-			return Token::DoubleLeftAngle;
+			return Token::LeftAngleAngle;
 		}
 		if (match('='))
 			return Token::LeftAngleEqual;
@@ -312,9 +312,9 @@ private:
 		if (match('>'))
 		{
 			if (match('='))
-				return Token::DoubleRightAngleEqual;
+				return Token::RightAngleAngleEqual;
 
-			return Token::DoubleRightAngle;
+			return Token::RightAngleAngle;
 		}
 		if (match('='))
 			return Token::RightAngleEqual;

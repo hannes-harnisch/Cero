@@ -15,7 +15,7 @@ LexicalToken TokenStream::at(uint32_t index) const
 	return tokens.at(index);
 }
 
-std::string TokenStream::to_log_string(const Source& source) const
+std::string TokenStream::to_string(const Source& source) const
 {
 	std::stringstream str;
 
@@ -27,5 +27,5 @@ std::string TokenStream::to_log_string(const Source& source) const
 
 void TokenStream::log(const Source& source) const
 {
-	std::clog << to_log_string(source);
+	std::clog << to_string(source);
 }

@@ -2,8 +2,14 @@
 
 #include "syntax/Expression.hpp"
 
-struct Definition : AstIndex
-{};
+struct Definition
+{
+	Index index;
+
+	Definition(Index index) :
+		index(index)
+	{}
+};
 
 enum class ParameterKind : uint8_t
 {
@@ -14,10 +20,10 @@ enum class ParameterKind : uint8_t
 
 struct Parameter
 {
-	ParameterKind	 kind = {};
-	std::string_view name;
-	Expression		 type;
-	Expression		 default_argument;
+	ParameterKind	   kind = {};
+	std::string_view   name;
+	Expression		   type;
+	OptionalExpression default_argument;
 };
 
 struct ReturnValue

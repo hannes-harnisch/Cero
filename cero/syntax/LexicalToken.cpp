@@ -6,13 +6,6 @@
 
 namespace
 {
-	bool is_variable_length_token(Token t)
-	{
-		using enum Token;
-		return t == Name || t == LineComment || t == BlockComment || t == DecIntLiteral || t == HexIntLiteral
-			   || t == BinIntLiteral || t == OctIntLiteral || t == FloatLiteral || t == CharLiteral || t == StringLiteral;
-	}
-
 	std::string_view get_token_message_format(Token kind)
 	{
 		using enum Token;
@@ -48,11 +41,9 @@ std::string LexicalToken::to_message_string(const Source& source) const
 std::string LexicalToken::to_log_string(const Source& source) const
 {
 	auto token_kind = magic_enum::enum_name(kind);
-
-	if (is_variable_length_token(kind))
-		return std::format("{}(`{}`)", token_kind, get_lexeme(source));
-
-	return std::string(token_kind);
+	auto lexeme		= get_lexeme(source);
+	auto location	= locate_in(source);
+	return std::format("{} `{}`\t[{}]", token_kind, lexeme, location.to_string());
 }
 
 SourceLocation LexicalToken::locate_in(const Source& source) const

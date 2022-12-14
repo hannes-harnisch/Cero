@@ -1,25 +1,27 @@
-#include "util/ExhaustiveReporter.hpp"
 #include "util/Test.hpp"
 
 #include <cero/syntax/Lexer.hpp>
 
-TokenStream lex_exhaustive(const Source& source)
+namespace
 {
-	ExhaustiveReporter reporter(source.get_path());
-	return lex(source, reporter);
-}
+	TokenStream lex_exhaustive(const Source& source)
+	{
+		ExhaustiveReporter reporter(source.get_path());
+		return lex(source, reporter);
+	}
 
-bool all_tokens_match(const TokenStream& token_stream, std::initializer_list<Token> kinds)
-{
-	auto tokens = token_stream.get_tokens();
-	CHECK(tokens.size() == kinds.size());
+	bool all_tokens_match(const TokenStream& token_stream, std::initializer_list<Token> kinds)
+	{
+		auto tokens = token_stream.get_tokens();
+		CHECK(tokens.size() == kinds.size());
 
-	for (size_t i = 0; i != tokens.size(); ++i)
-		if (tokens[i].kind != kinds.begin()[i])
-			return false;
+		for (size_t i = 0; i != tokens.size(); ++i)
+			if (tokens[i].kind != kinds.begin()[i])
+				return false;
 
-	return true;
-}
+		return true;
+	}
+} // namespace
 
 using enum Token;
 

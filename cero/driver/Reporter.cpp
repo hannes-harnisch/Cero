@@ -59,10 +59,10 @@ void Reporter::write(Message message, SourceLocation location, std::format_args 
 	if (warnings_as_errors && severity == Severity::Warning)
 		severity = Severity::Error;
 
-	auto message_text  = std::vformat(MESSAGE_FORMATS[message], args);
+	auto location_text = location.to_string();
 	auto severity_text = to_string(severity);
-	std::fprintf(stderr, "%s:%u:%u: %s: %s\n", location.file.data(), location.line, location.column, severity_text,
-				 message_text.data());
+	auto message_text  = std::vformat(MESSAGE_FORMATS[message], args);
+	std::fprintf(stderr, "%s: %s: %s\n", location_text.data(), severity_text, message_text.data());
 
 	reports.emplace_back(message, location, std::move(message_text));
 }

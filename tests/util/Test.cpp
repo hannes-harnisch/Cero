@@ -1,7 +1,6 @@
-#include "ExhaustiveReporter.hpp"
+#include "Test.hpp"
 
 #include <cero/driver/Build.hpp>
-#include <doctest/doctest.h>
 
 ExhaustiveReporter::ExhaustiveReporter(std::string_view test_name) :
 	test_name(test_name)

@@ -288,20 +288,19 @@ namespace
 
 	bool search_range_table(std::span<const CodePointRange> table, uint32_t encoded)
 	{
-		static constexpr char LENGTHS[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-										   0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0};
-		static constexpr int  MASKS[]	= {0x00, 0x7f, 0x1f, 0x0f, 0x07};
-		static constexpr int  SHIFTS[]	= {0, 18, 12, 6, 0};
+		static constexpr uint8_t  LENGTHS[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+											   0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0};
+		static constexpr uint32_t MASKS[]	= {0x00, 0x7f, 0x1f, 0x0f, 0x07};
+		static constexpr uint32_t SHIFTS[]	= {0, 18, 12, 6, 0};
 
 		uint8_t* byte_ptr = reinterpret_cast<uint8_t*>(&encoded);
 
-		int length = LENGTHS[*byte_ptr >> 3];
+		uint32_t length = LENGTHS[*byte_ptr >> 3];
 
-		uint32_t code_point;
-		code_point = static_cast<uint32_t>(byte_ptr[0] & MASKS[length]) << 18;
-		code_point |= static_cast<uint32_t>(byte_ptr[1] & 0x3f) << 12;
-		code_point |= static_cast<uint32_t>(byte_ptr[2] & 0x3f) << 6;
-		code_point |= static_cast<uint32_t>(byte_ptr[3] & 0x3f) << 0;
+		uint32_t code_point = (byte_ptr[0] & MASKS[length]) << 18;
+		code_point |= (byte_ptr[1] & 0x3fu) << 12;
+		code_point |= (byte_ptr[2] & 0x3fu) << 6;
+		code_point |= (byte_ptr[3] & 0x3fu) << 0;
 		code_point >>= SHIFTS[length];
 
 		return std::binary_search(table.begin(), table.end(), code_point);
