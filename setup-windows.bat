@@ -1,6 +1,6 @@
 @echo off
 
-if exist CMakeCache.txt rm CMakeCache.txt
+if exist CMakeCache.txt del CMakeCache.txt
 
 cmake .
 cmake . & :: CMake runs twice so that it groups generated PCH files correctly.

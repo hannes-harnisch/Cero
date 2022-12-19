@@ -1,6 +1,7 @@
 #pragma once
 
 #include "syntax/Literal.hpp"
+#include "util/StringInteger.hpp"
 
 #include <cstdint>
 #include <string_view>
@@ -18,24 +19,26 @@ struct Expression
 	{}
 };
 
-struct OptionalExpression : Expression
+class OptionalExpression
 {
 	static constexpr Index NULL_INDEX = ~0u;
 
-	OptionalExpression(Expression expr = NULL_INDEX) :
-		Expression(expr)
+	Expression expression;
+
+public:
+	OptionalExpression(Expression expression = NULL_INDEX) :
+		expression(expression)
 	{}
 
 	bool is_null() const
 	{
-		return index == NULL_INDEX;
+		return expression.index == NULL_INDEX;
 	}
-};
 
-struct BinaryExpression
-{
-	Expression left;
-	Expression right;
+	Expression get() const
+	{
+		return expression;
+	}
 };
 
 struct Identifier
@@ -46,39 +49,47 @@ struct Identifier
 struct GenericIdentifier
 {
 	std::string_view		name;
-	std::vector<Expression> generic_args;
+	std::vector<Expression> arguments;
+};
+
+struct Variability
+{
+	enum class Specifier : uint8_t
+	{
+		In,
+		Var,
+		VarBounded,
+		VarUnbounded
+	};
+
+	Specifier				specifier = {};
+	std::vector<Expression> arguments;
 };
 
 struct ArrayTypeExpression
 {
-	Expression count_expression;
-	Expression element_type;
-};
-
-enum class VarSpecifier : uint8_t
-{
-	None,
-	VarDefault,
-	VarFinite,
-	VarInfinite
+	OptionalExpression count;
+	Expression		   element_type;
 };
 
 struct PointerTypeExpression
 {
-	VarSpecifier			var_specifier;
-	Expression				type;
-	std::vector<Expression> invalidation_layers;
+	Variability variability;
+	Expression	type;
 };
 
-struct LetBinding
+struct Binding
 {
-	std::string_view   name;
-	OptionalExpression type;
-	OptionalExpression initializer;
-};
+	enum class Specifier
+	{
+		Let,
+		Var,
+		Const,
+		Static,
+		StaticVar
+	};
 
-struct VarBinding
-{
+	Specifier		   specifier = {};
 	std::string_view   name;
 	OptionalExpression type;
 	OptionalExpression initializer;
@@ -114,132 +125,125 @@ struct ForLoop
 	Expression statement;
 };
 
-struct Access
+struct BreakExpression
+{
+	OptionalExpression label;
+};
+
+struct ContinueExpression
+{
+	OptionalExpression label;
+};
+
+struct ReturnExpression
+{
+	OptionalExpression expression;
+};
+
+struct ThrowExpression
+{
+	OptionalExpression expression;
+};
+
+struct MemberAccess
 {
 	Expression		 target;
 	std::string_view member;
 };
 
-struct Call
+struct CallExpression
 {
 	Expression				callee;
 	std::vector<Expression> arguments;
 };
 
-struct Indexing
+struct IndexExpression
 {
 	Expression				target;
 	std::vector<Expression> arguments;
 };
 
-// clang-format off
+enum class UnaryOperator
+{
+	TryOperator,
+	PreIncrement,
+	PreDecrement,
+	PostIncrement,
+	PostDecrement,
+	AddressOf,
+	Dereference,
+	Negation,
+	LogicalNot,
+	BitwiseNot
+};
 
-struct BreakExpression			: OptionalExpression {};
-struct ContinueExpression		: OptionalExpression {};
-struct ReturnExpression			: OptionalExpression {};
-struct ThrowExpression			: OptionalExpression {};
-struct TryExpression			: Expression {};
-struct PreIncrement				: Expression {};
-struct PreDecrement				: Expression {};
-struct PostIncrement			: Expression {};
-struct PostDecrement			: Expression {};
-struct LogicalNot				: Expression {};
-struct BitwiseNot				: Expression {};
-struct Negation					: Expression {};
-struct Dereference				: Expression {};
-struct AddressOf				: Expression {};
-struct Addition					: BinaryExpression {};
-struct Subtraction				: BinaryExpression {};
-struct Multiplication			: BinaryExpression {};
-struct Division					: BinaryExpression {};
-struct Remainder				: BinaryExpression {};
-struct Exponentiation			: BinaryExpression {};
-struct BitwiseAnd				: BinaryExpression {};
-struct BitwiseOr				: BinaryExpression {};
-struct Xor						: BinaryExpression {};
-struct LeftShift				: BinaryExpression {};
-struct RightShift				: BinaryExpression {};
-struct LogicalAnd				: BinaryExpression {};
-struct LogicalOr				: BinaryExpression {};
-struct Equality					: BinaryExpression {};
-struct Inequality				: BinaryExpression {};
-struct Less						: BinaryExpression {};
-struct Greater					: BinaryExpression {};
-struct LessEqual				: BinaryExpression {};
-struct GreaterEqual				: BinaryExpression {};
-struct Assignment				: BinaryExpression {};
-struct AdditionAssignment		: BinaryExpression {};
-struct SubtractionAssignment	: BinaryExpression {};
-struct MultiplicationAssignment	: BinaryExpression {};
-struct DivisionAssignment		: BinaryExpression {};
-struct RemainderAssignment		: BinaryExpression {};
-struct ExponentiationAssignment	: BinaryExpression {};
-struct BitwiseAndAssignment		: BinaryExpression {};
-struct BitwiseOrAssignment		: BinaryExpression {};
-struct XorAssignment			: BinaryExpression {};
-struct LeftShiftAssignment		: BinaryExpression {};
-struct RightShiftAssignment		: BinaryExpression {};
+struct UnaryExpression
+{
+	UnaryOperator op;
+	Expression	  operand;
+};
 
-// clang-format on
+enum class BinaryOperator
+{
+	Add,
+	Subtract,
+	Multiply,
+	Divide,
+	Remainder,
+	Power,
+	LogicalAnd,
+	LogicalOr,
+	BitAnd,
+	BitOr,
+	Xor,
+	LeftShift,
+	RightShift,
+	Equality,
+	Inequality,
+	Less,
+	Greater,
+	LessEqual,
+	GreaterEqual,
+	Assign,
+	AddAssign,
+	SubtractAssign,
+	MultiplyAssign,
+	DivideAssign,
+	RemainderAssign,
+	PowerAssign,
+	BitAndAssign,
+	BitOrAssign,
+	XorAssign,
+	LeftShiftAssign,
+	RightShiftAssign
+};
+
+struct BinaryExpression
+{
+	BinaryOperator op;
+	Expression	   left;
+	Expression	   right;
+};
 
 using ExpressionNode = std::variant<Identifier,
 									GenericIdentifier,
+									Variability,
 									ArrayTypeExpression,
 									PointerTypeExpression,
 									NumericLiteral,
 									StringLiteral,
-									LetBinding,
-									VarBinding,
+									Binding,
 									BlockExpression,
 									GroupExpression,
 									IfExpression,
 									WhileLoop,
 									ForLoop,
-									Access,
-									Call,
-									Indexing,
 									BreakExpression,
 									ContinueExpression,
 									ReturnExpression,
 									ThrowExpression,
-									TryExpression,
-									PreIncrement,
-									PreDecrement,
-									PostIncrement,
-									PostDecrement,
-									AddressOf,
-									Dereference,
-									Negation,
-									LogicalNot,
-									BitwiseNot,
-									Addition,
-									Subtraction,
-									Multiplication,
-									Division,
-									Remainder,
-									Exponentiation,
-									LogicalAnd,
-									LogicalOr,
-									BitwiseAnd,
-									BitwiseOr,
-									Xor,
-									LeftShift,
-									RightShift,
-									Equality,
-									Inequality,
-									Less,
-									Greater,
-									LessEqual,
-									GreaterEqual,
-									Assignment,
-									AdditionAssignment,
-									SubtractionAssignment,
-									MultiplicationAssignment,
-									DivisionAssignment,
-									RemainderAssignment,
-									ExponentiationAssignment,
-									BitwiseAndAssignment,
-									BitwiseOrAssignment,
-									XorAssignment,
-									LeftShiftAssignment,
-									RightShiftAssignment>;
+									MemberAccess,
+									CallExpression,
+									IndexExpression,
+									UnaryExpression,
+									BinaryExpression>;

@@ -26,6 +26,7 @@ enum class Message : uint8_t
 	ExpectParenAfterCall,
 	ExpectBracketAfterIndex,
 	ExpectBracketAfterArrayCount,
+	ExpectBraceAfterVariability,
 	AmbiguousOperatorChaining,
 	AmbiguousOperatorMixing,
 };
@@ -54,6 +55,7 @@ constexpr inline LookupTable<Message, std::string_view> MESSAGE_FORMATS = []
 	t[ExpectParenAfterCall]			= "expected `)` after call expression, but found {}";
 	t[ExpectBracketAfterIndex]		= "expected `]` after index expression, but found {}";
 	t[ExpectBracketAfterArrayCount] = "expected `]` after array count, but found {}";
+	t[ExpectBraceAfterVariability]	= "expected `}` after variability arguments, but found {}";
 	t[AmbiguousOperatorChaining]	= "chaining the `{}` operator is ambiguous, could be {} or {}";
 	t[AmbiguousOperatorMixing]		= "mixing the `{}` and `{}` operators is ambiguous, could be {} or {}";
 	return t;
