@@ -22,8 +22,7 @@ enum class Message : uint8_t
 	ExpectNameAfterDot,
 	ExpectColonAfterCondition,
 	UnnecessaryColonBeforeBlock,
-	ExpectParenAfterGroup,
-	ExpectParenAfterCall,
+	ExpectClosingParen,
 	ExpectBracketAfterIndex,
 	ExpectBracketAfterArrayCount,
 	ExpectBraceAfterVariability,
@@ -51,8 +50,7 @@ constexpr inline LookupTable<Message, std::string_view> MESSAGE_FORMATS = []
 	t[ExpectNameAfterDot]			= "expected a member name after `.`, but found {}";
 	t[ExpectColonAfterCondition]	= "expected `:` after condition, but found {}";
 	t[UnnecessaryColonBeforeBlock]	= "`:` between condition and block is unnecessary";
-	t[ExpectParenAfterGroup]		= "expected `)` after grouping expression, but found {}";
-	t[ExpectParenAfterCall]			= "expected `)` after call expression, but found {}";
+	t[ExpectClosingParen]			= "expected closing `)`, but found {}";
 	t[ExpectBracketAfterIndex]		= "expected `]` after index expression, but found {}";
 	t[ExpectBracketAfterArrayCount] = "expected `]` after array count, but found {}";
 	t[ExpectBraceAfterVariability]	= "expected `}` after variability arguments, but found {}";

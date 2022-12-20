@@ -10,13 +10,13 @@ void SyntaxTree::add_to_root(Definition definition)
 Expression SyntaxTree::add(ExpressionNode node)
 {
 	expression_nodes.emplace_back(std::move(node));
-	return {static_cast<Index>(expression_nodes.size() - 1)};
+	return Expression(static_cast<Index>(expression_nodes.size() - 1));
 }
 
 Definition SyntaxTree::add(DefinitionNode node)
 {
 	definition_nodes.emplace_back(std::move(node));
-	return {static_cast<Index>(definition_nodes.size() - 1)};
+	return Definition(static_cast<Index>(definition_nodes.size() - 1));
 }
 
 std::span<const Definition> SyntaxTree::get_root_definitions() const

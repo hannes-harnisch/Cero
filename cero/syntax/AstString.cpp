@@ -367,14 +367,6 @@ void AstString::visit_node(const BlockExpression& block)
 	pop_level();
 }
 
-void AstString::visit_node(const GroupExpression& group)
-{
-	add_line("group");
-	push_level();
-	visit_tail(group.expression);
-	pop_level();
-}
-
 void AstString::visit_node(const IfExpression& if_expression)
 {
 	add_line("if");
@@ -464,10 +456,18 @@ void AstString::visit_node(const MemberAccess& member_access)
 
 void AstString::visit_node(const CallExpression& call)
 {
+	bool has_callee = !call.callee.is_null();
+	if (!has_callee && call.arguments.size() == 1)
+	{
+		visit(call.arguments[0]);
+		return;
+	}
+
 	add_line("call expression");
 	push_level();
 
-	visit_body(call.callee);
+	if (has_callee)
+		visit_body(call.callee.get());
 
 	add_tail_line("arguments");
 	push_level();

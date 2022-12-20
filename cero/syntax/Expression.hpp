@@ -1,7 +1,6 @@
 #pragma once
 
 #include "syntax/Literal.hpp"
-#include "util/StringInteger.hpp"
 
 #include <cstdint>
 #include <string_view>
@@ -14,7 +13,7 @@ struct Expression
 {
 	Index index;
 
-	Expression(Index index) :
+	explicit Expression(Index index) :
 		index(index)
 	{}
 };
@@ -26,7 +25,11 @@ class OptionalExpression
 	Expression expression;
 
 public:
-	OptionalExpression(Expression expression = NULL_INDEX) :
+	OptionalExpression() :
+		expression(NULL_INDEX)
+	{}
+
+	explicit OptionalExpression(Expression expression) :
 		expression(expression)
 	{}
 
@@ -62,7 +65,7 @@ struct Variability
 		VarUnbounded
 	};
 
-	Specifier				specifier = {};
+	Specifier				specifier = Specifier::In;
 	std::vector<Expression> arguments;
 };
 
@@ -98,11 +101,6 @@ struct Binding
 struct BlockExpression
 {
 	std::vector<Expression> statements;
-};
-
-struct GroupExpression
-{
-	Expression expression;
 };
 
 struct IfExpression
@@ -153,7 +151,7 @@ struct MemberAccess
 
 struct CallExpression
 {
-	Expression				callee;
+	OptionalExpression		callee;
 	std::vector<Expression> arguments;
 };
 
@@ -234,7 +232,6 @@ using ExpressionNode = std::variant<Identifier,
 									StringLiteral,
 									Binding,
 									BlockExpression,
-									GroupExpression,
 									IfExpression,
 									WhileLoop,
 									ForLoop,

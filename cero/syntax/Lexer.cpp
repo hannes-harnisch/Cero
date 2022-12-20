@@ -190,8 +190,8 @@ private:
 			}
 		}
 
-		uint32_t length = static_cast<uint32_t>(cursor - token_begin);
-		uint32_t offset = static_cast<uint32_t>(token_begin - source_begin);
+		auto length = static_cast<uint32_t>(cursor - token_begin);
+		auto offset = static_cast<uint32_t>(token_begin - source_begin);
 		stream.append({kind, length, offset});
 	}
 

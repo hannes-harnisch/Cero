@@ -54,7 +54,6 @@ private:
 	void visit_node(const StringLiteral& string_literal);
 	void visit_node(const Binding& binding);
 	void visit_node(const BlockExpression& block);
-	void visit_node(const GroupExpression& group);
 	void visit_node(const IfExpression& if_expression);
 	void visit_node(const WhileLoop& while_loop);
 	void visit_node(const ForLoop& for_loop);

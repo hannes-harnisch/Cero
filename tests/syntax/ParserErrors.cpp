@@ -217,7 +217,7 @@ g(bool a, bool b, bool c, bool d) -> bool
 	return (a || b) && (c || d)
 }
 )_____");
-	CHECK(r.pop_report(5, 1, Message::ExpectParenAfterGroup, "`}`"));
+	CHECK(r.pop_report(5, 1, Message::ExpectClosingParen, "`}`"));
 }
 
 TEST(MissingParenAfterFunctionCall)
@@ -235,7 +235,7 @@ g()
 	foo(2)
 }
 )_____");
-	CHECK(r.pop_report(7, 1, Message::ExpectParenAfterCall, "`}`"));
+	CHECK(r.pop_report(7, 1, Message::ExpectClosingParen, "`}`"));
 }
 
 TEST(MissingBracketAfterIndex)

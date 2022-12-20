@@ -1,7 +1,5 @@
 #include "LexicalToken.hpp"
 
-#include "util/Fail.hpp"
-
 #include <magic_enum.hpp>
 
 namespace
@@ -23,8 +21,8 @@ namespace
 			case CharLiteral: return "character literal {}";
 			case StringLiteral: return "string literal {}";
 			case EndOfFile: return "end of file";
+			default: return "`{}`";
 		}
-		return "`{}`";
 	}
 } // namespace
 

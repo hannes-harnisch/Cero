@@ -51,8 +51,7 @@ private:
 		Bitwise = Additive,
 		Multiplicative,
 		Prefix,
-		Postfix,
-		Primary
+		Postfix
 	};
 
 	struct ParseError
@@ -143,7 +142,7 @@ private:
 
 		OptionalExpression default_argument;
 		if (match(Token::Equal))
-			default_argument = parse_expression();
+			default_argument = OptionalExpression(parse_expression());
 
 		return {kind, name, type, default_argument};
 	}
@@ -302,6 +301,9 @@ private:
 
 	Expression on_var()
 	{
+		if (next_breakable().kind == Token::LeftBrace)
+			return ast.add(parse_variability());
+
 		return ast.add(parse_binding(Binding::Specifier::Var));
 	}
 
@@ -322,12 +324,13 @@ private:
 	Binding parse_binding(Binding::Specifier specifier)
 	{
 		uint32_t saved = cursor;
-		if (auto name = match(Token::Name))
+		if (auto name_token = match(Token::Name))
 		{
 			if (match(Token::Equal))
 			{
+				auto name		 = name_token->get_lexeme(source);
 				auto initializer = parse_expression();
-				return {specifier, name->get_lexeme(source), {}, initializer};
+				return {specifier, name, {}, OptionalExpression(initializer)};
 			}
 			cursor = saved;
 		}
@@ -337,9 +340,9 @@ private:
 
 		OptionalExpression initializer;
 		if (match(Token::Equal))
-			initializer = parse_expression();
+			initializer = OptionalExpression(parse_expression());
 
-		return {specifier, name, type, initializer};
+		return {specifier, name, OptionalExpression(type), initializer};
 	}
 
 	Expression on_prefix_left_brace()
@@ -349,18 +352,7 @@ private:
 
 	Expression on_prefix_left_paren()
 	{
-		uint32_t saved	= unclosed_angles;
-		unclosed_angles = 0;
-		++unclosed_parens;
-		defer
-		{
-			--unclosed_parens;
-			unclosed_angles = saved;
-		};
-
-		auto expression = parse_expression();
-		expect(Token::RightParen, Message::ExpectParenAfterGroup);
-		return ast.add(GroupExpression(expression));
+		return parse_call({});
 	}
 
 	Expression on_prefix_left_bracket()
@@ -387,17 +379,17 @@ private:
 
 		OptionalExpression else_expr;
 		if (match(Token::Else))
-			else_expr = parse_expression();
+			else_expr = OptionalExpression(parse_expression());
 
 		return ast.add(IfExpression(condition, then_expr, else_expr));
 	}
 
-	Expression on_while_loop()
+	Expression on_while()
 	{
 		to_do();
 	}
 
-	Expression on_for_loop()
+	Expression on_for()
 	{
 		to_do();
 	}
@@ -425,9 +417,9 @@ private:
 	OptionalExpression parse_optional_operand()
 	{
 		if (next_is_new_line())
-			return OptionalExpression();
+			return {};
 
-		return parse_expression();
+		return OptionalExpression(parse_expression());
 	}
 
 	template<UnaryOperator O, Precedence P>
@@ -458,15 +450,29 @@ private:
 
 	Expression on_infix_left_paren(Expression left)
 	{
+		return parse_call(OptionalExpression(left));
+	}
+
+	Expression parse_call(OptionalExpression callee)
+	{
+		uint32_t saved	= unclosed_angles;
+		unclosed_angles = 0;
+		++unclosed_parens;
+		defer
+		{
+			--unclosed_parens;
+			unclosed_angles = saved;
+		};
+
 		std::vector<Expression> arguments;
 		if (!match(Token::RightParen))
 		{
 			do
 				arguments.emplace_back(parse_expression());
 			while (match(Token::Comma));
-			expect(Token::RightParen, Message::ExpectParenAfterCall);
+			expect(Token::RightParen, Message::ExpectClosingParen);
 		}
-		return ast.add(CallExpression(left, std::move(arguments)));
+		return ast.add(CallExpression(callee, std::move(arguments)));
 	}
 
 	Expression on_infix_left_bracket(Expression left)
@@ -544,7 +550,7 @@ private:
 		auto count = parse_expression();
 		expect(Token::RightBracket, Message::ExpectBracketAfterArrayCount);
 		auto type = parse_type();
-		return ast.add(ArrayTypeExpression(count, type));
+		return ast.add(ArrayTypeExpression(OptionalExpression(count), type));
 	}
 
 	Expression parse_pointer_type()
@@ -659,8 +665,8 @@ private:
 		t[LeftParen]	 = &Parser::on_prefix_left_paren;
 		t[LeftBracket]	 = &Parser::on_prefix_left_bracket;
 		t[If]			 = &Parser::on_if;
-		t[While]		 = &Parser::on_while_loop;
-		t[For]			 = &Parser::on_for_loop;
+		t[While]		 = &Parser::on_while;
+		t[For]			 = &Parser::on_for;
 		t[Break]		 = &Parser::on_break;
 		t[Continue]		 = &Parser::on_continue;
 		t[Return]		 = &Parser::on_return;

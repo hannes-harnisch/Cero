@@ -1,0 +1,5 @@
+Checks: >
+  -cppcoreguidelines-pro-type-member-init,
+  -hicpp-exception-baseclass,
+  -misc-no-recursion,
+  -modernize-use-nodiscard,
