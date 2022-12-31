@@ -7,7 +7,7 @@
 
 SyntaxTree parse_exhaustive(const Source& source)
 {
-	ExhaustiveReporter reporter(source.get_path());
+	ExhaustiveReporter reporter(Reporter(Config()), source.get_path());
 
 	auto stream = lex(source, reporter);
 	return parse(stream, source, reporter);

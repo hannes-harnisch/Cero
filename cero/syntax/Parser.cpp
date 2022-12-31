@@ -11,7 +11,7 @@ class Parser
 	const Source&	   source;
 	Reporter&		   reporter;
 	uint32_t		   cursor		   = 0;
-	uint32_t		   unclosed_parens = 0;
+	uint32_t		   unclosed_groups = 0;
 	uint32_t		   unclosed_angles = 0;
 
 	using PrefixParse	 = Expression (Parser::*)();
@@ -116,6 +116,12 @@ private:
 
 	std::vector<Parameter> parse_parameter_list()
 	{
+		++unclosed_groups;
+		defer
+		{
+			--unclosed_groups;
+		};
+
 		std::vector<Parameter> parameters;
 		if (!match(Token::RightParen))
 		{
@@ -172,10 +178,10 @@ private:
 
 	std::vector<Expression> parse_block()
 	{
-		uint32_t saved_parens = unclosed_parens;
+		uint32_t saved_parens = unclosed_groups;
 		uint32_t saved_angles = unclosed_angles;
 
-		unclosed_parens = 0;
+		unclosed_groups = 0;
 		unclosed_angles = 0;
 
 		std::vector<Expression> statements;
@@ -192,7 +198,7 @@ private:
 		}
 
 		unclosed_angles = saved_angles;
-		unclosed_parens = saved_parens;
+		unclosed_groups = saved_parens;
 		return statements;
 	}
 
@@ -227,7 +233,7 @@ private:
 		if (precedence >= NON_PREFIX_PRECEDENCES[token.kind])
 			return nullptr;
 
-		if (across_lines && unclosed_parens == 0 && is_unbreakable_operator(token.kind))
+		if (across_lines && unclosed_groups == 0 && is_unbreakable_operator(token.kind))
 			return nullptr;
 
 		advance();
@@ -357,7 +363,8 @@ private:
 
 	Expression on_prefix_left_bracket()
 	{
-		to_do();
+		auto arguments = parse_bracketed_arguments();
+		return Expression(~0u);
 	}
 
 	Expression on_if()
@@ -457,10 +464,10 @@ private:
 	{
 		uint32_t saved	= unclosed_angles;
 		unclosed_angles = 0;
-		++unclosed_parens;
+		++unclosed_groups;
 		defer
 		{
-			--unclosed_parens;
+			--unclosed_groups;
 			unclosed_angles = saved;
 		};
 
@@ -477,6 +484,20 @@ private:
 
 	Expression on_infix_left_bracket(Expression left)
 	{
+		return ast.add(IndexExpression(left, parse_bracketed_arguments()));
+	}
+
+	std::vector<Expression> parse_bracketed_arguments()
+	{
+		uint32_t saved	= unclosed_angles;
+		unclosed_angles = 0;
+		++unclosed_groups;
+		defer
+		{
+			--unclosed_groups;
+			unclosed_angles = saved;
+		};
+
 		std::vector<Expression> arguments;
 		if (!match(Token::RightBracket))
 		{
@@ -485,7 +506,7 @@ private:
 			while (match(Token::Comma));
 			expect(Token::RightBracket, Message::ExpectBracketAfterIndex);
 		}
-		return ast.add(IndexExpression(left, std::move(arguments)));
+		return arguments;
 	}
 
 	Expression on_right_angle(Expression left)

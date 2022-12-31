@@ -2,10 +2,6 @@
 
 #include <cero/driver/Build.hpp>
 
-ExhaustiveReporter::ExhaustiveReporter(std::string_view test_name) :
-	test_name(test_name)
-{}
-
 ExhaustiveReporter::ExhaustiveReporter(Reporter reporter, std::string_view test_name) :
 	Reporter(std::move(reporter)),
 	test_name(test_name)
@@ -19,7 +15,7 @@ ExhaustiveReporter::~ExhaustiveReporter()
 Source make_test_source(std::string source_text, std::source_location loc, const Config& config)
 {
 	auto path = loc.function_name();
-	return Source(std::move(source_text), path, config);
+	return {std::move(source_text), path, config};
 }
 
 ExhaustiveReporter build_test_source(std::string source_text, std::source_location loc)
@@ -29,5 +25,5 @@ ExhaustiveReporter build_test_source(std::string source_text, std::source_locati
 
 	auto reporter = build_source(source, config);
 	auto path	  = loc.function_name();
-	return ExhaustiveReporter(std::move(reporter), path);
+	return {std::move(reporter), path};
 }

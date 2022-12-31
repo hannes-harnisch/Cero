@@ -227,8 +227,6 @@ private:
 
 	Token lex_number(char first)
 	{
-		// TODO: trim whitespace
-		// TODO: disallow `1.`
 		if (first == '0' && cursor != source_end)
 		{
 			switch (*cursor)
@@ -252,11 +250,14 @@ private:
 
 		if (cursor != source_end && *cursor == '.')
 		{
+			auto cursor_at_dot = cursor;
 			++cursor;
-			eat_number_literal(is_dec_digit);
-			return Token::FloatLiteral;
-		}
 
+			if (eat_decimal_number())
+				return Token::FloatLiteral;
+			else
+				cursor = cursor_at_dot;
+		}
 		return Token::DecIntLiteral;
 	}
 
@@ -265,11 +266,29 @@ private:
 		while (cursor != source_end)
 		{
 			char it = *cursor;
+
 			if (!char_predicate(it) && it != ' ' && it != '\t')
 				break;
 
 			++cursor;
 		}
+	}
+
+	bool eat_decimal_number()
+	{
+		bool ate = false;
+		while (cursor != source_end)
+		{
+			char it = *cursor;
+
+			if (is_dec_digit(it))
+				ate = true;
+			else if (it != ' ' && it != '\t')
+				break;
+
+			++cursor;
+		}
+		return ate;
 	}
 
 	Token match_colon()

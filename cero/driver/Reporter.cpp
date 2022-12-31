@@ -26,14 +26,15 @@ namespace
 		switch (message)
 		{
 			case UnnecessaryColonBeforeBlock: return Severity::Warning;
+			default: return Severity::Error;
 		}
-		return Severity::Error;
 	}
 } // namespace
 
-void Reporter::set_warnings_as_errors()
+Reporter::Reporter(const Config& config)
 {
-	warnings_as_errors = true;
+	if (config.warnings_as_errors)
+		warnings_as_errors = true;
 }
 
 bool Reporter::has_reports() const
@@ -62,7 +63,7 @@ void Reporter::write(Message message, SourceLocation location, std::format_args 
 	auto location_text = location.to_string();
 	auto severity_text = to_string(severity);
 	auto message_text  = std::vformat(MESSAGE_FORMATS[message], args);
-	std::fprintf(stderr, "%s: %s: %s\n", location_text.data(), severity_text, message_text.data());
+	std::printf("%s: %s: %s\n", location_text.data(), severity_text, message_text.data());
 
 	reports.emplace_back(message, location, std::move(message_text));
 }

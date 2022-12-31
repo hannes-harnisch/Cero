@@ -12,7 +12,6 @@ class ExhaustiveReporter : public Reporter,
 	std::string_view test_name;
 
 public:
-	ExhaustiveReporter(std::string_view test_name);
 	ExhaustiveReporter(Reporter reporter, std::string_view test_name);
 
 	~ExhaustiveReporter();

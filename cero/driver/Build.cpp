@@ -5,7 +5,7 @@
 
 Reporter build_source(const Source& source, const Config& config)
 {
-	Reporter reporter;
+	Reporter reporter(config);
 
 	auto stream = lex(source, reporter);
 	if (config.log_tokens)

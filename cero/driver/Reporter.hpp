@@ -1,5 +1,6 @@
 #pragma once
 
+#include "driver/Config.hpp"
 #include "driver/Message.hpp"
 #include "driver/SourceLocation.hpp"
 
@@ -22,7 +23,7 @@ class Reporter
 	bool				warnings_as_errors = false;
 
 public:
-	Reporter() = default;
+	explicit Reporter(const Config& config);
 
 	template<typename... Args>
 	void report(CheckedMessage<Args...> message, SourceLocation location, Args&&... args)
@@ -30,7 +31,6 @@ public:
 		write(message.value, location, std::make_format_args(std::forward<Args>(args)...));
 	}
 
-	void set_warnings_as_errors();
 	bool has_reports() const;
 
 protected:

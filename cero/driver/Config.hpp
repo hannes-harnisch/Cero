@@ -31,7 +31,7 @@ struct Config
 	bool	 log_ast			= false;
 
 	Config() = default;
-	Config(std::span<std::string_view> args);
+	explicit Config(std::span<std::string_view> args);
 
 private:
 	void set_command(std::string_view arg);

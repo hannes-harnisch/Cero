@@ -48,6 +48,8 @@ void Config::set_option(std::string_view arg)
 {
 	if (is_file_path(arg))
 		file_paths.emplace_back(arg);
+	else if (arg == "-Werror")
+		warnings_as_errors = true;
 	else if (arg == "--log-tokens")
 		log_tokens = true;
 	else if (arg == "--log-ast")
