@@ -1,15 +1,10 @@
+#include "syntax/LexExhaustive.hpp"
 #include "util/Test.hpp"
 
 #include <cero/syntax/Lexer.hpp>
 
 namespace
 {
-	TokenStream lex_exhaustive(const Source& source)
-	{
-		ExhaustiveReporter reporter(Reporter(Config()), source.get_path());
-		return lex(source, reporter);
-	}
-
 	bool all_tokens_match(const TokenStream& token_stream, std::initializer_list<Token> kinds)
 	{
 		auto tokens = token_stream.get_tokens();
@@ -183,15 +178,6 @@ TEST(BlockComments)
 	CHECK(tokens.at(19).get_lexeme(src) == "/*// */");
 }
 
-TEST(DotDot)
-{
-	auto src	= make_test_source(R"_____(
-..
-)_____");
-	auto tokens = lex_exhaustive(src);
-	CHECK(all_tokens_match(tokens, {NewLine, Dot, Dot, NewLine, EndOfFile}));
-}
-
 TEST(BracketCaret)
 {
 	auto src	= make_test_source(R"_____(
@@ -210,4 +196,35 @@ TEST(UnicodeNames)
 	auto tokens = lex_exhaustive(src);
 	CHECK(all_tokens_match(tokens, {NewLine, Name, LeftParen, RightParen, NewLine, LeftBrace, RightBrace, NewLine, EndOfFile}));
 	CHECK(tokens.at(1).get_lexeme(src) == "𖭽");
+}
+
+TEST(LexingOperators)
+{
+	auto src	= make_test_source(R"_____(
+!
++ - * / %
+<< >>
+== != < > <= >=
+.
+::
+&& ||
+=
+& | ~
+)_____");
+	auto tokens = lex_exhaustive(src);
+	CHECK(all_tokens_match(tokens, {NewLine,	Bang,	   NewLine,	  Plus,			  Minus,		   Star,
+									Slash,		Percent,   NewLine,	  LeftAngleAngle, RightAngleAngle, NewLine,
+									EqualEqual, BangEqual, LeftAngle, RightAngle,	  LeftAngleEqual,  RightAngleEqual,
+									NewLine,	Dot,	   NewLine,	  ColonColon,	  NewLine,		   DoubleAmpersand,
+									PipePipe,	NewLine,   Equal,	  NewLine,		  Ampersand,	   Pipe,
+									Tilde,		NewLine,   EndOfFile}));
+}
+
+TEST(DotDot)
+{
+	auto src	= make_test_source(R"_____(
+..
+)_____");
+	auto tokens = lex_exhaustive(src);
+	CHECK(all_tokens_match(tokens, {NewLine, Dot, Dot, NewLine, EndOfFile}));
 }

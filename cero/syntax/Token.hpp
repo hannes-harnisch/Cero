@@ -74,7 +74,6 @@ enum class Token : uint32_t
 	StarStarEqual,		  // **=
 	LeftAngleAngleEqual,  // <<=
 	RightAngleAngleEqual, // >>=
-	BracketedCaret,		  // [^]
 
 	// Keywords
 	Break,

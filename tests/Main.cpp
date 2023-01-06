@@ -32,7 +32,7 @@ public:
 
 	void test_case_start(const doctest::TestCaseData& test_case) override
 	{
-		out << "—————————— Test: " << test_case.m_name << '\n';
+		out << "—————————— Running test: " << test_case.m_name << '\n';
 	}
 
 	void test_case_reenter(const doctest::TestCaseData&) override

@@ -40,8 +40,11 @@ std::string LexicalToken::to_log_string(const Source& source) const
 {
 	auto token_kind = magic_enum::enum_name(kind);
 	auto lexeme		= get_lexeme(source);
-	auto location	= locate_in(source);
-	return std::format("{} `{}`\t[{}]", token_kind, lexeme, location.to_string());
+	if (kind == Token::NewLine)
+		lexeme = "";
+
+	auto location = locate_in(source);
+	return std::format("{} `{}` [{}]", token_kind, lexeme, location.to_string());
 }
 
 SourceLocation LexicalToken::locate_in(const Source& source) const

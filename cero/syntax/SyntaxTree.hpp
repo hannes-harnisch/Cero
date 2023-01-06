@@ -19,6 +19,8 @@ public:
 	const ExpressionNode&		get(Expression expression) const;
 	const DefinitionNode&		get(Definition definition) const;
 
+	bool operator==(const SyntaxTree&) const = default;
+
 	std::string to_string(const Source& source) const;
 	void		log(const Source& source) const;
 };

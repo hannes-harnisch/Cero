@@ -151,7 +151,7 @@ private:
 			case '}': kind = RightBrace; break;
 			case '(': kind = LeftParen; break;
 			case ')': kind = RightParen; break;
-			case '[': kind = match_left_bracket(); break;
+			case '[': kind = LeftBracket; break;
 			case ']': kind = RightBracket; break;
 			case '<': kind = match_left_angle(); break;
 			case '>': kind = match_right_angle(); break;
@@ -297,18 +297,6 @@ private:
 			return Token::ColonColon;
 
 		return Token::Colon;
-	}
-
-	Token match_left_bracket()
-	{
-		if (match('^'))
-		{
-			if (match(']'))
-				return Token::BracketedCaret;
-
-			--cursor; // step back to ensure caret is not skipped
-		}
-		return Token::LeftBracket;
 	}
 
 	Token match_left_angle()

@@ -14,6 +14,8 @@ struct NumericLiteral
 {
 	Literal kind = {};
 	// TODO: multiprecision value
+
+	bool operator==(const NumericLiteral&) const = default;
 };
 
 NumericLiteral evaluate_dec_int_literal(std::string_view lexeme);
@@ -27,5 +29,7 @@ struct StringLiteral
 {
 	std::string value;
 
-	StringLiteral(std::string_view lexeme);
+	explicit StringLiteral(std::string_view lexeme);
+
+	bool operator==(const StringLiteral&) const = default;
 };
