@@ -4,6 +4,9 @@
 #include "util/Defer.hpp"
 #include "util/LookupTable.hpp"
 
+namespace cero
+{
+
 class Parser
 {
 	SyntaxTree		   ast;
@@ -111,10 +114,10 @@ private:
 		expect(Token::LeftBrace, Message::ExpectBraceBeforeFuncBody);
 
 		auto statements = parse_block();
-		return ast.add(Function(name, std::move(parameters), std::move(returns), std::move(statements)));
+		return ast.add(ast::Function(name, std::move(parameters), std::move(returns), std::move(statements)));
 	}
 
-	std::vector<Parameter> parse_parameter_list()
+	std::vector<ast::Parameter> parse_parameter_list()
 	{
 		++unclosed_groups;
 		defer
@@ -122,7 +125,7 @@ private:
 			--unclosed_groups;
 		};
 
-		std::vector<Parameter> parameters;
+		std::vector<ast::Parameter> parameters;
 		if (!match(Token::RightParen))
 		{
 			do
@@ -133,13 +136,13 @@ private:
 		return parameters;
 	}
 
-	Parameter parse_parameter()
+	ast::Parameter parse_parameter()
 	{
-		auto kind = ParameterKind::In;
+		auto kind = ast::ParameterKind::In;
 		if (match(Token::Let))
-			kind = ParameterKind::Let;
+			kind = ast::ParameterKind::Let;
 		else if (match(Token::Var))
-			kind = ParameterKind::Var;
+			kind = ast::ParameterKind::Var;
 
 		auto type = parse_type();
 		auto name = expect_name(Message::ExpectParamName);
@@ -153,9 +156,9 @@ private:
 		return {kind, name, type, default_argument};
 	}
 
-	std::vector<ReturnValue> parse_return_list()
+	std::vector<ast::ReturnValue> parse_return_list()
 	{
-		std::vector<ReturnValue> returns;
+		std::vector<ast::ReturnValue> returns;
 		if (match(Token::ThinArrow))
 		{
 			do
@@ -165,7 +168,7 @@ private:
 		return returns;
 	}
 
-	ReturnValue parse_return_value()
+	ast::ReturnValue parse_return_value()
 	{
 		auto type = parse_type();
 
@@ -266,7 +269,7 @@ private:
 		if (match(Token::LeftAngle))
 			return parse_generic_identifier(name);
 
-		return ast.add(Identifier(name));
+		return ast.add(ast::Identifier(name));
 	}
 
 	Expression parse_generic_identifier(std::string_view name)
@@ -284,10 +287,10 @@ private:
 				generic_args.emplace_back(parse_expression());
 			while (match(Token::Comma));
 		} // Definitely unfinished
-		return ast.add(GenericIdentifier(name, std::move(generic_args)));
+		return ast.add(ast::GenericIdentifier(name, std::move(generic_args)));
 	}
 
-	template<NumericLiteral (*EVALUATE)(std::string_view)>
+	template<ast::NumericLiteral (*EVALUATE)(std::string_view)>
 	Expression on_numeric_literal()
 	{
 		auto lexeme = previous().get_lexeme(source);
@@ -297,12 +300,12 @@ private:
 	Expression on_string_literal()
 	{
 		auto lexeme = previous().get_lexeme(source);
-		return ast.add(StringLiteral(lexeme));
+		return ast.add(ast::StringLiteral(lexeme));
 	}
 
 	Expression on_let()
 	{
-		return ast.add(parse_binding(Binding::Specifier::Let));
+		return ast.add(parse_binding(ast::Binding::Specifier::Let));
 	}
 
 	Expression on_var()
@@ -310,24 +313,24 @@ private:
 		if (next_breakable().kind == Token::LeftBrace)
 			return ast.add(parse_variability());
 
-		return ast.add(parse_binding(Binding::Specifier::Var));
+		return ast.add(parse_binding(ast::Binding::Specifier::Var));
 	}
 
 	Expression on_const()
 	{
-		return ast.add(parse_binding(Binding::Specifier::Const));
+		return ast.add(parse_binding(ast::Binding::Specifier::Const));
 	}
 
 	Expression on_static()
 	{
-		auto specifier = Binding::Specifier::Static;
+		auto specifier = ast::Binding::Specifier::Static;
 		if (match(Token::Var))
-			specifier = Binding::Specifier::StaticVar;
+			specifier = ast::Binding::Specifier::StaticVar;
 
 		return ast.add(parse_binding(specifier));
 	}
 
-	Binding parse_binding(Binding::Specifier specifier)
+	ast::Binding parse_binding(ast::Binding::Specifier specifier)
 	{
 		uint32_t saved = cursor;
 		if (auto name_token = match(Token::Name))
@@ -353,7 +356,7 @@ private:
 
 	Expression on_prefix_left_brace()
 	{
-		return ast.add(BlockExpression(parse_block()));
+		return ast.add(ast::Block(parse_block()));
 	}
 
 	Expression on_prefix_left_paren()
@@ -388,7 +391,7 @@ private:
 		if (match(Token::Else))
 			else_expr = OptionalExpression(parse_expression());
 
-		return ast.add(IfExpression(condition, then_expr, else_expr));
+		return ast.add(ast::If(condition, then_expr, else_expr));
 	}
 
 	Expression on_while()
@@ -403,22 +406,22 @@ private:
 
 	Expression on_break()
 	{
-		return ast.add(BreakExpression(parse_optional_operand()));
+		return ast.add(ast::Break(parse_optional_operand()));
 	}
 
 	Expression on_continue()
 	{
-		return ast.add(ContinueExpression(parse_optional_operand()));
+		return ast.add(ast::Continue(parse_optional_operand()));
 	}
 
 	Expression on_return()
 	{
-		return ast.add(ReturnExpression(parse_optional_operand()));
+		return ast.add(ast::Return(parse_optional_operand()));
 	}
 
 	Expression on_throw()
 	{
-		return ast.add(ThrowExpression(parse_optional_operand()));
+		return ast.add(ast::Throw(parse_optional_operand()));
 	}
 
 	OptionalExpression parse_optional_operand()
@@ -429,30 +432,30 @@ private:
 		return OptionalExpression(parse_expression());
 	}
 
-	template<UnaryOperator O, Precedence P>
+	template<ast::UnaryOperator O, Precedence P>
 	Expression on_prefix_operator()
 	{
 		auto right = parse_expression(P);
-		return ast.add(UnaryExpression(O, right));
+		return ast.add(ast::UnaryExpression(O, right));
 	}
 
-	template<BinaryOperator O, Precedence P>
+	template<ast::BinaryOperator O, Precedence P>
 	Expression on_infix_operator(Expression left)
 	{
 		auto right = parse_expression(P);
-		return ast.add(BinaryExpression(O, left, right));
+		return ast.add(ast::BinaryExpression(O, left, right));
 	}
 
-	template<UnaryOperator O>
+	template<ast::UnaryOperator O>
 	Expression on_postfix_operator(Expression left)
 	{
-		return ast.add(UnaryExpression(O, left));
+		return ast.add(ast::UnaryExpression(O, left));
 	}
 
 	Expression on_dot(Expression left)
 	{
 		auto member = expect_name(Message::ExpectNameAfterDot);
-		return ast.add(MemberAccess(left, member));
+		return ast.add(ast::MemberAccess(left, member));
 	}
 
 	Expression on_infix_left_paren(Expression left)
@@ -479,12 +482,12 @@ private:
 			while (match(Token::Comma));
 			expect(Token::RightParen, Message::ExpectClosingParen);
 		}
-		return ast.add(CallExpression(callee, std::move(arguments)));
+		return ast.add(ast::Call(callee, std::move(arguments)));
 	}
 
 	Expression on_infix_left_bracket(Expression left)
 	{
-		return ast.add(IndexExpression(left, parse_bracketed_arguments()));
+		return ast.add(ast::Index(left, parse_bracketed_arguments()));
 	}
 
 	std::vector<Expression> parse_bracketed_arguments()
@@ -518,13 +521,13 @@ private:
 		}
 
 		auto right = parse_expression(Precedence::Comparison);
-		return ast.add(BinaryExpression(BinaryOperator::Greater, left, right));
+		return ast.add(ast::BinaryExpression(ast::BinaryOperator::Greater, left, right));
 	}
 
 	Expression on_right_angle_angle(Expression left)
 	{
 		auto right = parse_expression(Precedence::Bitwise);
-		return ast.add(BinaryExpression(BinaryOperator::RightShift, left, right));
+		return ast.add(ast::BinaryExpression(ast::BinaryOperator::RightShift, left, right));
 	}
 
 	Expression on_caret()
@@ -532,14 +535,14 @@ private:
 		return parse_pointer_type();
 	}
 
-	Variability parse_variability()
+	ast::Variability parse_variability()
 	{
-		auto specifier = Variability::Specifier::Var;
+		auto specifier = ast::Variability::Specifier::Var;
 
 		std::vector<Expression> arguments;
 		if (match(Token::LeftBrace))
 		{
-			specifier = Variability::Specifier::VarBounded;
+			specifier = ast::Variability::Specifier::VarBounded;
 			if (!match(Token::RightBrace))
 			{
 				do
@@ -547,7 +550,7 @@ private:
 				while (match(Token::Comma));
 
 				if (match(Token::Ellipsis))
-					specifier = Variability::Specifier::VarUnbounded;
+					specifier = ast::Variability::Specifier::VarUnbounded;
 
 				expect(Token::RightBrace, Message::ExpectBraceAfterVariability);
 			}
@@ -568,20 +571,20 @@ private:
 
 	Expression parse_array_type()
 	{
-		auto count = parse_expression();
-		expect(Token::RightBracket, Message::ExpectBracketAfterArrayCount);
+		auto bound = parse_expression();
+		expect(Token::RightBracket, Message::ExpectBracketAfterArrayBound);
 		auto type = parse_type();
-		return ast.add(ArrayTypeExpression(OptionalExpression(count), type));
+		return ast.add(ast::ArrayType(OptionalExpression(bound), type));
 	}
 
 	Expression parse_pointer_type()
 	{
-		Variability variability;
+		ast::Variability variability;
 		if (match(Token::Var))
 			variability = parse_variability();
 
 		auto type = parse_type();
-		return ast.add(PointerTypeExpression(variability, type));
+		return ast.add(ast::PointerType(variability, type));
 	}
 
 	std::optional<LexicalToken> match(Token kind)
@@ -666,8 +669,8 @@ private:
 	static constexpr LookupTable<Token, PrefixParse> PREFIX_PARSES = []
 	{
 		using enum Token;
-		using enum UnaryOperator;
 		using enum Precedence;
+		using enum ast::UnaryOperator;
 
 		LookupTable<Token, PrefixParse> t(nullptr);
 		t[Name]			 = &Parser::on_name;
@@ -753,9 +756,9 @@ private:
 	static constexpr LookupTable<Token, NonPrefixParse> NON_PREFIX_PARSES = []
 	{
 		using enum Token;
-		using enum UnaryOperator;
-		using enum BinaryOperator;
 		using enum Precedence;
+		using enum ast::UnaryOperator;
+		using enum ast::BinaryOperator;
 
 		LookupTable<Token, NonPrefixParse> t(nullptr);
 		t[Dot]					= &Parser::on_dot;
@@ -804,3 +807,5 @@ SyntaxTree parse(const TokenStream& token_stream, const Source& source, Reporter
 	Parser parser(token_stream, source, reporter);
 	return parser.parse();
 }
+
+} // namespace cero

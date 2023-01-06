@@ -1,11 +1,16 @@
 #define DOCTEST_CONFIG_IMPLEMENT
 #include <doctest/doctest.h>
 
+namespace cero
+{
+
 void init_platform();
+
+}
 
 int main(int argc, char* argv[])
 {
-	init_platform();
+	cero::init_platform();
 
 	doctest::Context context;
 	context.applyCommandLine(argc, argv);

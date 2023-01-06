@@ -8,6 +8,9 @@
 #include <string>
 #include <vector>
 
+namespace cero
+{
+
 class Reporter
 {
 	struct Report
@@ -39,3 +42,5 @@ protected:
 private:
 	void write(Message message, SourceLocation loc, std::format_args args);
 };
+
+} // namespace cero

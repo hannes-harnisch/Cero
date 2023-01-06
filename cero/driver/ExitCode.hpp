@@ -1,5 +1,8 @@
 #pragma once
 
+namespace cero
+{
+
 enum class ExitCode
 {
 	Success		  = 0,
@@ -11,3 +14,5 @@ enum class ExitCode
 	CannotCreate  = 73,
 	IoError		  = 74,
 };
+
+} // namespace cero

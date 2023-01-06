@@ -7,6 +7,9 @@
 #include <string_view>
 #include <vector>
 
+namespace cero
+{
+
 enum class Command
 {
 	None,
@@ -37,3 +40,5 @@ private:
 	void set_command(std::string_view arg);
 	void set_option(std::string_view arg);
 };
+
+} // namespace cero

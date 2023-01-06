@@ -2,6 +2,9 @@
 
 #include "driver/ExitCode.hpp"
 
+namespace cero
+{
+
 namespace
 {
 	[[noreturn]] void exit(ExitCode exit_code)
@@ -23,3 +26,5 @@ void to_do(std::source_location location)
 	std::cout << "\tFunction:\t" << location.function_name() << std::endl;
 	exit(ExitCode::InternalError);
 }
+
+} // namespace cero

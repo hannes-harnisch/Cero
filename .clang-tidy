@@ -1,5 +1,7 @@
 Checks: >
+  -bugprone-string-constructor,
   -cppcoreguidelines-pro-type-member-init,
+  -google-explicit-constructor,
   -hicpp-exception-baseclass,
   -misc-no-recursion,
   -modernize-use-nodiscard,

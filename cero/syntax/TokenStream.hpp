@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 
+namespace cero
+{
+
 class TokenStream
 {
 	std::vector<LexicalToken> tokens;
@@ -18,3 +21,5 @@ public:
 	std::string to_string(const Source& source) const;
 	void		log(const Source& source) const;
 };
+
+} // namespace cero

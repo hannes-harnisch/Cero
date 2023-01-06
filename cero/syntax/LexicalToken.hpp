@@ -7,6 +7,9 @@
 #include <string>
 #include <string_view>
 
+namespace cero
+{
+
 struct LexicalToken
 {
 	static constexpr size_t KIND_BITS	= 8;
@@ -22,3 +25,5 @@ struct LexicalToken
 	std::string		 to_log_string(const Source& source) const;
 	SourceLocation	 locate_in(const Source& source) const;
 };
+
+} // namespace cero

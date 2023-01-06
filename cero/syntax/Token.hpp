@@ -2,6 +2,9 @@
 
 #include <cstdint>
 
+namespace cero
+{
+
 enum class Token : uint32_t
 {
 	Name,
@@ -99,3 +102,5 @@ enum class Token : uint32_t
 
 	EndOfFile,
 };
+
+} // namespace cero

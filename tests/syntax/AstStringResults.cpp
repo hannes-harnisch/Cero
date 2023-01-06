@@ -1,7 +1,7 @@
 #include "syntax/ParseExhaustive.hpp"
 #include "util/Test.hpp"
 
-TEST(AstStringSimpleFunction)
+TEST(AstStringForSimpleFunction)
 {
 	auto src = make_test_source(R"_____(
 
@@ -10,7 +10,7 @@ main()
 
 )_____");
 	auto str = parse_exhaustive(src).to_string(src);
-	CHECK(str == R"_____(Printing AST for Test_AstStringSimpleFunction
+	CHECK(str == R"_____(Printing AST for Test_AstStringForSimpleFunction
 └── function `main`
     ├── parameters
     ├── return values
@@ -18,7 +18,7 @@ main()
 )_____");
 }
 
-TEST(AstStringSimpleFunctionWithParametersAndReturn)
+TEST(AstStringForSimpleFunctionWithParametersAndReturn)
 {
 	auto src = make_test_source(R"_____(
 
@@ -27,7 +27,7 @@ a(int32 x, bool a, bool b = x) -> float32
 
 )_____");
 	auto str = parse_exhaustive(src).to_string(src);
-	CHECK(str == R"_____(Printing AST for Test_AstStringSimpleFunctionWithParametersAndReturn
+	CHECK(str == R"_____(Printing AST for Test_AstStringForSimpleFunctionWithParametersAndReturn
 └── function `a`
     ├── parameters
     │   ├── parameter `x`
@@ -51,7 +51,7 @@ a(int32 x, bool a, bool b = x) -> float32
 )_____");
 }
 
-TEST(AstStringCall)
+TEST(AstStringForCall)
 {
 	auto src = make_test_source(R"_____(
 
@@ -65,7 +65,7 @@ b(int32 i, float64 f)
 
 )_____");
 	auto str = parse_exhaustive(src).to_string(src);
-	CHECK(str == R"_____(Printing AST for Test_AstStringCall
+	CHECK(str == R"_____(Printing AST for Test_AstStringForCall
 ├── function `a`
 │   ├── parameters
 │   │   ├── parameter `a`

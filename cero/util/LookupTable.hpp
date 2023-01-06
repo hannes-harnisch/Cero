@@ -2,6 +2,9 @@
 
 #include <magic_enum.hpp>
 
+namespace cero
+{
+
 template<typename T>
 constexpr size_t size_from_enum_max()
 requires std::is_enum_v<T>
@@ -35,3 +38,5 @@ public:
 		return table[static_cast<size_t>(key)];
 	}
 };
+
+} // namespace cero

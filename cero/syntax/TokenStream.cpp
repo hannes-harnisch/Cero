@@ -1,5 +1,8 @@
 #include "TokenStream.hpp"
 
+namespace cero
+{
+
 void TokenStream::append(LexicalToken token)
 {
 	tokens.emplace_back(token);
@@ -29,3 +32,5 @@ void TokenStream::log(const Source& source) const
 {
 	std::clog << to_string(source);
 }
+
+} // namespace cero

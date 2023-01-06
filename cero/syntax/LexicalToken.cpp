@@ -2,6 +2,9 @@
 
 #include <magic_enum.hpp>
 
+namespace cero
+{
+
 namespace
 {
 	std::string_view get_token_message_format(Token kind)
@@ -52,3 +55,5 @@ SourceLocation LexicalToken::locate_in(const Source& source) const
 	auto cursor = source.begin() + offset;
 	return source.locate(cursor);
 }
+
+} // namespace cero

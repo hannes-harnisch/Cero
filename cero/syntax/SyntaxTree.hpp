@@ -4,6 +4,9 @@
 #include "syntax/Definition.hpp"
 #include "syntax/Expression.hpp"
 
+namespace cero
+{
+
 class SyntaxTree
 {
 	std::vector<ExpressionNode> expression_nodes;
@@ -24,3 +27,5 @@ public:
 	std::string to_string(const Source& source) const;
 	void		log(const Source& source) const;
 };
+
+} // namespace cero

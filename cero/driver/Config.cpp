@@ -1,5 +1,8 @@
 #include "Config.hpp"
 
+namespace cero
+{
+
 Config::Config(std::span<std::string_view> args)
 {
 	std::queue args_queue(std::deque(args.begin(), args.end()));
@@ -57,3 +60,5 @@ void Config::set_option(std::string_view arg)
 
 	// check for all other options here in the future
 }
+
+} // namespace cero

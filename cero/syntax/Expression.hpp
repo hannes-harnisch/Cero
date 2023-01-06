@@ -7,6 +7,9 @@
 #include <variant>
 #include <vector>
 
+namespace cero
+{
+
 using Index = uint32_t;
 
 struct Expression
@@ -48,241 +51,246 @@ public:
 	bool operator==(const OptionalExpression&) const = default;
 };
 
-struct Identifier
+namespace ast
 {
-	std::string_view name;
-
-	bool operator==(const Identifier&) const = default;
-};
-
-struct GenericIdentifier
-{
-	std::string_view		name;
-	std::vector<Expression> arguments;
-
-	bool operator==(const GenericIdentifier&) const = default;
-};
-
-struct Variability
-{
-	enum class Specifier : uint8_t
+	struct Identifier
 	{
-		In,
-		Var,
-		VarBounded,
-		VarUnbounded
+		std::string_view name;
+
+		bool operator==(const Identifier&) const = default;
 	};
 
-	Specifier				specifier = Specifier::In;
-	std::vector<Expression> arguments;
-
-	bool operator==(const Variability&) const = default;
-};
-
-struct ArrayTypeExpression
-{
-	OptionalExpression count;
-	Expression		   element_type;
-
-	bool operator==(const ArrayTypeExpression&) const = default;
-};
-
-struct PointerTypeExpression
-{
-	Variability variability;
-	Expression	type;
-
-	bool operator==(const PointerTypeExpression&) const = default;
-};
-
-struct Binding
-{
-	enum class Specifier
+	struct GenericIdentifier
 	{
-		Let,
-		Var,
-		Const,
-		Static,
-		StaticVar
+		std::string_view		name;
+		std::vector<Expression> arguments;
+
+		bool operator==(const GenericIdentifier&) const = default;
 	};
 
-	Specifier		   specifier = {};
-	std::string_view   name;
-	OptionalExpression type;
-	OptionalExpression initializer;
+	struct Variability
+	{
+		enum class Specifier : uint8_t
+		{
+			In,
+			Var,
+			VarBounded,
+			VarUnbounded
+		};
 
-	bool operator==(const Binding&) const = default;
-};
+		Specifier				specifier = Specifier::In;
+		std::vector<Expression> arguments;
 
-struct BlockExpression
-{
-	std::vector<Expression> statements;
+		bool operator==(const Variability&) const = default;
+	};
 
-	bool operator==(const BlockExpression&) const = default;
-};
+	struct ArrayType
+	{
+		OptionalExpression bound;
+		Expression		   element_type;
 
-struct IfExpression
-{
-	Expression		   condition;
-	Expression		   then_expression;
-	OptionalExpression else_expression;
+		bool operator==(const ArrayType&) const = default;
+	};
 
-	bool operator==(const IfExpression&) const = default;
-};
+	struct PointerType
+	{
+		Variability variability;
+		Expression	type;
 
-struct WhileLoop
-{
-	Expression condition;
-	Expression statement;
+		bool operator==(const PointerType&) const = default;
+	};
 
-	bool operator==(const WhileLoop&) const = default;
-};
+	struct Binding
+	{
+		enum class Specifier
+		{
+			Let,
+			Var,
+			Const,
+			Static,
+			StaticVar
+		};
 
-struct ForLoop
-{
-	Expression binding;
-	Expression range_expression;
-	Expression statement;
+		Specifier		   specifier = {};
+		std::string_view   name;
+		OptionalExpression type;
+		OptionalExpression initializer;
 
-	bool operator==(const ForLoop&) const = default;
-};
+		bool operator==(const Binding&) const = default;
+	};
 
-struct BreakExpression
-{
-	OptionalExpression label;
+	struct Block
+	{
+		std::vector<Expression> statements;
 
-	bool operator==(const BreakExpression&) const = default;
-};
+		bool operator==(const Block&) const = default;
+	};
 
-struct ContinueExpression
-{
-	OptionalExpression label;
+	struct If
+	{
+		Expression		   condition;
+		Expression		   then_expression;
+		OptionalExpression else_expression;
 
-	bool operator==(const ContinueExpression&) const = default;
-};
+		bool operator==(const If&) const = default;
+	};
 
-struct ReturnExpression
-{
-	OptionalExpression expression;
+	struct WhileLoop
+	{
+		Expression condition;
+		Expression statement;
 
-	bool operator==(const ReturnExpression&) const = default;
-};
+		bool operator==(const WhileLoop&) const = default;
+	};
 
-struct ThrowExpression
-{
-	OptionalExpression expression;
+	struct ForLoop
+	{
+		Expression binding;
+		Expression range_expression;
+		Expression statement;
 
-	bool operator==(const ThrowExpression&) const = default;
-};
+		bool operator==(const ForLoop&) const = default;
+	};
 
-struct MemberAccess
-{
-	Expression		 target;
-	std::string_view member;
+	struct Break
+	{
+		OptionalExpression label;
 
-	bool operator==(const MemberAccess&) const = default;
-};
+		bool operator==(const Break&) const = default;
+	};
 
-struct CallExpression
-{
-	OptionalExpression		callee;
-	std::vector<Expression> arguments;
+	struct Continue
+	{
+		OptionalExpression label;
 
-	bool operator==(const CallExpression&) const = default;
-};
+		bool operator==(const Continue&) const = default;
+	};
 
-struct IndexExpression
-{
-	Expression				target;
-	std::vector<Expression> arguments;
+	struct Return
+	{
+		OptionalExpression expression;
 
-	bool operator==(const IndexExpression&) const = default;
-};
+		bool operator==(const Return&) const = default;
+	};
 
-enum class UnaryOperator
-{
-	TryOperator,
-	PreIncrement,
-	PreDecrement,
-	PostIncrement,
-	PostDecrement,
-	AddressOf,
-	Dereference,
-	Negation,
-	LogicalNot,
-	BitwiseNot
-};
+	struct Throw
+	{
+		OptionalExpression expression;
 
-struct UnaryExpression
-{
-	UnaryOperator op;
-	Expression	  operand;
+		bool operator==(const Throw&) const = default;
+	};
 
-	bool operator==(const UnaryExpression&) const = default;
-};
+	struct MemberAccess
+	{
+		Expression		 target;
+		std::string_view member;
 
-enum class BinaryOperator
-{
-	Add,
-	Subtract,
-	Multiply,
-	Divide,
-	Remainder,
-	Power,
-	LogicalAnd,
-	LogicalOr,
-	BitAnd,
-	BitOr,
-	Xor,
-	LeftShift,
-	RightShift,
-	Equality,
-	Inequality,
-	Less,
-	Greater,
-	LessEqual,
-	GreaterEqual,
-	Assign,
-	AddAssign,
-	SubtractAssign,
-	MultiplyAssign,
-	DivideAssign,
-	RemainderAssign,
-	PowerAssign,
-	BitAndAssign,
-	BitOrAssign,
-	XorAssign,
-	LeftShiftAssign,
-	RightShiftAssign
-};
+		bool operator==(const MemberAccess&) const = default;
+	};
 
-struct BinaryExpression
-{
-	BinaryOperator op;
-	Expression	   left;
-	Expression	   right;
+	struct Call
+	{
+		OptionalExpression		callee;
+		std::vector<Expression> arguments;
 
-	bool operator==(const BinaryExpression&) const = default;
-};
+		bool operator==(const Call&) const = default;
+	};
 
-using ExpressionNode = std::variant<Identifier,
-									GenericIdentifier,
-									Variability,
-									ArrayTypeExpression,
-									PointerTypeExpression,
-									NumericLiteral,
-									StringLiteral,
-									Binding,
-									BlockExpression,
-									IfExpression,
-									WhileLoop,
-									ForLoop,
-									BreakExpression,
-									ContinueExpression,
-									ReturnExpression,
-									ThrowExpression,
-									MemberAccess,
-									CallExpression,
-									IndexExpression,
-									UnaryExpression,
-									BinaryExpression>;
+	struct Index
+	{
+		Expression				target;
+		std::vector<Expression> arguments;
+
+		bool operator==(const Index&) const = default;
+	};
+
+	enum class UnaryOperator
+	{
+		TryOperator,
+		PreIncrement,
+		PreDecrement,
+		PostIncrement,
+		PostDecrement,
+		AddressOf,
+		Dereference,
+		Negation,
+		LogicalNot,
+		BitwiseNot
+	};
+
+	struct UnaryExpression
+	{
+		UnaryOperator op;
+		Expression	  operand;
+
+		bool operator==(const UnaryExpression&) const = default;
+	};
+
+	enum class BinaryOperator
+	{
+		Add,
+		Subtract,
+		Multiply,
+		Divide,
+		Remainder,
+		Power,
+		LogicalAnd,
+		LogicalOr,
+		BitAnd,
+		BitOr,
+		Xor,
+		LeftShift,
+		RightShift,
+		Equality,
+		Inequality,
+		Less,
+		Greater,
+		LessEqual,
+		GreaterEqual,
+		Assign,
+		AddAssign,
+		SubtractAssign,
+		MultiplyAssign,
+		DivideAssign,
+		RemainderAssign,
+		PowerAssign,
+		BitAndAssign,
+		BitOrAssign,
+		XorAssign,
+		LeftShiftAssign,
+		RightShiftAssign
+	};
+
+	struct BinaryExpression
+	{
+		BinaryOperator op;
+		Expression	   left;
+		Expression	   right;
+
+		bool operator==(const BinaryExpression&) const = default;
+	};
+} // namespace ast
+
+using ExpressionNode = std::variant<ast::Identifier,
+									ast::GenericIdentifier,
+									ast::Variability,
+									ast::ArrayType,
+									ast::PointerType,
+									ast::NumericLiteral,
+									ast::StringLiteral,
+									ast::Binding,
+									ast::Block,
+									ast::If,
+									ast::WhileLoop,
+									ast::ForLoop,
+									ast::Break,
+									ast::Continue,
+									ast::Return,
+									ast::Throw,
+									ast::MemberAccess,
+									ast::Call,
+									ast::Index,
+									ast::UnaryExpression,
+									ast::BinaryExpression>;
+
+} // namespace cero

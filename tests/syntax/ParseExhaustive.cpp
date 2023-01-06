@@ -5,10 +5,10 @@
 #include <cero/syntax/Lexer.hpp>
 #include <cero/syntax/Parser.hpp>
 
-SyntaxTree parse_exhaustive(const Source& source)
+cero::SyntaxTree parse_exhaustive(const cero::Source& source)
 {
-	ExhaustiveReporter reporter(Reporter(Config()), source.get_path());
+	ExhaustiveReporter reporter(cero::Reporter(cero::Config()), source.get_path());
 
-	auto stream = lex(source, reporter);
-	return parse(stream, source, reporter);
+	auto stream = cero::lex(source, reporter);
+	return cero::parse(stream, source, reporter);
 }

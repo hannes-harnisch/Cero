@@ -3,6 +3,9 @@
 #include "syntax/Lexer.hpp"
 #include "syntax/Parser.hpp"
 
+namespace cero
+{
+
 Reporter build_source(const Source& source, const Config& config)
 {
 	Reporter reporter(config);
@@ -17,3 +20,5 @@ Reporter build_source(const Source& source, const Config& config)
 
 	return reporter;
 }
+
+} // namespace cero

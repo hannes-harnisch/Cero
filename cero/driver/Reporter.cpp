@@ -1,5 +1,8 @@
 #include "Reporter.hpp"
 
+namespace cero
+{
+
 namespace
 {
 	enum class Severity
@@ -63,7 +66,9 @@ void Reporter::write(Message message, SourceLocation location, std::format_args 
 	auto location_text = location.to_string();
 	auto severity_text = to_string(severity);
 	auto message_text  = std::vformat(MESSAGE_FORMATS[message], args);
-	std::printf("%s: %s: %s\n", location_text.data(), severity_text, message_text.data());
+	std::cout << std::format("{}: {}: {}\n", location_text, severity_text, message_text);
 
 	reports.emplace_back(message, location, std::move(message_text));
 }
+
+} // namespace cero

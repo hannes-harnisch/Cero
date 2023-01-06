@@ -6,6 +6,9 @@
 #include <optional>
 #include <string_view>
 
+namespace cero
+{
+
 class Source
 {
 	std::string		 text;
@@ -25,3 +28,5 @@ public:
 	std::string_view get_text() const;
 	std::string_view get_path() const;
 };
+
+} // namespace cero

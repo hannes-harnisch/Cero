@@ -1,5 +1,8 @@
 #include "Encoding.hpp"
 
+namespace cero
+{
+
 bool is_dec_digit(char c)
 {
 	return c >= '0' && c <= '9';
@@ -316,3 +319,5 @@ bool is_utf8_xid_continue(uint32_t encoded)
 {
 	return search_range_table(XID_CONTINUE_RANGES, encoded);
 }
+
+} // namespace cero

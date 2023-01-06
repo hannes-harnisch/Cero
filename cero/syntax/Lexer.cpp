@@ -3,6 +3,9 @@
 #include "driver/Message.hpp"
 #include "syntax/Encoding.hpp"
 
+namespace cero
+{
+
 namespace
 {
 	Token identify_word_lexeme(std::string_view lexeme)
@@ -568,3 +571,5 @@ TokenStream lex(const Source& source, Reporter& reporter)
 	Lexer lexer(source, reporter);
 	return lexer.lex();
 }
+
+} // namespace cero

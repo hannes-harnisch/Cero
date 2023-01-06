@@ -3,6 +3,9 @@
 #include <cstdint>
 #include <string_view>
 
+namespace cero
+{
+
 struct SourceLocation
 {
 	uint32_t		 line	= 0;
@@ -13,3 +16,5 @@ struct SourceLocation
 
 	std::string to_string() const;
 };
+
+} // namespace cero

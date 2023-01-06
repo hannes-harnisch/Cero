@@ -5,6 +5,9 @@
 
 #include <string_view>
 
+namespace cero
+{
+
 enum class Message : uint8_t
 {
 	SourceInputTooLarge,
@@ -24,7 +27,7 @@ enum class Message : uint8_t
 	UnnecessaryColonBeforeBlock,
 	ExpectClosingParen,
 	ExpectBracketAfterIndex,
-	ExpectBracketAfterArrayCount,
+	ExpectBracketAfterArrayBound,
 	ExpectBraceAfterVariability,
 	AmbiguousOperatorChaining,
 	AmbiguousOperatorMixing,
@@ -52,7 +55,7 @@ constexpr inline LookupTable<Message, std::string_view> MESSAGE_FORMATS = []
 	t[UnnecessaryColonBeforeBlock]	= "`:` between condition and block is unnecessary";
 	t[ExpectClosingParen]			= "expected closing `)`, but found {}";
 	t[ExpectBracketAfterIndex]		= "expected `]` after index expression, but found {}";
-	t[ExpectBracketAfterArrayCount] = "expected `]` after array count, but found {}";
+	t[ExpectBracketAfterArrayBound] = "expected `]` after array bound, but found {}";
 	t[ExpectBraceAfterVariability]	= "expected `}` after variability arguments, but found {}";
 	t[AmbiguousOperatorChaining]	= "chaining the `{}` operator is ambiguous, could be {} or {}";
 	t[AmbiguousOperatorMixing]		= "mixing the `{}` and `{}` operators is ambiguous, could be {} or {}";
@@ -92,3 +95,5 @@ private:
 
 template<typename... Args>
 using CheckedMessage = MessageChecker<std::type_identity_t<Args>...>;
+
+} // namespace cero

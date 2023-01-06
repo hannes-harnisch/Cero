@@ -5,6 +5,9 @@
 #include "driver/Source.hpp"
 #include "util/Fail.hpp"
 
+namespace cero
+{
+
 namespace
 {
 	void print_help()
@@ -70,3 +73,5 @@ ExitCode run_driver(std::span<std::string_view> args)
 	Config config(args);
 	return perform_command(config);
 }
+
+} // namespace cero

@@ -3,6 +3,9 @@
 #include "util/Macros.hpp"
 #include "util/Traits.hpp"
 
+namespace cero
+{
+
 template<typename D>
 class Defer : public Immovable
 {
@@ -19,4 +22,6 @@ public:
 	}
 };
 
-#define defer Defer CERO_CONCAT(_defer_, __LINE__) = [&]()
+} // namespace cero
+
+#define defer cero::Defer CERO_CONCAT(_defer_, __LINE__) = [&]()

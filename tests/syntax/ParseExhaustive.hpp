@@ -3,4 +3,4 @@
 #include <cero/driver/Source.hpp>
 #include <cero/syntax/SyntaxTree.hpp>
 
-SyntaxTree parse_exhaustive(const Source& source);
+cero::SyntaxTree parse_exhaustive(const cero::Source& source);

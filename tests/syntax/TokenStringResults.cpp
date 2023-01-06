@@ -1,7 +1,7 @@
 #include "syntax/LexExhaustive.hpp"
 #include "util/Test.hpp"
 
-TEST(TokenString_BracketsLiterals)
+TEST(TokenStringForBracketsLiterals)
 {
 	auto src	= make_test_source(R"_____(
 () [] {} <>
@@ -13,34 +13,34 @@ foo "bar" 'baz' 123 456
 )_____");
 	auto stream = lex_exhaustive(src);
 	auto string = stream.to_string(src);
-	CHECK(string == R"_____(NewLine `` [Test_TokenString_BracketsLiterals:1:1]
-LeftParen `(` [Test_TokenString_BracketsLiterals:2:1]
-RightParen `)` [Test_TokenString_BracketsLiterals:2:2]
-LeftBracket `[` [Test_TokenString_BracketsLiterals:2:4]
-RightBracket `]` [Test_TokenString_BracketsLiterals:2:5]
-LeftBrace `{` [Test_TokenString_BracketsLiterals:2:7]
-RightBrace `}` [Test_TokenString_BracketsLiterals:2:8]
-LeftAngle `<` [Test_TokenString_BracketsLiterals:2:10]
-RightAngle `>` [Test_TokenString_BracketsLiterals:2:11]
-NewLine `` [Test_TokenString_BracketsLiterals:2:12]
-Name `foo` [Test_TokenString_BracketsLiterals:3:1]
-StringLiteral `"bar"` [Test_TokenString_BracketsLiterals:3:5]
-CharLiteral `'baz'` [Test_TokenString_BracketsLiterals:3:11]
-DecIntLiteral `123 456` [Test_TokenString_BracketsLiterals:3:17]
-NewLine `` [Test_TokenString_BracketsLiterals:3:24]
-HexIntLiteral `0x12345 456 aff` [Test_TokenString_BracketsLiterals:4:1]
-NewLine `` [Test_TokenString_BracketsLiterals:4:16]
-BinIntLiteral `0b011 01  101` [Test_TokenString_BracketsLiterals:5:1]
-NewLine `` [Test_TokenString_BracketsLiterals:5:14]
-OctIntLiteral `0o03423362 63` [Test_TokenString_BracketsLiterals:6:1]
-NewLine `` [Test_TokenString_BracketsLiterals:6:14]
-FloatLiteral `1.345634634 234623` [Test_TokenString_BracketsLiterals:7:1]
-NewLine `` [Test_TokenString_BracketsLiterals:7:19]
-EndOfFile `` [Test_TokenString_BracketsLiterals:8:1]
+	CHECK(string == R"_____(NewLine `` [Test_TokenStringForBracketsLiterals:1:1]
+LeftParen `(` [Test_TokenStringForBracketsLiterals:2:1]
+RightParen `)` [Test_TokenStringForBracketsLiterals:2:2]
+LeftBracket `[` [Test_TokenStringForBracketsLiterals:2:4]
+RightBracket `]` [Test_TokenStringForBracketsLiterals:2:5]
+LeftBrace `{` [Test_TokenStringForBracketsLiterals:2:7]
+RightBrace `}` [Test_TokenStringForBracketsLiterals:2:8]
+LeftAngle `<` [Test_TokenStringForBracketsLiterals:2:10]
+RightAngle `>` [Test_TokenStringForBracketsLiterals:2:11]
+NewLine `` [Test_TokenStringForBracketsLiterals:2:12]
+Name `foo` [Test_TokenStringForBracketsLiterals:3:1]
+StringLiteral `"bar"` [Test_TokenStringForBracketsLiterals:3:5]
+CharLiteral `'baz'` [Test_TokenStringForBracketsLiterals:3:11]
+DecIntLiteral `123 456` [Test_TokenStringForBracketsLiterals:3:17]
+NewLine `` [Test_TokenStringForBracketsLiterals:3:24]
+HexIntLiteral `0x12345 456 aff` [Test_TokenStringForBracketsLiterals:4:1]
+NewLine `` [Test_TokenStringForBracketsLiterals:4:16]
+BinIntLiteral `0b011 01  101` [Test_TokenStringForBracketsLiterals:5:1]
+NewLine `` [Test_TokenStringForBracketsLiterals:5:14]
+OctIntLiteral `0o03423362 63` [Test_TokenStringForBracketsLiterals:6:1]
+NewLine `` [Test_TokenStringForBracketsLiterals:6:14]
+FloatLiteral `1.345634634 234623` [Test_TokenStringForBracketsLiterals:7:1]
+NewLine `` [Test_TokenStringForBracketsLiterals:7:19]
+EndOfFile `` [Test_TokenStringForBracketsLiterals:8:1]
 )_____");
 }
 
-TEST(TokenString_Operators)
+TEST(TokenStringForOperators)
 {
 	auto src	= make_test_source(R"_____(
 + - * / % & | ~ << >>
@@ -48,28 +48,28 @@ TEST(TokenString_Operators)
 )_____");
 	auto stream = lex_exhaustive(src);
 	auto string = stream.to_string(src);
-	CHECK(string == R"_____(NewLine `` [Test_TokenString_Operators:1:1]
-Plus `+` [Test_TokenString_Operators:2:1]
-Minus `-` [Test_TokenString_Operators:2:3]
-Star `*` [Test_TokenString_Operators:2:5]
-Slash `/` [Test_TokenString_Operators:2:7]
-Percent `%` [Test_TokenString_Operators:2:9]
-Ampersand `&` [Test_TokenString_Operators:2:11]
-Pipe `|` [Test_TokenString_Operators:2:13]
-Tilde `~` [Test_TokenString_Operators:2:15]
-LeftAngleAngle `<<` [Test_TokenString_Operators:2:17]
-RightAngleAngle `>>` [Test_TokenString_Operators:2:20]
-NewLine `` [Test_TokenString_Operators:2:22]
-DoubleAmpersand `&&` [Test_TokenString_Operators:3:1]
-PipePipe `||` [Test_TokenString_Operators:3:4]
-EqualEqual `==` [Test_TokenString_Operators:3:7]
-BangEqual `!=` [Test_TokenString_Operators:3:10]
-NewLine `` [Test_TokenString_Operators:3:12]
-EndOfFile `` [Test_TokenString_Operators:4:1]
+	CHECK(string == R"_____(NewLine `` [Test_TokenStringForOperators:1:1]
+Plus `+` [Test_TokenStringForOperators:2:1]
+Minus `-` [Test_TokenStringForOperators:2:3]
+Star `*` [Test_TokenStringForOperators:2:5]
+Slash `/` [Test_TokenStringForOperators:2:7]
+Percent `%` [Test_TokenStringForOperators:2:9]
+Ampersand `&` [Test_TokenStringForOperators:2:11]
+Pipe `|` [Test_TokenStringForOperators:2:13]
+Tilde `~` [Test_TokenStringForOperators:2:15]
+LeftAngleAngle `<<` [Test_TokenStringForOperators:2:17]
+RightAngleAngle `>>` [Test_TokenStringForOperators:2:20]
+NewLine `` [Test_TokenStringForOperators:2:22]
+DoubleAmpersand `&&` [Test_TokenStringForOperators:3:1]
+PipePipe `||` [Test_TokenStringForOperators:3:4]
+EqualEqual `==` [Test_TokenStringForOperators:3:7]
+BangEqual `!=` [Test_TokenStringForOperators:3:10]
+NewLine `` [Test_TokenStringForOperators:3:12]
+EndOfFile `` [Test_TokenStringForOperators:4:1]
 )_____");
 }
 
-TEST(TokenString_Keywords)
+TEST(TokenStringForKeywords)
 {
 	auto src	= make_test_source(R"_____(
 struct S
@@ -84,36 +84,35 @@ struct S
 }
 )_____");
 	auto stream = lex_exhaustive(src);
-	auto tokens = stream.get_tokens();
 	auto string = stream.to_string(src);
-	CHECK(string == R"_____(NewLine `` [Test_TokenString_Keywords:1:1]
-Struct `struct` [Test_TokenString_Keywords:2:1]
-Name `S` [Test_TokenString_Keywords:2:8]
-NewLine `` [Test_TokenString_Keywords:2:9]
-LeftBrace `{` [Test_TokenString_Keywords:3:1]
-NewLine `` [Test_TokenString_Keywords:3:2]
-Enum `enum` [Test_TokenString_Keywords:4:5]
-Name `E` [Test_TokenString_Keywords:4:10]
-NewLine `` [Test_TokenString_Keywords:4:11]
-LeftBrace `{` [Test_TokenString_Keywords:5:5]
-RightBrace `}` [Test_TokenString_Keywords:5:6]
-NewLine `` [Test_TokenString_Keywords:5:7]
-NewLine `` [Test_TokenString_Keywords:6:1]
-Name `f` [Test_TokenString_Keywords:7:5]
-LeftParen `(` [Test_TokenString_Keywords:7:6]
-RightParen `)` [Test_TokenString_Keywords:7:7]
-ThinArrow `->` [Test_TokenString_Keywords:7:9]
-Name `int32` [Test_TokenString_Keywords:7:12]
-NewLine `` [Test_TokenString_Keywords:7:17]
-LeftBrace `{` [Test_TokenString_Keywords:8:5]
-NewLine `` [Test_TokenString_Keywords:8:6]
-Return `return` [Test_TokenString_Keywords:9:9]
-DecIntLiteral `0` [Test_TokenString_Keywords:9:16]
-NewLine `` [Test_TokenString_Keywords:9:17]
-RightBrace `}` [Test_TokenString_Keywords:10:5]
-NewLine `` [Test_TokenString_Keywords:10:6]
-RightBrace `}` [Test_TokenString_Keywords:11:1]
-NewLine `` [Test_TokenString_Keywords:11:2]
-EndOfFile `` [Test_TokenString_Keywords:12:1]
+	CHECK(string == R"_____(NewLine `` [Test_TokenStringForKeywords:1:1]
+Struct `struct` [Test_TokenStringForKeywords:2:1]
+Name `S` [Test_TokenStringForKeywords:2:8]
+NewLine `` [Test_TokenStringForKeywords:2:9]
+LeftBrace `{` [Test_TokenStringForKeywords:3:1]
+NewLine `` [Test_TokenStringForKeywords:3:2]
+Enum `enum` [Test_TokenStringForKeywords:4:5]
+Name `E` [Test_TokenStringForKeywords:4:10]
+NewLine `` [Test_TokenStringForKeywords:4:11]
+LeftBrace `{` [Test_TokenStringForKeywords:5:5]
+RightBrace `}` [Test_TokenStringForKeywords:5:6]
+NewLine `` [Test_TokenStringForKeywords:5:7]
+NewLine `` [Test_TokenStringForKeywords:6:1]
+Name `f` [Test_TokenStringForKeywords:7:5]
+LeftParen `(` [Test_TokenStringForKeywords:7:6]
+RightParen `)` [Test_TokenStringForKeywords:7:7]
+ThinArrow `->` [Test_TokenStringForKeywords:7:9]
+Name `int32` [Test_TokenStringForKeywords:7:12]
+NewLine `` [Test_TokenStringForKeywords:7:17]
+LeftBrace `{` [Test_TokenStringForKeywords:8:5]
+NewLine `` [Test_TokenStringForKeywords:8:6]
+Return `return` [Test_TokenStringForKeywords:9:9]
+DecIntLiteral `0` [Test_TokenStringForKeywords:9:16]
+NewLine `` [Test_TokenStringForKeywords:9:17]
+RightBrace `}` [Test_TokenStringForKeywords:10:5]
+NewLine `` [Test_TokenStringForKeywords:10:6]
+RightBrace `}` [Test_TokenStringForKeywords:11:1]
+NewLine `` [Test_TokenStringForKeywords:11:2]
+EndOfFile `` [Test_TokenStringForKeywords:12:1]
 )_____");
 }

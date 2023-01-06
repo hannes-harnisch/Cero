@@ -2,6 +2,9 @@
 
 #include "syntax/AstString.hpp"
 
+namespace cero
+{
+
 void SyntaxTree::add_to_root(Definition definition)
 {
 	root_definitions.emplace_back(definition);
@@ -44,3 +47,5 @@ void SyntaxTree::log(const Source& source) const
 {
 	std::clog << to_string(source);
 }
+
+} // namespace cero

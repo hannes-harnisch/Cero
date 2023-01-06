@@ -1,5 +1,8 @@
 #include "Source.hpp"
 
+namespace cero
+{
+
 namespace
 {
 	std::optional<std::string> get_file_content(std::string_view path_text)
@@ -79,3 +82,5 @@ std::string_view Source::get_path() const
 {
 	return path;
 }
+
+} // namespace cero

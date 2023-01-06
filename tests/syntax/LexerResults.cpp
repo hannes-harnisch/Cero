@@ -1,24 +1,24 @@
 #include "syntax/LexExhaustive.hpp"
 #include "util/Test.hpp"
 
-#include <cero/syntax/Lexer.hpp>
-
 namespace
 {
-	bool all_tokens_match(const TokenStream& token_stream, std::initializer_list<Token> kinds)
-	{
-		auto tokens = token_stream.get_tokens();
-		CHECK(tokens.size() == kinds.size());
 
-		for (size_t i = 0; i != tokens.size(); ++i)
-			if (tokens[i].kind != kinds.begin()[i])
-				return false;
+bool all_tokens_match(const cero::TokenStream& token_stream, std::initializer_list<cero::Token> kinds)
+{
+	auto tokens = token_stream.get_tokens();
+	CHECK(tokens.size() == kinds.size());
 
-		return true;
-	}
+	for (size_t i = 0; i != tokens.size(); ++i)
+		if (tokens[i].kind != kinds.begin()[i])
+			return false;
+
+	return true;
+}
+
 } // namespace
 
-using enum Token;
+using enum cero::Token;
 
 TEST(EmptySource)
 {

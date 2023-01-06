@@ -4,8 +4,8 @@
 
 #include <cero/syntax/Lexer.hpp>
 
-TokenStream lex_exhaustive(const Source& source)
+cero::TokenStream lex_exhaustive(const cero::Source& source)
 {
-	ExhaustiveReporter reporter(Reporter(Config()), source.get_path());
-	return lex(source, reporter);
+	ExhaustiveReporter reporter(cero::Reporter(cero::Config()), source.get_path());
+	return cero::lex(source, reporter);
 }

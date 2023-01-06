@@ -1,7 +1,7 @@
 #include "syntax/ParseExhaustive.hpp"
 #include "util/Test.hpp"
 
-TEST(AstSimpleMain)
+TEST(AstForSimpleMain)
 {
 	auto src	= make_test_source(R"_____(
 main()
@@ -9,9 +9,9 @@ main()
 )_____");
 	auto result = parse_exhaustive(src);
 
-	SyntaxTree expected;
+	cero::SyntaxTree expected;
 
-	auto main = expected.add(Function("main", {}, {}, {}));
+	auto main = expected.add(cero::ast::Function("main", {}, {}, {}));
 	expected.add_to_root(main);
 
 	CHECK(result == expected);
