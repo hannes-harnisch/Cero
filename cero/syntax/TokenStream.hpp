@@ -14,9 +14,14 @@ class TokenStream
 	std::vector<LexicalToken> tokens;
 
 public:
-	void						  append(LexicalToken token);
+	using Iterator = std::vector<LexicalToken>::const_iterator;
+
+	explicit TokenStream(std::vector<LexicalToken> tokens);
+
 	std::span<const LexicalToken> get_tokens() const;
-	LexicalToken				  at(uint32_t index) const;
+	LexicalToken				  at(size_t index) const;
+	Iterator					  begin() const;
+	Iterator					  end() const;
 
 	std::string to_string(const Source& source) const;
 	void		log(const Source& source) const;

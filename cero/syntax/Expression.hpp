@@ -10,22 +10,20 @@
 namespace cero
 {
 
-using Index = uint32_t;
+using AstIndex = uint32_t;
 
 struct Expression
 {
-	Index index;
+	AstIndex index;
 
-	explicit Expression(Index index) :
+	explicit Expression(AstIndex index) :
 		index(index)
 	{}
-
-	bool operator==(const Expression&) const = default;
 };
 
 class OptionalExpression
 {
-	static constexpr Index NULL_INDEX = ~0u;
+	static constexpr AstIndex NULL_INDEX = ~0u;
 
 	Expression expression;
 
@@ -34,7 +32,7 @@ public:
 		expression(NULL_INDEX)
 	{}
 
-	explicit OptionalExpression(Expression expression) :
+	OptionalExpression(Expression expression) :
 		expression(expression)
 	{}
 
@@ -47,8 +45,6 @@ public:
 	{
 		return expression;
 	}
-
-	bool operator==(const OptionalExpression&) const = default;
 };
 
 namespace ast
@@ -56,16 +52,12 @@ namespace ast
 	struct Identifier
 	{
 		std::string_view name;
-
-		bool operator==(const Identifier&) const = default;
 	};
 
 	struct GenericIdentifier
 	{
 		std::string_view		name;
 		std::vector<Expression> arguments;
-
-		bool operator==(const GenericIdentifier&) const = default;
 	};
 
 	struct Variability
@@ -80,24 +72,44 @@ namespace ast
 
 		Specifier				specifier = Specifier::In;
 		std::vector<Expression> arguments;
-
-		bool operator==(const Variability&) const = default;
 	};
 
 	struct ArrayType
 	{
 		OptionalExpression bound;
 		Expression		   element_type;
-
-		bool operator==(const ArrayType&) const = default;
 	};
 
 	struct PointerType
 	{
 		Variability variability;
 		Expression	type;
+	};
 
-		bool operator==(const PointerType&) const = default;
+	enum class ParameterSpecifier : uint8_t
+	{
+		In,
+		Let,
+		Var
+	};
+
+	struct ReturnValue
+	{
+		Expression		 type;
+		std::string_view name;
+	};
+
+	struct FunctionType
+	{
+		struct Parameter
+		{
+			ParameterSpecifier specifier = {};
+			std::string_view   name;
+			Expression		   type;
+		};
+
+		std::vector<Parameter>	 parameters;
+		std::vector<ReturnValue> returns;
 	};
 
 	struct Binding
@@ -115,15 +127,11 @@ namespace ast
 		std::string_view   name;
 		OptionalExpression type;
 		OptionalExpression initializer;
-
-		bool operator==(const Binding&) const = default;
 	};
 
 	struct Block
 	{
 		std::vector<Expression> statements;
-
-		bool operator==(const Block&) const = default;
 	};
 
 	struct If
@@ -131,16 +139,12 @@ namespace ast
 		Expression		   condition;
 		Expression		   then_expression;
 		OptionalExpression else_expression;
-
-		bool operator==(const If&) const = default;
 	};
 
 	struct WhileLoop
 	{
 		Expression condition;
 		Expression statement;
-
-		bool operator==(const WhileLoop&) const = default;
 	};
 
 	struct ForLoop
@@ -148,60 +152,49 @@ namespace ast
 		Expression binding;
 		Expression range_expression;
 		Expression statement;
-
-		bool operator==(const ForLoop&) const = default;
 	};
 
 	struct Break
 	{
 		OptionalExpression label;
-
-		bool operator==(const Break&) const = default;
 	};
 
 	struct Continue
 	{
 		OptionalExpression label;
-
-		bool operator==(const Continue&) const = default;
 	};
 
 	struct Return
 	{
 		OptionalExpression expression;
-
-		bool operator==(const Return&) const = default;
 	};
 
 	struct Throw
 	{
 		OptionalExpression expression;
-
-		bool operator==(const Throw&) const = default;
 	};
 
 	struct MemberAccess
 	{
 		Expression		 target;
 		std::string_view member;
-
-		bool operator==(const MemberAccess&) const = default;
 	};
 
 	struct Call
 	{
 		OptionalExpression		callee;
 		std::vector<Expression> arguments;
-
-		bool operator==(const Call&) const = default;
 	};
 
 	struct Index
 	{
 		Expression				target;
 		std::vector<Expression> arguments;
+	};
 
-		bool operator==(const Index&) const = default;
+	struct ArrayLiteral
+	{
+		std::vector<Expression> elements;
 	};
 
 	enum class UnaryOperator
@@ -222,8 +215,6 @@ namespace ast
 	{
 		UnaryOperator op;
 		Expression	  operand;
-
-		bool operator==(const UnaryExpression&) const = default;
 	};
 
 	enum class BinaryOperator
@@ -266,8 +257,6 @@ namespace ast
 		BinaryOperator op;
 		Expression	   left;
 		Expression	   right;
-
-		bool operator==(const BinaryExpression&) const = default;
 	};
 } // namespace ast
 
@@ -276,6 +265,7 @@ using ExpressionNode = std::variant<ast::Identifier,
 									ast::Variability,
 									ast::ArrayType,
 									ast::PointerType,
+									ast::FunctionType,
 									ast::NumericLiteral,
 									ast::StringLiteral,
 									ast::Binding,

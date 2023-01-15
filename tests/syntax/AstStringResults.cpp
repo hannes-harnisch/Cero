@@ -30,20 +30,13 @@ a(int32 x, bool a, bool b = x) -> float32
 	CHECK(str == R"_____(Printing AST for Test_AstStringForSimpleFunctionWithParametersAndReturn
 └── function `a`
     ├── parameters
-    │   ├── parameter `x`
-    │   │   ├── kind `in`
-    │   │   └── type
-    │   │       └── identifier `int32`
-    │   ├── parameter `a`
-    │   │   ├── kind `in`
-    │   │   └── type
-    │   │       └── identifier `bool`
-    │   └── parameter `b`
-    │       ├── kind `in`
-    │       ├── type
-    │       │   └── identifier `bool`
-    │       └── default argument
-    │           └── identifier `x`
+    │   ├── in parameter `x`
+    │   │   └── identifier `int32`
+    │   ├── in parameter `a`
+    │   │   └── identifier `bool`
+    │   └── in parameter `b`
+    │       ├── identifier `bool`
+    │       └── identifier `x`
     ├── return values
     │   └── return value
     │       └── identifier `float32`
@@ -68,30 +61,20 @@ b(int32 i, float64 f)
 	CHECK(str == R"_____(Printing AST for Test_AstStringForCall
 ├── function `a`
 │   ├── parameters
-│   │   ├── parameter `a`
-│   │   │   ├── kind `in`
-│   │   │   └── type
-│   │   │       └── identifier `int32`
-│   │   ├── parameter `f`
-│   │   │   ├── kind `in`
-│   │   │   └── type
-│   │   │       └── identifier `float64`
-│   │   └── parameter `b`
-│   │       ├── kind `in`
-│   │       └── type
-│   │           └── identifier `int64`
+│   │   ├── in parameter `a`
+│   │   │   └── identifier `int32`
+│   │   ├── in parameter `f`
+│   │   │   └── identifier `float64`
+│   │   └── in parameter `b`
+│   │       └── identifier `int64`
 │   ├── return values
 │   └── statements
 └── function `b`
     ├── parameters
-    │   ├── parameter `i`
-    │   │   ├── kind `in`
-    │   │   └── type
-    │   │       └── identifier `int32`
-    │   └── parameter `f`
-    │       ├── kind `in`
-    │       └── type
-    │           └── identifier `float64`
+    │   ├── in parameter `i`
+    │   │   └── identifier `int32`
+    │   └── in parameter `f`
+    │       └── identifier `float64`
     ├── return values
     └── statements
         └── call expression

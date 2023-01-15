@@ -1,40 +1,34 @@
 #include "SyntaxTree.hpp"
 
+#include "syntax/AstComparator.hpp"
 #include "syntax/AstString.hpp"
 
 namespace cero
 {
 
-void SyntaxTree::add_to_root(Definition definition)
-{
-	root_definitions.emplace_back(definition);
-}
+SyntaxTree::SyntaxTree(AstState state) :
+	state(std::move(state))
+{}
 
-Expression SyntaxTree::add(ExpressionNode node)
+std::span<const Definition> SyntaxTree::get_root() const
 {
-	expression_nodes.emplace_back(std::move(node));
-	return Expression(static_cast<Index>(expression_nodes.size() - 1));
-}
-
-Definition SyntaxTree::add(DefinitionNode node)
-{
-	definition_nodes.emplace_back(std::move(node));
-	return Definition(static_cast<Index>(definition_nodes.size() - 1));
-}
-
-std::span<const Definition> SyntaxTree::get_root_definitions() const
-{
-	return root_definitions;
+	return state.get_root_definitions();
 }
 
 const ExpressionNode& SyntaxTree::get(Expression expression) const
 {
-	return expression_nodes.at(expression.index);
+	return state.get(expression);
+}
+
+bool SyntaxTree::operator==(const SyntaxTree& other) const
+{
+	AstComparator comparator(*this, other);
+	return comparator.compare();
 }
 
 const DefinitionNode& SyntaxTree::get(Definition definition) const
 {
-	return definition_nodes.at(definition.index);
+	return state.get(definition);
 }
 
 std::string SyntaxTree::to_string(const Source& source) const

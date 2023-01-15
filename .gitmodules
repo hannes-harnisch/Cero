@@ -4,3 +4,7 @@
 [submodule "extern/doctest"]
 	path = extern/doctest
 	url = https://github.com/doctest/doctest
+[submodule "extern/pfr"]
+	path = extern/pfr
+	url = https://github.com/boostorg/pfr
+	branch = master

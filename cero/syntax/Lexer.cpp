@@ -51,7 +51,7 @@ public:
 
 	TokenStream lex()
 	{
-		TokenStream stream;
+		std::vector<LexicalToken> tokens;
 
 		size_t source_length = source.get_text().length();
 		if (source_length > LexicalToken::MAX_LENGTH)
@@ -59,15 +59,15 @@ public:
 		else
 		{
 			while (cursor != source_end)
-				next_token(stream);
+				next_token(tokens);
 		}
 
-		stream.append({Token::EndOfFile, 0, static_cast<uint32_t>(source_length)});
-		return stream;
+		tokens.emplace_back(Token::EndOfFile, 0, static_cast<uint32_t>(source_length));
+		return TokenStream(std::move(tokens));
 	}
 
 private:
-	void next_token(TokenStream& stream)
+	void next_token(std::vector<LexicalToken>& tokens)
 	{
 		auto token_begin = cursor;
 
@@ -195,7 +195,7 @@ private:
 
 		auto length = static_cast<uint32_t>(cursor - token_begin);
 		auto offset = static_cast<uint32_t>(token_begin - source_begin);
-		stream.append({kind, length, offset});
+		tokens.emplace_back(kind, length, offset);
 	}
 
 	bool match(char expected)
@@ -560,9 +560,9 @@ private:
 	}
 
 	template<typename... Args>
-	void report(CheckedMessage<Args...> message, Source::Iterator cursor, Args&&... args) const
+	void report(CheckedMessage<Args...> message, Source::Iterator report_cursor, Args&&... args) const
 	{
-		reporter.report(message, source.locate(cursor), std::forward<Args>(args)...);
+		reporter.report(message, source.locate(report_cursor), std::forward<Args>(args)...);
 	}
 };
 

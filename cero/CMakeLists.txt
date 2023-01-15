@@ -9,6 +9,7 @@ add_library(Cero ${CERO_SRC})
 
 target_include_directories(Cero PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(Cero PUBLIC ${CMAKE_SOURCE_DIR}/extern/magic_enum/include)
+target_include_directories(Cero PUBLIC ${CMAKE_SOURCE_DIR}/extern/pfr/include)
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${CERO_SRC})
 source_group("generated" FILES ${PCH_FILES})

@@ -3,17 +3,16 @@
 namespace cero
 {
 
-void TokenStream::append(LexicalToken token)
-{
-	tokens.emplace_back(token);
-}
+TokenStream::TokenStream(std::vector<LexicalToken> tokens) :
+	tokens(std::move(tokens))
+{}
 
 std::span<const LexicalToken> TokenStream::get_tokens() const
 {
 	return tokens;
 }
 
-LexicalToken TokenStream::at(uint32_t index) const
+LexicalToken TokenStream::at(size_t index) const
 {
 	return tokens.at(index);
 }
@@ -25,12 +24,22 @@ std::string TokenStream::to_string(const Source& source) const
 	for (auto token : tokens)
 		str << token.to_log_string(source) << '\n';
 
-	return str.str();
+	return std::move(str).str();
 }
 
 void TokenStream::log(const Source& source) const
 {
 	std::clog << to_string(source);
+}
+
+TokenStream::Iterator TokenStream::begin() const
+{
+	return tokens.begin();
+}
+
+TokenStream::Iterator TokenStream::end() const
+{
+	return tokens.end();
 }
 
 } // namespace cero

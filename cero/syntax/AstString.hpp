@@ -40,7 +40,8 @@ private:
 	void visit_each_in(const auto& list);
 	void visit(Definition definition);
 	void visit_node(const ast::Function& function);
-	void visit(const ast::Parameter& parameter);
+	void visit(const ast::Function::Parameter& parameter);
+	void visit(const ast::FunctionType::Parameter& parameter);
 	void visit(const ast::ReturnValue& return_value);
 	void visit_node(const ast::Struct& struct_definition);
 	void visit_node(const ast::Enum& enum_definition);
@@ -53,6 +54,7 @@ private:
 	void visit_node(const ast::Variability& variability);
 	void visit_node(const ast::ArrayType& array_type);
 	void visit_node(const ast::PointerType& pointer_type);
+	void visit_node(const ast::FunctionType& function_type);
 	void visit_node(const ast::NumericLiteral& numeric_literal);
 	void visit_node(const ast::StringLiteral& string_literal);
 	void visit_node(const ast::Binding& binding);

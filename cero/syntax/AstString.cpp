@@ -7,10 +7,10 @@ namespace cero
 
 namespace
 {
-	std::string_view to_string(ast::ParameterKind kind)
+	std::string_view to_string(ast::ParameterSpecifier specifier)
 	{
-		using enum ast::ParameterKind;
-		switch (kind)
+		using enum ast::ParameterSpecifier;
+		switch (specifier)
 		{
 			case In: return "in";
 			case Let: return "let";
@@ -114,7 +114,7 @@ AstString::AstString(const SyntaxTree& ast, const Source& source) :
 
 std::string AstString::build()
 {
-	visit_each_in(ast.get_root_definitions());
+	visit_each_in(ast.get_root());
 	return std::move(string);
 }
 
@@ -193,28 +193,27 @@ void AstString::visit_node(const ast::Function& function)
 	pop_level();
 }
 
-void AstString::visit(const ast::Parameter& parameter)
+void AstString::visit(const ast::Function::Parameter& parameter)
 {
-	add_line(std::format("parameter `{}`", parameter.name));
+	add_line(std::format("{} parameter `{}`", to_string(parameter.specifier), parameter.name));
 	push_level();
-
-	add_body_line(std::format("kind `{}`", to_string(parameter.kind)));
 
 	bool has_default_argument = !parameter.default_argument.is_null();
 	set_tail(!has_default_argument);
-	add_line("type");
-	push_level();
-	visit_tail(parameter.type);
-	pop_level();
+	visit(parameter.type);
 
 	if (has_default_argument)
-	{
-		add_tail_line("default argument");
-		push_level();
 		visit_tail(parameter.default_argument.get());
-		pop_level();
-	}
 
+	pop_level();
+}
+
+void AstString::visit(const ast::FunctionType::Parameter& parameter)
+{
+	add_line(std::format("{} parameter `{}`", to_string(parameter.specifier), parameter.name));
+
+	push_level();
+	visit_tail(parameter.type);
 	pop_level();
 }
 
@@ -335,9 +334,27 @@ void AstString::visit_node(const ast::PointerType& pointer_type)
 	pop_level();
 }
 
+void AstString::visit_node(const ast::FunctionType& function_type)
+{
+	add_line("function type");
+	push_level();
+
+	add_body_line("parameters");
+	push_level();
+	visit_each_in(function_type.parameters);
+	pop_level();
+
+	add_tail_line("return values");
+	push_level();
+	visit_each_in(function_type.returns);
+	pop_level();
+
+	pop_level();
+}
+
 void AstString::visit_node(const ast::NumericLiteral& numeric_literal)
 {
-	add_line(std::format("numeric literal `{}`", "oof"));
+	add_line(std::format("numeric literal `{}`", " ---TODO--- "));
 }
 
 void AstString::visit_node(const ast::StringLiteral& string_literal)

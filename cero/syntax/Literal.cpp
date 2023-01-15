@@ -33,8 +33,9 @@ ast::NumericLiteral evaluate_char_literal(std::string_view)
 	return {ast::Literal::Character};
 }
 
-ast::StringLiteral::StringLiteral(std::string_view lexeme) :
-	value(lexeme) // TODO: escape sequences
-{}
+ast::StringLiteral evaluate_string_literal(std::string_view lexeme)
+{
+	return {std::string(lexeme)}; // TODO: escape sequences
+}
 
 } // namespace cero

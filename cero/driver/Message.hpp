@@ -19,6 +19,7 @@ enum class Message : uint8_t
 	ExpectType,
 	ExpectParamName,
 	ExpectParenAfterParams,
+	ExpectParenAfterReturns,
 	ExpectBraceBeforeFuncBody,
 	ExpectNameAfterDeclType,
 	ExpectExpr,
@@ -29,6 +30,8 @@ enum class Message : uint8_t
 	ExpectBracketAfterIndex,
 	ExpectBracketAfterArrayBound,
 	ExpectBraceAfterVariability,
+	ExpectArrowAfterFuncTypeParams,
+	FuncTypeDefaultArgument,
 	AmbiguousOperatorChaining,
 	AmbiguousOperatorMixing,
 };
@@ -38,27 +41,30 @@ constexpr inline LookupTable<Message, std::string_view> MESSAGE_FORMATS = []
 	using enum Message;
 
 	LookupTable<Message, std::string_view> t({});
-	t[SourceInputTooLarge]			= "source input is too large, limit is {} bytes";
-	t[UnexpectedCharacter]			= "unexpected character `0x{:x}`";
-	t[MissingClosingQuote]			= "missing closing quote";
-	t[UnterminatedBlockComment]		= "block comment must be closed with `*/`";
-	t[ExpectFuncStructEnum]			= "expected function, struct or enum, but found {}";
-	t[ExpectParenAfterFuncName]		= "expected `(` after function name, but found {}";
-	t[ExpectType]					= "expected a type, but found {}";
-	t[ExpectParamName]				= "expected a parameter name, but found {}";
-	t[ExpectParenAfterParams]		= "expected `)` after parameters, but found {}";
-	t[ExpectBraceBeforeFuncBody]	= "expected `{{` before function body, but found {}";
-	t[ExpectNameAfterDeclType]		= "expected a name after type in declaration, but found {}";
-	t[ExpectExpr]					= "expected an expression, but found {}";
-	t[ExpectNameAfterDot]			= "expected a member name after `.`, but found {}";
-	t[ExpectColonAfterCondition]	= "expected `:` after condition, but found {}";
-	t[UnnecessaryColonBeforeBlock]	= "`:` between condition and block is unnecessary";
-	t[ExpectClosingParen]			= "expected closing `)`, but found {}";
-	t[ExpectBracketAfterIndex]		= "expected `]` after index expression, but found {}";
-	t[ExpectBracketAfterArrayBound] = "expected `]` after array bound, but found {}";
-	t[ExpectBraceAfterVariability]	= "expected `}` after variability arguments, but found {}";
-	t[AmbiguousOperatorChaining]	= "chaining the `{}` operator is ambiguous, could be {} or {}";
-	t[AmbiguousOperatorMixing]		= "mixing the `{}` and `{}` operators is ambiguous, could be {} or {}";
+	t[SourceInputTooLarge]			  = "source input is too large, limit is {} bytes";
+	t[UnexpectedCharacter]			  = "unexpected character `0x{:x}`";
+	t[MissingClosingQuote]			  = "missing closing quote";
+	t[UnterminatedBlockComment]		  = "block comment must be closed with `*/`";
+	t[ExpectFuncStructEnum]			  = "expected function, struct or enum, but found {}";
+	t[ExpectParenAfterFuncName]		  = "expected `(` after function name, but found {}";
+	t[ExpectType]					  = "expected a type, but found {}";
+	t[ExpectParamName]				  = "expected a parameter name, but found {}";
+	t[ExpectParenAfterParams]		  = "expected `)` after parameters, but found {}";
+	t[ExpectParenAfterReturns]		  = "expected `)` after return values, but found {}";
+	t[ExpectBraceBeforeFuncBody]	  = "expected `{{` before function body, but found {}";
+	t[ExpectNameAfterDeclType]		  = "expected a name after type in declaration, but found {}";
+	t[ExpectExpr]					  = "expected an expression, but found {}";
+	t[ExpectNameAfterDot]			  = "expected a member name after `.`, but found {}";
+	t[ExpectColonAfterCondition]	  = "expected `:` after condition, but found {}";
+	t[UnnecessaryColonBeforeBlock]	  = "`:` between condition and block is unnecessary";
+	t[ExpectClosingParen]			  = "expected closing `)`, but found {}";
+	t[ExpectBracketAfterIndex]		  = "expected `]` after index expression, but found {}";
+	t[ExpectBracketAfterArrayBound]	  = "expected `]` after array bound, but found {}";
+	t[ExpectBraceAfterVariability]	  = "expected `}` after variability arguments, but found {}";
+	t[ExpectArrowAfterFuncTypeParams] = "expected `->` after parameters for function type, but found {}";
+	t[FuncTypeDefaultArgument]		  = "parameter in function type cannot have default argument";
+	t[AmbiguousOperatorChaining]	  = "chaining the `{}` operator is ambiguous, could be {} or {}";
+	t[AmbiguousOperatorMixing]		  = "mixing the `{}` and `{}` operators is ambiguous, could be {} or {}";
 	return t;
 }();
 
