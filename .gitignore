@@ -1,15 +1,8 @@
 /.cmake/
 /.idea/
 /.vs/
-/bin/
-/x64/
-CMakeFiles/
-*.dir/
-
-*.cmake
-*.filters
-*.sln
-*.user
-*.vcxproj
+/build/
+/CMakeFiles/
 
 CMakeCache.txt
+CMakeUserPresets.json

@@ -74,4 +74,11 @@ ExitCode run_driver(std::span<std::string_view> args)
 	return perform_command(config);
 }
 
+void init_platform();
+
+void initialize()
+{
+	init_platform();
+}
+
 } // namespace cero

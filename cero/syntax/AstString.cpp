@@ -46,6 +46,21 @@ namespace
 		return {};
 	}
 
+	std::string_view to_string(ast::Literal literal)
+	{
+		using enum ast::Literal;
+		switch (literal)
+		{
+			case Decimal: return "decimal";
+			case Hexadecimal: return "hexadecimal";
+			case Binary: return "binary";
+			case Octal: return "octal";
+			case Float: return "float";
+			case Character: return "character";
+		}
+		return {};
+	}
+
 	constexpr inline LookupTable<ast::UnaryOperator, std::string_view> UNARY_OPERATOR_STRINGS = []
 	{
 		using enum ast::UnaryOperator;
@@ -120,7 +135,7 @@ std::string AstString::build()
 
 void AstString::push_level()
 {
-	auto prefix = prefixes.top();
+	std::string prefix = prefixes.top();
 	prefix.append(edge->prefix);
 	prefixes.push(std::move(prefix));
 }
@@ -354,7 +369,7 @@ void AstString::visit_node(const ast::FunctionType& function_type)
 
 void AstString::visit_node(const ast::NumericLiteral& numeric_literal)
 {
-	add_line(std::format("numeric literal `{}`", " ---TODO--- "));
+	add_line(std::format("{} literal `{}`", to_string(numeric_literal.kind), " ---TODO--- "));
 }
 
 void AstString::visit_node(const ast::StringLiteral& string_literal)

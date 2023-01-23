@@ -394,18 +394,7 @@ private:
 	Expression on_if()
 	{
 		auto condition = parse_expression();
-		if (auto colon = cursor.match(Token::Colon))
-		{
-			auto next = cursor.next_breakable();
-			if (next.kind == Token::LeftBrace)
-				reporter.report(Message::UnnecessaryColonBeforeBlock, colon->locate_in(source));
-		}
-		else
-		{
-			auto next = cursor.next_breakable();
-			if (next.kind != Token::LeftBrace)
-				report_expectation(Message::ExpectColonAfterCondition, next);
-		}
+		expect_colon_or_block();
 		auto then_expr = parse_expression();
 
 		OptionalExpression else_expr;
@@ -417,12 +406,31 @@ private:
 
 	Expression on_while()
 	{
-		to_do();
+		auto condition = parse_expression();
+		expect_colon_or_block();
+		auto statement = parse_expression();
+		return ast.add(ast::WhileLoop {condition, statement});
 	}
 
 	Expression on_for()
 	{
 		to_do();
+	}
+
+	void expect_colon_or_block()
+	{
+		if (auto colon = cursor.match(Token::Colon))
+		{
+			auto next = cursor.next_breakable();
+			if (next.kind == Token::LeftBrace)
+				reporter.report(Message::UnnecessaryColonBeforeBlock, colon->locate_in(source));
+		}
+		else
+		{
+			auto next = cursor.next_breakable();
+			if (next.kind != Token::LeftBrace)
+				report_expectation(Message::ExpectColonOrBlock, next);
+		}
 	}
 
 	Expression on_break()

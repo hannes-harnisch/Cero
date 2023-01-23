@@ -1,16 +1,10 @@
 #define DOCTEST_CONFIG_IMPLEMENT
+#include <cero/driver/Driver.hpp>
 #include <doctest/doctest.h>
-
-namespace cero
-{
-
-void init_platform();
-
-}
 
 int main(int argc, char* argv[])
 {
-	cero::init_platform();
+	cero::initialize();
 
 	doctest::Context context;
 	context.applyCommandLine(argc, argv);

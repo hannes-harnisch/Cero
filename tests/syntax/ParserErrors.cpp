@@ -179,7 +179,7 @@ g(bool b) -> int32
 		return 5
 }
 )_____");
-	CHECK(r.pop_report(5, 9, cero::Message::ExpectColonAfterCondition, "`return`"));
+	CHECK(r.pop_report(5, 9, cero::Message::ExpectColonOrBlock, "`return`"));
 }
 
 TEST(UnnecessaryColonBeforeBlock)

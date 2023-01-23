@@ -2,10 +2,10 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-file(GLOB_RECURSE TEST_SRC *.cpp *.hpp)
-file(GLOB_RECURSE PCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}${CMAKE_FILES_DIRECTORY}/cmake_pch.*)
+file(GLOB_RECURSE TEST_SRC CONFIGURE_DEPENDS *.cpp *.hpp)
+file(GLOB_RECURSE PCH_FILES "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/cmake_pch.*")
 
-add_executable(Tests ${TEST_SRC} syntax/LexExhaustive.hpp syntax/LexExhaustive.cpp)
+add_executable(Tests ${TEST_SRC})
 
 target_include_directories(Tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(Tests PRIVATE ${CMAKE_SOURCE_DIR})

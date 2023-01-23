@@ -8,6 +8,8 @@
 namespace cero
 {
 
+void initialize();
+
 ExitCode run_driver(std::span<std::string_view> args);
 
-}
+} // namespace cero
