@@ -22,7 +22,7 @@ else ()
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif ()
 
-add_subdirectory(cero)
+add_subdirectory(src)
 add_subdirectory(tests)
 
-set_target_properties(Cero Tests PROPERTIES PRECOMPILE_HEADERS ${CMAKE_SOURCE_DIR}/cero/PCH.hpp)
+set_target_properties(Cero Tests PROPERTIES PRECOMPILE_HEADERS ${CMAKE_SOURCE_DIR}/include/PCH.hpp)

@@ -1,27 +1,34 @@
-#include "syntax/ParseExhaustive.hpp"
+#include "util/ExhaustiveReporter.hpp"
 #include "util/Test.hpp"
+
+#include <cero/syntax/Parse.hpp>
 
 TEST(AstForSimpleMain)
 {
-	auto src	= make_test_source(R"_____(
+	ExhaustiveReporter r;
+
+	auto src = make_test_source(R"_____(
 main()
 {}
 )_____");
-	auto result = parse_exhaustive(src);
 
-	cero::AstState ast;
+	cero::SyntaxTree ast;
 	ast.add_to_root(ast.add(cero::ast::Function {
 		.name		= "main",
 		.parameters = {},
 		.returns	= {},
 		.statements = {},
 	}));
-	CHECK(result == cero::SyntaxTree(ast));
+
+	auto result = cero::parse(src, r);
+	CHECK(result == ast);
 }
 
 TEST(AstForFibonacci)
 {
-	auto src	= make_test_source(R"_____(
+	ExhaustiveReporter r;
+
+	auto src = make_test_source(R"_____(
 fibonacci(var usize n) -> usize
 {
     var usize result = 0
@@ -37,9 +44,8 @@ fibonacci(var usize n) -> usize
     return result
 }
 )_____");
-	auto result = parse_exhaustive(src);
 
-	cero::AstState ast;
+	cero::SyntaxTree ast;
 	ast.add_to_root(ast.add(cero::ast::Function {
 		.name		= "fibonacci",
 		.parameters = {cero::ast::Function::Parameter {
@@ -99,5 +105,10 @@ fibonacci(var usize n) -> usize
 						   .expression = ast.add(cero::ast::Identifier {"result"}),
 					   })},
 	}));
-	CHECK(result == cero::SyntaxTree(ast));
+
+	auto result = cero::parse(src, r);
+	CHECK(result == ast);
 }
+
+TEST(AstForAdd)
+{}

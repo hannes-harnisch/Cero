@@ -1,5 +1,7 @@
-#include "syntax/LexExhaustive.hpp"
+#include "util/ExhaustiveReporter.hpp"
 #include "util/Test.hpp"
+
+#include <cero/syntax/Lex.hpp>
 
 namespace
 {
@@ -22,13 +24,17 @@ using enum cero::Token;
 
 TEST(EmptySource)
 {
+	ExhaustiveReporter r;
+
 	auto src	= make_test_source("");
-	auto tokens = lex_exhaustive(src);
+	auto tokens = cero::lex(src, r);
 	CHECK(all_tokens_match(tokens, {EndOfFile}));
 }
 
 TEST(IntegerLiterals)
 {
+	ExhaustiveReporter r;
+
 	auto src	= make_test_source(R"_____(
 0
 123
@@ -43,7 +49,7 @@ TEST(IntegerLiterals)
 0o1125417245
 0o 124 22115 2736
 )_____");
-	auto tokens = lex_exhaustive(src);
+	auto tokens = cero::lex(src, r);
 	CHECK(all_tokens_match(tokens, {NewLine, DecIntLiteral, NewLine, DecIntLiteral, NewLine,	   DecIntLiteral,
 									NewLine, DecIntLiteral, NewLine, HexIntLiteral, NewLine,	   HexIntLiteral,
 									NewLine, HexIntLiteral, Name,	 NewLine,		HexIntLiteral, Name,
@@ -67,6 +73,8 @@ TEST(IntegerLiterals)
 
 TEST(FloatLiterals)
 {
+	ExhaustiveReporter r;
+
 	auto src	= make_test_source(R"_____(
 1.0
 1.
@@ -78,7 +86,7 @@ TEST(FloatLiterals)
 1..z
 1.0.a
 )_____");
-	auto tokens = lex_exhaustive(src);
+	auto tokens = cero::lex(src, r);
 	CHECK(all_tokens_match(tokens,
 						   {NewLine,	  FloatLiteral, NewLine,	   DecIntLiteral, Dot,		NewLine,	  FloatLiteral,
 							NewLine,	  FloatLiteral, NewLine,	   FloatLiteral,  NewLine,	FloatLiteral, NewLine,
@@ -103,6 +111,8 @@ TEST(FloatLiterals)
 
 TEST(StringLiteralsWithEscapes)
 {
+	ExhaustiveReporter r;
+
 	auto src	= make_test_source(R"_____(
 "123\""
 "\""
@@ -113,7 +123,7 @@ TEST(StringLiteralsWithEscapes)
 "\"\\a\a"
 "\"\\\"\\\\a\\a\""
 )_____");
-	auto tokens = lex_exhaustive(src);
+	auto tokens = cero::lex(src, r);
 	CHECK(all_tokens_match(tokens, {NewLine, StringLiteral, NewLine, StringLiteral, NewLine, StringLiteral, NewLine,
 									StringLiteral, NewLine, StringLiteral, NewLine, StringLiteral, NewLine, StringLiteral,
 									NewLine, StringLiteral, NewLine, EndOfFile}));
@@ -129,13 +139,15 @@ TEST(StringLiteralsWithEscapes)
 
 TEST(LineComments)
 {
+	ExhaustiveReporter r;
+
 	auto src	= make_test_source(R"_____(
 //
 // 
 // abc
 // //
 )_____");
-	auto tokens = lex_exhaustive(src);
+	auto tokens = cero::lex(src, r);
 	CHECK(all_tokens_match(tokens, {NewLine, LineComment, NewLine, LineComment, NewLine, LineComment, NewLine, LineComment,
 									NewLine, EndOfFile}));
 	CHECK(tokens.at(1).get_lexeme(src) == "//");
@@ -146,6 +158,8 @@ TEST(LineComments)
 
 TEST(BlockComments)
 {
+	ExhaustiveReporter r;
+
 	auto src	= make_test_source(R"_____(
 /**/
 /* abc
@@ -162,7 +176,7 @@ TEST(BlockComments)
 /*/ */
 /*// */
 )_____");
-	auto tokens = lex_exhaustive(src);
+	auto tokens = cero::lex(src, r);
 	CHECK(all_tokens_match(tokens, {NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment,
 									NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment, NewLine, BlockComment,
 									NewLine, BlockComment, NewLine, BlockComment, NewLine, EndOfFile}));
@@ -180,26 +194,32 @@ TEST(BlockComments)
 
 TEST(BracketCaret)
 {
+	ExhaustiveReporter r;
+
 	auto src	= make_test_source(R"_____(
 [^
 )_____");
-	auto tokens = lex_exhaustive(src);
+	auto tokens = cero::lex(src, r);
 	CHECK(all_tokens_match(tokens, {NewLine, LeftBracket, Caret, NewLine, EndOfFile}));
 }
 
 TEST(UnicodeNames)
 {
+	ExhaustiveReporter r;
+
 	auto src	= make_test_source(R"_____(
 𖭽()
 {}
 )_____");
-	auto tokens = lex_exhaustive(src);
+	auto tokens = cero::lex(src, r);
 	CHECK(all_tokens_match(tokens, {NewLine, Name, LeftParen, RightParen, NewLine, LeftBrace, RightBrace, NewLine, EndOfFile}));
 	CHECK(tokens.at(1).get_lexeme(src) == "𖭽");
 }
 
 TEST(LexingOperators)
 {
+	ExhaustiveReporter r;
+
 	auto src	= make_test_source(R"_____(
 !
 + - * / %
@@ -211,7 +231,7 @@ TEST(LexingOperators)
 =
 & | ~
 )_____");
-	auto tokens = lex_exhaustive(src);
+	auto tokens = cero::lex(src, r);
 	CHECK(all_tokens_match(tokens, {NewLine,	Bang,	   NewLine,	  Plus,			  Minus,		   Star,
 									Slash,		Percent,   NewLine,	  LeftAngleAngle, RightAngleAngle, NewLine,
 									EqualEqual, BangEqual, LeftAngle, RightAngle,	  LeftAngleEqual,  RightAngleEqual,
@@ -222,9 +242,11 @@ TEST(LexingOperators)
 
 TEST(DotDot)
 {
+	ExhaustiveReporter r;
+
 	auto src	= make_test_source(R"_____(
 ..
 )_____");
-	auto tokens = lex_exhaustive(src);
+	auto tokens = cero::lex(src, r);
 	CHECK(all_tokens_match(tokens, {NewLine, Dot, Dot, NewLine, EndOfFile}));
 }

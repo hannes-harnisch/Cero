@@ -1,9 +1,13 @@
-#include "syntax/LexExhaustive.hpp"
+#include "util/ExhaustiveReporter.hpp"
 #include "util/Test.hpp"
+
+#include <cero/syntax/Lex.hpp>
 
 TEST(TokenStringForBracketsLiterals)
 {
-	auto src	= make_test_source(R"_____(
+	ExhaustiveReporter r;
+
+	auto src = make_test_source(R"_____(
 () [] {} <>
 foo "bar" 'baz' 123 456
 0x12345 456 aff
@@ -11,9 +15,9 @@ foo "bar" 'baz' 123 456
 0o03423362 63
 1.345634634 234623
 )_____");
-	auto stream = lex_exhaustive(src);
-	auto string = stream.to_string(src);
-	CHECK(string == R"_____(NewLine `` [Test_TokenStringForBracketsLiterals:1:1]
+
+	auto stream = cero::lex(src, r);
+	CHECK(stream.to_string(src) == R"_____(NewLine `` [Test_TokenStringForBracketsLiterals:1:1]
 LeftParen `(` [Test_TokenStringForBracketsLiterals:2:1]
 RightParen `)` [Test_TokenStringForBracketsLiterals:2:2]
 LeftBracket `[` [Test_TokenStringForBracketsLiterals:2:4]
@@ -42,13 +46,15 @@ EndOfFile `` [Test_TokenStringForBracketsLiterals:8:1]
 
 TEST(TokenStringForOperators)
 {
-	auto src	= make_test_source(R"_____(
+	ExhaustiveReporter r;
+
+	auto src = make_test_source(R"_____(
 + - * / % & | ~ << >>
 && || == !=
 )_____");
-	auto stream = lex_exhaustive(src);
-	auto string = stream.to_string(src);
-	CHECK(string == R"_____(NewLine `` [Test_TokenStringForOperators:1:1]
+
+	auto stream = cero::lex(src, r);
+	CHECK(stream.to_string(src) == R"_____(NewLine `` [Test_TokenStringForOperators:1:1]
 Plus `+` [Test_TokenStringForOperators:2:1]
 Minus `-` [Test_TokenStringForOperators:2:3]
 Star `*` [Test_TokenStringForOperators:2:5]
@@ -71,7 +77,9 @@ EndOfFile `` [Test_TokenStringForOperators:4:1]
 
 TEST(TokenStringForKeywords)
 {
-	auto src	= make_test_source(R"_____(
+	ExhaustiveReporter r;
+
+	auto src = make_test_source(R"_____(
 struct S
 {
 	enum E
@@ -83,9 +91,9 @@ struct S
 	}
 }
 )_____");
-	auto stream = lex_exhaustive(src);
-	auto string = stream.to_string(src);
-	CHECK(string == R"_____(NewLine `` [Test_TokenStringForKeywords:1:1]
+
+	auto stream = cero::lex(src, r);
+	CHECK(stream.to_string(src) == R"_____(NewLine `` [Test_TokenStringForKeywords:1:1]
 Struct `struct` [Test_TokenStringForKeywords:2:1]
 Name `S` [Test_TokenStringForKeywords:2:8]
 NewLine `` [Test_TokenStringForKeywords:2:9]

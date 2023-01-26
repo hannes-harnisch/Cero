@@ -1,11 +1,8 @@
 #define DOCTEST_CONFIG_IMPLEMENT
-#include <cero/driver/Driver.hpp>
 #include <doctest/doctest.h>
 
 int main(int argc, char* argv[])
 {
-	cero::initialize();
-
 	doctest::Context context;
 	context.applyCommandLine(argc, argv);
 	return context.run();
@@ -31,7 +28,7 @@ public:
 
 	void test_case_start(const doctest::TestCaseData& test_case) override
 	{
-		out << "—————————— Running test: " << test_case.m_name << '\n';
+		out << "Running test: " << test_case.m_name << '\n';
 	}
 
 	void test_case_reenter(const doctest::TestCaseData&) override

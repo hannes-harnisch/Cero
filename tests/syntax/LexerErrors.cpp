@@ -1,41 +1,46 @@
+#include "util/ExhaustiveReporter.hpp"
 #include "util/Test.hpp"
 
 #include <cero/syntax/LexicalToken.hpp>
 
 TEST(SourceTooLarge)
 {
-	auto r = build_test_source(std::string(16779000, ' '));
-	CHECK(r.pop_report(1, 1, cero::Message::SourceInputTooLarge, cero::LexicalToken::MAX_LENGTH));
+	ExhaustiveReporter r;
+	r.expect(1, 1, cero::Message::SourceInputTooLarge, cero::LexicalToken::MAX_LENGTH);
+	build_test_source(r, std::string(16779000, ' '));
 }
 
 TEST(IllegalChar)
 {
-	auto r = build_test_source(R"_____(
+	ExhaustiveReporter r;
+	r.expect(5, 1, cero::Message::UnexpectedCharacter, 0x7);
+	build_test_source(r, R"_____(
 main()
 {}
 
 () {}
 )_____");
-	CHECK(r.pop_report(5, 1, cero::Message::UnexpectedCharacter, 0x7));
 }
 
 TEST(MissingClosingQuote)
 {
-	auto r = build_test_source(R"_____(
+	ExhaustiveReporter r;
+	r.expect(4, 27, cero::Message::MissingClosingQuote);
+	r.expect(5, 16, cero::Message::MissingClosingQuote);
+	build_test_source(r, R"_____(
 foo()
 {
 	let string = "Oh no...
 	let ch = 'x
 }
 )_____");
-	CHECK(r.pop_report(4, 27, cero::Message::MissingClosingQuote));
-	CHECK(r.pop_report(5, 16, cero::Message::MissingClosingQuote));
 }
 
 TEST(UnterminatedBlockComment)
 {
-	auto r = build_test_source(R"_____(
+	ExhaustiveReporter r;
+	r.expect(2, 3, cero::Message::UnterminatedBlockComment);
+	build_test_source(r, R"_____(
 /* abc
 )_____");
-	CHECK(r.pop_report(2, 3, cero::Message::UnterminatedBlockComment));
 }
