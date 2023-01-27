@@ -60,25 +60,15 @@ void ParseCursor::advance()
 	++cursor;
 }
 
-void ParseCursor::retreat()
+void ParseCursor::retreat_to_last_breakable()
 {
-	--cursor;
-}
-
-void ParseCursor::skip_enclosed_sequence(Token left, Token right)
-{
-	uint32_t unclosed = 1;
-	auto	 token	  = next_breakable().kind;
-	while (token != Token::EndOfFile)
+	Token kind;
+	do
 	{
-		if (token == left)
-			++unclosed;
-		else if (token == right && --unclosed == 0)
-			break;
-
-		token = next_breakable().kind;
+		--cursor;
+		kind = cursor->kind;
 	}
-	advance();
+	while (kind == Token::NewLine || kind == Token::LineComment || kind == Token::BlockComment);
 }
 
 } // namespace cero

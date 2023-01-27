@@ -93,7 +93,7 @@ namespace ast
 		Var
 	};
 
-	struct ReturnValue
+	struct FunctionOutput
 	{
 		Expression		 type;
 		std::string_view name;
@@ -108,8 +108,8 @@ namespace ast
 			Expression		   type;
 		};
 
-		std::vector<Parameter>	 parameters;
-		std::vector<ReturnValue> returns;
+		std::vector<Parameter>		parameters;
+		std::vector<FunctionOutput> outputs;
 	};
 
 	struct Binding

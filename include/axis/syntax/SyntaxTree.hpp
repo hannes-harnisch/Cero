@@ -24,8 +24,8 @@ public:
 	void		log(const Source& source) const;
 
 	void	   add_to_root(Definition definition);
-	Expression add(ExpressionNode node);
-	Definition add(DefinitionNode node);
+	Expression store(ExpressionNode node);
+	Definition store(DefinitionNode node);
 };
 
 } // namespace cero

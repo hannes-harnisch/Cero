@@ -7,7 +7,7 @@ TEST(TokenStringForBracketsLiterals)
 {
 	ExhaustiveReporter r;
 
-	auto src = make_test_source(R"_____(
+	auto source = make_test_source(R"_____(
 () [] {} <>
 foo "bar" 'baz' 123 456
 0x12345 456 aff
@@ -16,8 +16,8 @@ foo "bar" 'baz' 123 456
 1.345634634 234623
 )_____");
 
-	auto stream = cero::lex(src, r);
-	CHECK(stream.to_string(src) == R"_____(NewLine `` [Test_TokenStringForBracketsLiterals:1:1]
+	auto stream = cero::lex(source, r);
+	CHECK(stream.to_string(source) == R"_____(NewLine `` [Test_TokenStringForBracketsLiterals:1:1]
 LeftParen `(` [Test_TokenStringForBracketsLiterals:2:1]
 RightParen `)` [Test_TokenStringForBracketsLiterals:2:2]
 LeftBracket `[` [Test_TokenStringForBracketsLiterals:2:4]
@@ -48,13 +48,13 @@ TEST(TokenStringForOperators)
 {
 	ExhaustiveReporter r;
 
-	auto src = make_test_source(R"_____(
+	auto source = make_test_source(R"_____(
 + - * / % & | ~ << >>
 && || == !=
 )_____");
 
-	auto stream = cero::lex(src, r);
-	CHECK(stream.to_string(src) == R"_____(NewLine `` [Test_TokenStringForOperators:1:1]
+	auto stream = cero::lex(source, r);
+	CHECK(stream.to_string(source) == R"_____(NewLine `` [Test_TokenStringForOperators:1:1]
 Plus `+` [Test_TokenStringForOperators:2:1]
 Minus `-` [Test_TokenStringForOperators:2:3]
 Star `*` [Test_TokenStringForOperators:2:5]
@@ -79,7 +79,7 @@ TEST(TokenStringForKeywords)
 {
 	ExhaustiveReporter r;
 
-	auto src = make_test_source(R"_____(
+	auto source = make_test_source(R"_____(
 struct S
 {
 	enum E
@@ -92,8 +92,8 @@ struct S
 }
 )_____");
 
-	auto stream = cero::lex(src, r);
-	CHECK(stream.to_string(src) == R"_____(NewLine `` [Test_TokenStringForKeywords:1:1]
+	auto stream = cero::lex(source, r);
+	CHECK(stream.to_string(source) == R"_____(NewLine `` [Test_TokenStringForKeywords:1:1]
 Struct `struct` [Test_TokenStringForKeywords:2:1]
 Name `S` [Test_TokenStringForKeywords:2:8]
 NewLine `` [Test_TokenStringForKeywords:2:9]

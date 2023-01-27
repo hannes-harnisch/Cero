@@ -1,8 +1,11 @@
 #define DOCTEST_CONFIG_IMPLEMENT
+#include <cero/driver/Initialize.hpp>
 #include <doctest/doctest.h>
 
 int main(int argc, char* argv[])
 {
+	cero::initialize_system_state();
+
 	doctest::Context context;
 	context.applyCommandLine(argc, argv);
 	return context.run();

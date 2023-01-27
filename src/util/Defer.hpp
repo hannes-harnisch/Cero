@@ -24,4 +24,4 @@ public:
 
 } // namespace cero
 
-#define defer cero::Defer CERO_CONCAT(_defer_, __LINE__) = [&]()
+#define defer cero::Defer CERO_CONCAT(_defer_, __LINE__) = [&]() -> void

@@ -21,8 +21,7 @@ public:
 	LexicalToken next_breakable();
 	bool		 is_next_new_line();
 	void		 advance();
-	void		 retreat();
-	void		 skip_enclosed_sequence(Token left, Token right);
+	void		 retreat_to_last_breakable();
 };
 
 } // namespace cero

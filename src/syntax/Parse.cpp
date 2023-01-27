@@ -7,6 +7,8 @@
 #include "util/Defer.hpp"
 #include "util/Fail.hpp"
 
+#include <utility>
+
 namespace cero
 {
 
@@ -16,8 +18,9 @@ class Parser
 	const Source& source;
 	Reporter&	  reporter;
 	ParseCursor	  cursor;
-	uint32_t	  unclosed_groups = 0;
-	uint32_t	  unclosed_angles = 0;
+	uint32_t	  unclosed_groups		 = 0;
+	uint32_t	  unclosed_angles		 = 0;
+	bool		  preserve_closing_angle = true;
 
 	using PrefixParse	 = Expression (Parser::*)();
 	using NonPrefixParse = Expression (Parser::*)(Expression);
@@ -112,11 +115,11 @@ private:
 		expect(Token::LeftParen, Message::ExpectParenAfterFuncName);
 
 		auto parameters = parse_function_definition_parameters();
-		auto returns	= parse_return_values();
+		auto outputs	= parse_function_outputs();
 		expect(Token::LeftBrace, Message::ExpectBraceBeforeFuncBody);
 
 		auto statements = parse_block();
-		return ast.add(ast::Function {name, std::move(parameters), std::move(returns), std::move(statements)});
+		return ast.store(ast::Function {name, std::move(parameters), std::move(outputs), std::move(statements)});
 	}
 
 	std::vector<ast::Function::Parameter> parse_function_definition_parameters()
@@ -158,19 +161,19 @@ private:
 		return {specifier, name, type, default_argument};
 	}
 
-	std::vector<ast::ReturnValue> parse_return_values()
+	std::vector<ast::FunctionOutput> parse_function_outputs()
 	{
-		std::vector<ast::ReturnValue> returns;
+		std::vector<ast::FunctionOutput> outputs;
 		if (cursor.match(Token::ThinArrow))
 		{
 			do
-				returns.emplace_back(parse_return_value());
+				outputs.emplace_back(parse_function_output());
 			while (cursor.match(Token::Comma));
 		}
-		return returns;
+		return outputs;
 	}
 
-	ast::ReturnValue parse_return_value()
+	ast::FunctionOutput parse_function_output()
 	{
 		auto type = parse_type();
 
@@ -233,16 +236,19 @@ private:
 	NonPrefixParse get_next_non_prefix_parse(Precedence precedence)
 	{
 		bool across_lines = cursor.is_next_new_line();
-		auto token		  = cursor.next_breakable();
+		auto kind		  = cursor.next_breakable().kind;
 
-		if (precedence >= NON_PREFIX_PRECEDENCES[token.kind])
+		if (precedence >= NON_PREFIX_PRECEDENCES[kind])
 			return nullptr;
 
-		if (across_lines && unclosed_groups == 0 && is_unbreakable_operator(token.kind))
+		if (across_lines && unclosed_groups == 0 && is_unbreakable_operator(kind))
+			return nullptr;
+
+		if ((kind == Token::RightAngle || kind == Token::RightAngleAngle) && unclosed_angles != 0)
 			return nullptr;
 
 		cursor.advance();
-		return NON_PREFIX_PARSES[token.kind];
+		return NON_PREFIX_PARSES[kind];
 	}
 
 	static bool is_unbreakable_operator(Token t)
@@ -271,7 +277,7 @@ private:
 		if (cursor.match(Token::LeftAngle))
 			return parse_generic_identifier(name);
 
-		return ast.add(ast::Identifier {name});
+		return ast.store(ast::Identifier {name});
 	}
 
 	Expression parse_generic_identifier(std::string_view name)
@@ -282,45 +288,77 @@ private:
 			--unclosed_angles;
 		};
 
+		const auto saved = cursor;
+
 		std::vector<Expression> generic_args;
 		if (!cursor.match(Token::RightAngle))
 		{
 			do
 				generic_args.emplace_back(parse_expression());
 			while (cursor.match(Token::Comma));
-		} // Definitely unfinished
-		return ast.add(ast::GenericIdentifier {name, std::move(generic_args)});
+
+			static constexpr std::array disambiguators {Token::Name,		  Token::DecIntLiteral, Token::HexIntLiteral,
+														Token::BinIntLiteral, Token::OctIntLiteral, Token::FloatLiteral,
+														Token::CharLiteral,	  Token::StringLiteral};
+			if (cursor.match(Token::RightAngle))
+			{
+				auto kind = cursor.next_breakable().kind;
+				if (std::ranges::contains(disambiguators, kind))
+					return fall_back_to_identifier(saved, name);
+			}
+			else if (cursor.match(Token::RightAngleAngle))
+			{
+				auto kind = cursor.next_breakable().kind;
+				if (std::ranges::contains(disambiguators, kind))
+					return fall_back_to_identifier(saved, name);
+
+				if (preserve_closing_angle)
+					cursor.retreat_to_last_breakable();
+
+				preserve_closing_angle ^= true;
+			}
+			else
+				return fall_back_to_identifier(saved, name);
+		}
+		return ast.store(ast::GenericIdentifier {name, std::move(generic_args)});
+	}
+
+	Expression fall_back_to_identifier(ParseCursor saved, std::string_view name)
+	{
+		cursor = std::move(saved);
+		cursor.retreat_to_last_breakable();
+		return ast.store(ast::Identifier {name});
 	}
 
 	template<ast::NumericLiteral (*EVALUATE)(std::string_view)>
 	Expression on_numeric_literal()
 	{
 		auto lexeme = cursor.previous().get_lexeme(source);
-		return ast.add(EVALUATE(lexeme));
+		return ast.store(EVALUATE(lexeme));
 	}
 
 	Expression on_string_literal()
 	{
 		auto lexeme = cursor.previous().get_lexeme(source);
-		return ast.add(evaluate_string_literal(lexeme));
+		return ast.store(evaluate_string_literal(lexeme));
 	}
 
 	Expression on_let()
 	{
-		return ast.add(parse_binding(ast::Binding::Specifier::Let));
+		return ast.store(parse_binding(ast::Binding::Specifier::Let));
 	}
 
 	Expression on_var()
 	{
 		if (cursor.next_breakable().kind == Token::LeftBrace)
-			return ast.add(parse_variability());
+			return ast.store(parse_variability());
 
-		return ast.add(parse_binding(ast::Binding::Specifier::Var));
+		return ast.store(parse_binding(ast::Binding::Specifier::Var));
 	}
 
 	Expression on_const()
 	{
-		return ast.add(parse_binding(ast::Binding::Specifier::Const));
+		return ast.store(parse_binding(ast::Binding::Specifier::Const));
 	}
 
 	Expression on_static()
@@ -329,7 +367,7 @@ private:
 		if (cursor.match(Token::Var))
 			specifier = ast::Binding::Specifier::StaticVar;
 
-		return ast.add(parse_binding(specifier));
+		return ast.store(parse_binding(specifier));
 	}
 
 	ast::Binding parse_binding(ast::Binding::Specifier specifier)
@@ -358,17 +396,17 @@ private:
 
 	Expression on_prefix_left_brace()
 	{
-		return ast.add(ast::Block {parse_block()});
+		return ast.store(ast::Block {parse_block()});
 	}
 
 	Expression on_prefix_left_paren()
 	{
-		return parse_call({});
+		return parse_call({}); // TODO: function type
 	}
 
 	Expression on_prefix_left_bracket()
 	{
-		return parse_array_type();
+		return parse_array_type(); // TODO: array literal
 	}
 
 	std::vector<Expression> parse_bracketed_arguments()
@@ -403,7 +441,7 @@ private:
 		if (cursor.match(Token::Else))
 			else_expr = OptionalExpression(parse_expression());
 
-		return ast.add(ast::If {condition, then_expr, else_expr});
+		return ast.store(ast::If {condition, then_expr, else_expr});
 	}
 
 	Expression on_while()
@@ -411,7 +449,7 @@ private:
 		auto condition = parse_expression();
 		expect_colon_or_block();
 		auto statement = parse_expression();
-		return ast.add(ast::WhileLoop {condition, statement});
+		return ast.store(ast::WhileLoop {condition, statement});
 	}
 
 	Expression on_for()
@@ -437,22 +475,22 @@ private:
 
 	Expression on_break()
 	{
-		return ast.add(ast::Break {parse_optional_operand()});
+		return ast.store(ast::Break {parse_optional_operand()});
 	}
 
 	Expression on_continue()
 	{
-		return ast.add(ast::Continue {parse_optional_operand()});
+		return ast.store(ast::Continue {parse_optional_operand()});
 	}
 
 	Expression on_return()
 	{
-		return ast.add(ast::Return {parse_optional_operand()});
+		return ast.store(ast::Return {parse_optional_operand()});
 	}
 
 	Expression on_throw()
 	{
-		return ast.add(ast::Throw {parse_optional_operand()});
+		return ast.store(ast::Throw {parse_optional_operand()});
 	}
 
 	OptionalExpression parse_optional_operand()
@@ -467,26 +505,26 @@ private:
 	Expression on_prefix_operator()
 	{
 		auto right = parse_expression(P);
-		return ast.add(ast::UnaryExpression {O, right});
+		return ast.store(ast::UnaryExpression {O, right});
 	}
 
 	template<ast::BinaryOperator O, Precedence P>
 	Expression on_infix_operator(Expression left)
 	{
 		auto right = parse_expression(P);
-		return ast.add(ast::BinaryExpression {O, left, right});
+		return ast.store(ast::BinaryExpression {O, left, right});
 	}
 
 	template<ast::UnaryOperator O>
 	Expression on_postfix_operator(Expression left)
 	{
-		return ast.add(ast::UnaryExpression {O, left});
+		return ast.store(ast::UnaryExpression {O, left});
 	}
 
 	Expression on_dot(Expression left)
 	{
 		auto member = expect_name(Message::ExpectNameAfterDot);
-		return ast.add(ast::MemberAccess {left, member});
+		return ast.store(ast::MemberAccess {left, member});
 	}
 
 	Expression on_infix_left_paren(Expression left)
@@ -513,30 +551,12 @@ private:
 			while (cursor.match(Token::Comma));
 			expect(Token::RightParen, Message::ExpectClosingParen);
 		}
-		return ast.add(ast::Call {callee, std::move(arguments)});
+		return ast.store(ast::Call {callee, std::move(arguments)});
 	}
 
 	Expression on_infix_left_bracket(Expression left)
 	{
-		return ast.add(ast::Index {left, parse_bracketed_arguments()});
-	}
-
-	Expression on_right_angle(Expression left)
-	{
-		if (unclosed_angles != 0)
-		{
-			cursor.retreat();
-			return left;
-		}
-
-		auto right = parse_expression(Precedence::Comparison);
-		return ast.add(ast::BinaryExpression {ast::BinaryOperator::Greater, left, right});
-	}
-
-	Expression on_right_angle_angle(Expression left)
-	{
-		auto right = parse_expression(Precedence::Bitwise);
-		return ast.add(ast::BinaryExpression {ast::BinaryOperator::RightShift, left, right});
+		return ast.store(ast::Index {left, parse_bracketed_arguments()});
 	}
 
 	Expression on_caret()
@@ -591,7 +611,7 @@ private:
 		auto bound = parse_expression();
 		expect(Token::RightBracket, Message::ExpectBracketAfterArrayBound);
 		auto type = parse_type();
-		return ast.add(ast::ArrayType {OptionalExpression(bound), type});
+		return ast.store(ast::ArrayType {OptionalExpression(bound), type});
 	}
 
 	Expression parse_pointer_type()
@@ -601,15 +621,15 @@ private:
 			variability = parse_variability();
 
 		auto type = parse_type();
-		return ast.add(ast::PointerType {variability, type});
+		return ast.store(ast::PointerType {variability, type});
 	}
 
 	Expression parse_function_type()
 	{
 		auto parameters = parse_function_type_parameters();
 		expect(Token::ThinArrow, Message::ExpectArrowAfterFuncTypeParams);
-		auto returns = parse_function_type_returns();
-		return ast.add(ast::FunctionType {std::move(parameters), std::move(returns)});
+		auto outputs = parse_function_type_outputs();
+		return ast.store(ast::FunctionType {std::move(parameters), std::move(outputs)});
 	}
 
 	std::vector<ast::FunctionType::Parameter> parse_function_type_parameters()
@@ -653,9 +673,9 @@ private:
 		return {specifier, name, type};
 	}
 
-	std::vector<ast::ReturnValue> parse_function_type_returns()
+	std::vector<ast::FunctionOutput> parse_function_type_outputs()
 	{
-		std::vector<ast::ReturnValue> returns;
+		std::vector<ast::FunctionOutput> outputs;
 		if (cursor.match(Token::LeftParen))
 		{
 			++unclosed_groups;
@@ -665,14 +685,14 @@ private:
 			};
 
 			do
-				returns.emplace_back(parse_return_value());
+				outputs.emplace_back(parse_function_output());
 			while (cursor.match(Token::Comma));
-			expect(Token::RightParen, Message::ExpectParenAfterReturns);
+			expect(Token::RightParen, Message::ExpectParenAfterOutputs);
 		}
 		else
-			returns.emplace_back(ast::ReturnValue {parse_type(), std::string_view()});
+			outputs.emplace_back(ast::FunctionOutput {parse_type(), std::string_view()});
 
-		return returns;
+		return outputs;
 	}
 
 	void expect(Token kind, CheckedMessage<std::string> message)
@@ -827,7 +847,7 @@ private:
 		t[EqualEqual]			= &Parser::on_infix_operator<Equality, Comparison>;
 		t[BangEqual]			= &Parser::on_infix_operator<Inequality, Comparison>;
 		t[LeftAngle]			= &Parser::on_infix_operator<Less, Comparison>;
-		t[RightAngle]			= &Parser::on_right_angle;
+		t[RightAngle]			= &Parser::on_infix_operator<Greater, Comparison>;
 		t[LeftAngleEqual]		= &Parser::on_infix_operator<LessEqual, Comparison>;
 		t[RightAngleEqual]		= &Parser::on_infix_operator<GreaterEqual, Comparison>;
 		t[Plus]					= &Parser::on_infix_operator<Add, Additive>;
@@ -839,7 +859,7 @@ private:
 		t[Pipe]					= &Parser::on_infix_operator<BitOr, Bitwise>;
 		t[Tilde]				= &Parser::on_infix_operator<Xor, Bitwise>;
 		t[LeftAngleAngle]		= &Parser::on_infix_operator<LeftShift, Bitwise>;
-		t[RightAngleAngle]		= &Parser::on_right_angle_angle;
+		t[RightAngleAngle]		= &Parser::on_infix_operator<RightShift, Bitwise>;
 		t[StarStar]				= &Parser::on_infix_operator<Power, Multiplicative>;
 		t[Caret]				= &Parser::on_postfix_operator<Dereference>;
 		t[PlusPlus]				= &Parser::on_postfix_operator<PostIncrement>;

@@ -1,6 +1,6 @@
+#include "cero/driver/Initialize.hpp"
 #include "driver/Command.hpp"
 #include "driver/ExitCode.hpp"
-#include "driver/Initialize.hpp"
 
 namespace cero
 {

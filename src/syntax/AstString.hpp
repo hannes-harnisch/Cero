@@ -40,7 +40,7 @@ private:
 	void visit_node(const ast::Function& function);
 	void visit(const ast::Function::Parameter& parameter);
 	void visit(const ast::FunctionType::Parameter& parameter);
-	void visit(const ast::ReturnValue& return_value);
+	void visit(const ast::FunctionOutput& output);
 	void visit_node(const ast::Struct& struct_definition);
 	void visit_node(const ast::Enum& enum_definition);
 	void visit(Expression expression);

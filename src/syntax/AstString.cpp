@@ -195,9 +195,9 @@ void AstString::visit_node(const ast::Function& function)
 	visit_each_in(function.parameters);
 	pop_level();
 
-	add_body_line("return values");
+	add_body_line("outputs");
 	push_level();
-	visit_each_in(function.returns);
+	visit_each_in(function.outputs);
 	pop_level();
 
 	add_tail_line("statements");
@@ -232,15 +232,15 @@ void AstString::visit(const ast::FunctionType::Parameter& parameter)
 	pop_level();
 }
 
-void AstString::visit(const ast::ReturnValue& return_value)
+void AstString::visit(const ast::FunctionOutput& output)
 {
-	if (return_value.name.empty())
-		add_line("return value");
+	if (output.name.empty())
+		add_line("output");
 	else
-		add_line(std::format("return value `{}`", return_value.name));
+		add_line(std::format("output `{}`", output.name));
 
 	push_level();
-	visit_tail(return_value.type);
+	visit_tail(output.type);
 	pop_level();
 }
 
@@ -361,7 +361,7 @@ void AstString::visit_node(const ast::FunctionType& function_type)
 
 	add_tail_line("return values");
 	push_level();
-	visit_each_in(function_type.returns);
+	visit_each_in(function_type.outputs);
 	pop_level();
 
 	pop_level();

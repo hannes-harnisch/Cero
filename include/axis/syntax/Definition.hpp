@@ -26,10 +26,10 @@ namespace ast
 			OptionalExpression default_argument;
 		};
 
-		std::string_view		 name;
-		std::vector<Parameter>	 parameters;
-		std::vector<ReturnValue> returns;
-		std::vector<Expression>	 statements;
+		std::string_view			name;
+		std::vector<Parameter>		parameters;
+		std::vector<FunctionOutput> outputs;
+		std::vector<Expression>		statements;
 	};
 
 	struct Struct
