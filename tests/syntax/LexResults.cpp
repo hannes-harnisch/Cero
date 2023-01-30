@@ -22,7 +22,7 @@ bool all_tokens_match(const cero::TokenStream& token_stream, std::initializer_li
 
 using enum cero::Token;
 
-TEST(LexEmptySource)
+CERO_TEST(LexEmptySource)
 {
 	auto source = make_test_source("");
 
@@ -32,7 +32,7 @@ TEST(LexEmptySource)
 	CHECK(all_tokens_match(tokens, {EndOfFile}));
 }
 
-TEST(LexIntegerLiterals)
+CERO_TEST(LexIntegerLiterals)
 {
 	auto source = make_test_source(R"_____(
 0
@@ -73,7 +73,7 @@ TEST(LexIntegerLiterals)
 	CHECK(tokens.at(25).get_lexeme(source) == "0o 124 22115 2736");
 }
 
-TEST(LexFloatLiterals)
+CERO_TEST(LexFloatLiterals)
 {
 	auto source = make_test_source(R"_____(
 1.0
@@ -112,7 +112,7 @@ TEST(LexFloatLiterals)
 	CHECK(tokens.at(23).get_lexeme(source) == "a");
 }
 
-TEST(LexStringLiteralsWithEscapes)
+CERO_TEST(LexStringLiteralsWithEscapes)
 {
 	auto source = make_test_source(R"_____(
 "123\""
@@ -141,7 +141,7 @@ TEST(LexStringLiteralsWithEscapes)
 	CHECK(tokens.at(15).get_lexeme(source) == "\"\\\"\\\\\\\"\\\\\\\\a\\\\a\\\"\"");
 }
 
-TEST(LexLineComments)
+CERO_TEST(LexLineComments)
 {
 	auto source = make_test_source(R"_____(
 //
@@ -161,7 +161,7 @@ TEST(LexLineComments)
 	CHECK(tokens.at(7).get_lexeme(source) == "// //");
 }
 
-TEST(LexBlockComments)
+CERO_TEST(LexBlockComments)
 {
 	auto source = make_test_source(R"_____(
 /**/
@@ -198,7 +198,7 @@ TEST(LexBlockComments)
 	CHECK(tokens.at(19).get_lexeme(source) == "/*// */");
 }
 
-TEST(LexBracketCaret)
+CERO_TEST(LexBracketCaret)
 {
 	auto source = make_test_source(R"_____(
 [^
@@ -210,7 +210,7 @@ TEST(LexBracketCaret)
 	CHECK(all_tokens_match(tokens, {NewLine, LeftBracket, Caret, NewLine, EndOfFile}));
 }
 
-TEST(LexUnicodeNames)
+CERO_TEST(LexUnicodeNames)
 {
 	auto source = make_test_source(R"_____(
 𖭽()
@@ -224,7 +224,7 @@ TEST(LexUnicodeNames)
 	CHECK(tokens.at(1).get_lexeme(source) == "𖭽");
 }
 
-TEST(LexOperators)
+CERO_TEST(LexOperators)
 {
 	auto source = make_test_source(R"_____(
 !
@@ -249,7 +249,7 @@ TEST(LexOperators)
 									Tilde,		NewLine,   EndOfFile}));
 }
 
-TEST(LexDotDot)
+CERO_TEST(LexDotDot)
 {
 	auto source = make_test_source(R"_____(
 ..

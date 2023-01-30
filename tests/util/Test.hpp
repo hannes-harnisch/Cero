@@ -17,4 +17,4 @@ void build_test_source(cero::Reporter&		reporter,
 					   std::source_location location = std::source_location::current());
 
 // Defines a test case function by combining the test name with an easily identifiable prefix.
-#define TEST(name) DOCTEST_CREATE_AND_REGISTER_FUNCTION(Test_##name, #name)
+#define CERO_TEST(name) DOCTEST_CREATE_AND_REGISTER_FUNCTION(Test_##name, #name)

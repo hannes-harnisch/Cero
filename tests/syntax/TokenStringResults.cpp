@@ -3,7 +3,7 @@
 
 #include <cero/syntax/Lex.hpp>
 
-TEST(TokenStringForBracketsLiterals)
+CERO_TEST(TokenStringForBracketsLiterals)
 {
 	ExhaustiveReporter r;
 
@@ -44,7 +44,7 @@ EndOfFile `` [Test_TokenStringForBracketsLiterals:8:1]
 )_____");
 }
 
-TEST(TokenStringForOperators)
+CERO_TEST(TokenStringForOperators)
 {
 	ExhaustiveReporter r;
 
@@ -75,7 +75,7 @@ EndOfFile `` [Test_TokenStringForOperators:4:1]
 )_____");
 }
 
-TEST(TokenStringForKeywords)
+CERO_TEST(TokenStringForKeywords)
 {
 	ExhaustiveReporter r;
 

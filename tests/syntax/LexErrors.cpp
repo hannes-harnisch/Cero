@@ -3,14 +3,14 @@
 
 #include <cero/syntax/LexicalToken.hpp>
 
-TEST(SourceTooLarge)
+CERO_TEST(SourceTooLarge)
 {
 	ExhaustiveReporter r;
 	r.expect(1, 1, cero::Message::SourceInputTooLarge, cero::LexicalToken::MAX_LENGTH);
 	build_test_source(r, std::string(16779000, ' '));
 }
 
-TEST(IllegalChar)
+CERO_TEST(IllegalChar)
 {
 	ExhaustiveReporter r;
 	r.expect(5, 1, cero::Message::UnexpectedCharacter, 0x7);
@@ -22,7 +22,7 @@ main()
 )_____");
 }
 
-TEST(MissingClosingQuote)
+CERO_TEST(MissingClosingQuote)
 {
 	ExhaustiveReporter r;
 	r.expect(4, 27, cero::Message::MissingClosingQuote);
@@ -36,7 +36,7 @@ foo()
 )_____");
 }
 
-TEST(UnterminatedBlockComment)
+CERO_TEST(UnterminatedBlockComment)
 {
 	ExhaustiveReporter r;
 	r.expect(2, 3, cero::Message::UnterminatedBlockComment);

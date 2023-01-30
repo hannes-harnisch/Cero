@@ -309,7 +309,7 @@ private:
 			else if (cursor.match(Token::RightAngleAngle))
 			{
 				auto kind = cursor.next_breakable().kind;
-				if (std::ranges::contains(disambiguators, kind))
+				if (std::ranges::contains(disambiguators, kind) || (unclosed_angles == 1 && preserve_closing_angle))
 					return fall_back_to_identifier(saved, name);
 
 				if (preserve_closing_angle)

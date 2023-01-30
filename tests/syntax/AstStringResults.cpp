@@ -3,7 +3,7 @@
 
 #include <cero/syntax/Parse.hpp>
 
-TEST(AstStringForSimpleFunction)
+CERO_TEST(AstStringForSimpleFunction)
 {
 	auto source = make_test_source(R"_____(
 
@@ -23,7 +23,7 @@ main()
 )_____");
 }
 
-TEST(AstStringForSimpleFunctionWithParametersAndReturn)
+CERO_TEST(AstStringForSimpleFunctionWithParametersAndReturn)
 {
 	auto source = make_test_source(R"_____(
 
@@ -52,7 +52,7 @@ a(int32 x, bool _a, bool _b = x) -> float32
 )_____");
 }
 
-TEST(AstStringForCall)
+CERO_TEST(AstStringForCall)
 {
 	auto source = make_test_source(R"_____(
 
