@@ -5,6 +5,7 @@ CERO_TEST(ExpectFuncStructEnum)
 {
 	ExhaustiveReporter r;
 	r.expect(5, 1, cero::Message::ExpectFuncStructEnum, "`(`");
+
 	build_test_source(r, R"_____(
 main()
 {}
@@ -21,6 +22,7 @@ CERO_TEST(ExpectParenAfterFuncName)
 {
 	ExhaustiveReporter r;
 	r.expect(2, 5, cero::Message::ExpectParenAfterFuncName, "`)`");
+
 	build_test_source(r, R"_____(
 main)
 {}
@@ -32,6 +34,7 @@ CERO_TEST(MissingParameter)
 	ExhaustiveReporter r;
 	r.expect(2, 5, cero::Message::ExpectType, "`,`");
 	r.expect(2, 5, cero::Message::ExpectParamName, "`,`");
+
 	build_test_source(r, R"_____(
 foo(, bool x) -> bool
 {
@@ -44,6 +47,7 @@ CERO_TEST(MissingParameterName)
 {
 	ExhaustiveReporter r;
 	r.expect(2, 9, cero::Message::ExpectParamName, "`,`");
+
 	build_test_source(r, R"_____(
 foo(bool, bool x) -> bool
 {
@@ -59,6 +63,7 @@ CERO_TEST(MissingParameterWithUnexpectedToken)
 	r.expect(2, 5, cero::Message::ExpectParamName, "`}`");
 	r.expect(7, 13, cero::Message::ExpectType, "`%`");
 	r.expect(7, 13, cero::Message::ExpectParamName, "`%`");
+
 	build_test_source(r, R"_____(
 foo(}, bool x) -> bool
 {
@@ -77,6 +82,7 @@ CERO_TEST(MissingParenAfterParameters)
 	ExhaustiveReporter r;
 	r.expect(2, 12, cero::Message::ExpectParenAfterParams, "`->`");
 	r.expect(7, 11, cero::Message::ExpectParenAfterParams, "`}`");
+
 	build_test_source(r, R"_____(
 foo(bool x -> bool
 {
@@ -96,6 +102,7 @@ CERO_TEST(MissingBraceBeforeFuncBody)
 	r.expect(4, 5, cero::Message::ExpectBraceBeforeFuncBody, "`return`");
 	r.expect(8, 1, cero::Message::ExpectBraceBeforeFuncBody, "`}`");
 	r.expect(10, 7, cero::Message::ExpectBraceBeforeFuncBody, "`-`");
+
 	build_test_source(r, R"_____(
 foo(bool x) -> bool
 
@@ -115,6 +122,7 @@ CERO_TEST(MissingNameInDeclaration)
 	ExhaustiveReporter r;
 	r.expect(5, 17, cero::Message::ExpectNameAfterDeclType, "`=`");
 	r.expect(7, 17, cero::Message::ExpectNameAfterDeclType, "`=`");
+
 	build_test_source(r, R"_____(
 main()
 {
@@ -132,6 +140,7 @@ CERO_TEST(ExpectExpr)
 	r.expect(4, 5, cero::Message::ExpectExpr, "`]`");
 	r.expect(10, 1, cero::Message::ExpectExpr, "`}`");
 	r.expect(14, 5, cero::Message::ExpectExpr, "`+=`");
+
 	build_test_source(r, R"_____(
 a()
 {
@@ -157,6 +166,7 @@ CERO_TEST(MissingNameAfterDot)
 	ExhaustiveReporter r;
 	r.expect(5, 5, cero::Message::ExpectNameAfterDot, "`var`");
 	r.expect(7, 7, cero::Message::ExpectNameAfterDot, "`(`");
+
 	build_test_source(r, R"_____(
 f()
 {
@@ -173,6 +183,7 @@ CERO_TEST(MissingColonAfterIfCondition)
 {
 	ExhaustiveReporter r;
 	r.expect(5, 9, cero::Message::ExpectColonOrBlock, "`return`");
+
 	build_test_source(r, R"_____(
 f(bool b) -> int32
 {
@@ -198,6 +209,7 @@ CERO_TEST(UnnecessaryColonBeforeBlock)
 {
 	ExhaustiveReporter r;
 	r.expect(4, 9, cero::Message::UnnecessaryColonBeforeBlock);
+
 	build_test_source(r, R"_____(
 f(bool b) -> int32
 {
@@ -221,6 +233,7 @@ CERO_TEST(MissingParenAfterGroupExpression)
 {
 	ExhaustiveReporter r;
 	r.expect(5, 1, cero::Message::ExpectClosingParen, "`}`");
+
 	build_test_source(r, R"_____(
 f(bool a, bool b, bool c, bool d) -> bool
 {
@@ -238,6 +251,7 @@ CERO_TEST(MissingParenAfterFunctionCall)
 {
 	ExhaustiveReporter r;
 	r.expect(7, 1, cero::Message::ExpectClosingParen, "`}`");
+
 	build_test_source(r, R"_____(
 foo(int32 _) {}
 
@@ -257,6 +271,7 @@ CERO_TEST(MissingBracketAfterIndex)
 {
 	ExhaustiveReporter r;
 	r.expect(5, 1, cero::Message::ExpectBracketAfterIndex, "`}`");
+
 	build_test_source(r, R"_____(
 f([4]int32 x) -> int32
 {
@@ -274,6 +289,7 @@ CERO_TEST(MissingBracketAfterArrayBound)
 {
 	ExhaustiveReporter r;
 	r.expect(2, 6, cero::Message::ExpectBracketAfterArrayBound, "name `int32`");
+
 	build_test_source(r, R"_____(
 f([4 int32 x) -> int32
 {
@@ -283,6 +299,26 @@ f([4 int32 x) -> int32
 g([4]int32 x) -> int32
 {
 	return x[0]
+}
+)_____");
+}
+
+CERO_TEST(ExpectBraceAfterVariability)
+{
+	ExhaustiveReporter r;
+	r.expect(2, 10, cero::Message::ExpectBraceAfterVariability, "name `MyList`");
+
+	build_test_source(r, R"_____(
+f(^var{1 MyList l) -> int32
+{
+	let int32 p = l^[0]
+	return p
+}
+
+g(^var{1} MyList p) -> int32
+{
+	let int32 p = l^[0]
+	return p
 }
 )_____");
 }

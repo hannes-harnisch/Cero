@@ -2,11 +2,11 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-file(GLOB_RECURSE CERO_SRC CONFIGURE_DEPENDS *.cpp *.hpp)
+file(GLOB_RECURSE CERO_SRC CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/*")
 file(GLOB_RECURSE CERO_INCLUDE CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/include/*")
 file(GLOB_RECURSE PCH_FILES "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/cmake_pch.*")
 
-add_library(Cero ${CERO_SRC})
+add_library(Cero ${CERO_SRC} ${CERO_INCLUDE})
 
 target_include_directories(Cero PUBLIC ${CMAKE_SOURCE_DIR}/external/magic_enum/include)
 target_include_directories(Cero PUBLIC ${CMAKE_SOURCE_DIR}/external/pfr/include)
