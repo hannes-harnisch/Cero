@@ -322,3 +322,57 @@ g(^var{1} MyList p) -> int32
 }
 )_____");
 }
+
+CERO_TEST(ExpectArrowAfterFuncTypeParams)
+{
+	ExhaustiveReporter r;
+	r.expect(2, 12, cero::Message::ExpectArrowAfterFuncTypeParams, "name `f`");
+
+	build_test_source(r, R"_____(
+a(^(int32) f) -> int32
+{
+	return f()
+}
+)_____");
+}
+
+CERO_TEST(FuncTypeDefaultArgument) // TODO: add check for this in expression context
+{
+	ExhaustiveReporter r;
+	r.expect(2, 13, cero::Message::FuncTypeDefaultArgument);
+
+	build_test_source(r, R"_____(
+a(^(int32 x = 0)->int32 f) -> int32
+{
+	return f(3)
+}
+)_____");
+}
+
+CERO_TEST(AmbiguousOperatorChaining)
+{
+	ExhaustiveReporter r;
+	r.expect(4, 20, cero::Message::AmbiguousOperatorChaining, "==");
+	r.expect(4, 25, cero::Message::AmbiguousOperatorChaining, "==");
+
+	build_test_source(r, R"_____(
+f(bool a, bool b, bool c, bool d)
+{
+	let e = a == b == c == d
+}
+)_____");
+}
+
+CERO_TEST(AmbiguousOperatorMixing)
+{
+	ExhaustiveReporter r;
+	r.expect(4, 19, cero::Message::AmbiguousOperatorMixing, ">", "==");
+	r.expect(4, 24, cero::Message::AmbiguousOperatorMixing, "==", "<");
+
+	build_test_source(r, R"_____(
+f(bool a, bool b, bool c, bool d)
+{
+	let e = a > b == c < d
+}
+)_____");
+}

@@ -180,6 +180,11 @@ namespace ast
 		std::string_view member;
 	};
 
+	struct Group
+	{
+		std::vector<Expression> arguments;
+	};
+
 	struct Call
 	{
 		OptionalExpression		callee;
@@ -206,7 +211,7 @@ namespace ast
 		PostDecrement,
 		AddressOf,
 		Dereference,
-		Negation,
+		Negate,
 		LogicalNot,
 		BitwiseNot
 	};

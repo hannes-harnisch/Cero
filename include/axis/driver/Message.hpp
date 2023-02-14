@@ -64,8 +64,8 @@ constexpr inline LookupTable<Message, std::string_view> MESSAGE_FORMATS = []
 	t[ExpectBraceAfterVariability]	  = "expected `}}` after variability arguments, but found {}";
 	t[ExpectArrowAfterFuncTypeParams] = "expected `->` after parameters for function type, but found {}";
 	t[FuncTypeDefaultArgument]		  = "parameter in function type cannot have default argument";
-	t[AmbiguousOperatorChaining]	  = "chaining the `{}` operator is ambiguous, could be {} or {}";
-	t[AmbiguousOperatorMixing]		  = "mixing the `{}` and `{}` operators is ambiguous, could be {} or {}";
+	t[AmbiguousOperatorChaining]	  = "chaining the `{}` operator is ambiguous";
+	t[AmbiguousOperatorMixing]		  = "mixing the `{}` and `{}` operators is ambiguous";
 	return t;
 }();
 

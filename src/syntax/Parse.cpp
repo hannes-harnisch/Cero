@@ -3,6 +3,7 @@
 #include "cero/syntax/Lex.hpp"
 #include "cero/syntax/Literal.hpp"
 #include "cero/util/LookupTable.hpp"
+#include "syntax/AstString.hpp"
 #include "syntax/ParseCursor.hpp"
 #include "util/Algorithm.hpp"
 #include "util/Defer.hpp"
@@ -238,8 +239,9 @@ private:
 		auto left = ast.store((this->*parse_prefix)());
 		while (auto parse = get_next_non_prefix_parse(precedence))
 		{
-			auto right = ast.store((this->*parse)(left));
-			validate_associativity(left, right);
+			auto target = cursor.previous();
+			auto right	= ast.store((this->*parse)(left));
+			validate_associativity(left, right, target);
 			left = right;
 		}
 		return left;
@@ -278,8 +280,48 @@ private:
 		}
 	}
 
-	void validate_associativity(Expression, Expression)
-	{}
+	void validate_associativity(Expression left_index, Expression right_index, LexicalToken target)
+	{
+		auto& left_node	 = ast.get(left_index);
+		auto& right_node = ast.get(right_index);
+
+		if (auto right = std::get_if<ast::BinaryExpression>(&right_node))
+		{
+			if (auto left = std::get_if<ast::BinaryExpression>(&left_node))
+				validate_binary_associativity(left->op, right->op, target);
+			else if (auto unary = std::get_if<ast::UnaryExpression>(&left_node))
+				validate_unary_binary_associativity(unary->op, right->op);
+		}
+	}
+
+	void validate_binary_associativity(ast::BinaryOperator left, ast::BinaryOperator right, LexicalToken target)
+	{
+		if ((contains(BITWISE_OPERATORS, left) && contains(ARITHMETIC_OPERATORS, right))
+			|| (contains(ARITHMETIC_OPERATORS, left) && contains(BITWISE_OPERATORS, right)))
+		{
+			auto location = target.locate_in(source);
+			reporter.report(Message::AmbiguousOperatorMixing, location, BINARY_OPERATOR_STRINGS[left],
+							BINARY_OPERATOR_STRINGS[right]);
+		}
+		else if (contains(COMPARISON_OPERATORS, left) && contains(COMPARISON_OPERATORS, right))
+		{
+			auto location = target.locate_in(source);
+			if (left == right)
+				reporter.report(Message::AmbiguousOperatorChaining, location, BINARY_OPERATOR_STRINGS[left]);
+			else
+				reporter.report(Message::AmbiguousOperatorMixing, location, BINARY_OPERATOR_STRINGS[left],
+								BINARY_OPERATOR_STRINGS[right]);
+		}
+	}
+
+	void validate_unary_binary_associativity(ast::UnaryOperator left, ast::BinaryOperator right)
+	{
+		if (left == ast::UnaryOperator::Negate && right == ast::BinaryOperator::Power)
+		{
+			auto location = cursor.peek().locate_in(source);
+			reporter.report(Message::AmbiguousOperatorMixing, location, "-", "**");
+		}
+	}
 
 	ExpressionNode on_name()
 	{
@@ -786,7 +828,7 @@ private:
 		t[Throw]		 = &Parser::on_throw;
 		t[Try]			 = &Parser::on_prefix_operator<TryOperator, Statement>;
 		t[Ampersand]	 = &Parser::on_prefix_operator<AddressOf, Prefix>;
-		t[Minus]		 = &Parser::on_prefix_operator<Negation, Prefix>;
+		t[Minus]		 = &Parser::on_prefix_operator<Negate, Prefix>;
 		t[Bang]			 = &Parser::on_prefix_operator<LogicalNot, Prefix>;
 		t[Tilde]		 = &Parser::on_prefix_operator<BitwiseNot, Prefix>;
 		t[PlusPlus]		 = &Parser::on_prefix_operator<PreIncrement, Prefix>;
@@ -889,6 +931,21 @@ private:
 		t[MinusMinus]			= &Parser::on_postfix_operator<PostDecrement>;
 		return t;
 	}();
+
+	static constexpr ast::BinaryOperator BITWISE_OPERATORS[] {ast::BinaryOperator::BitAnd, ast::BinaryOperator::BitOr,
+															  ast::BinaryOperator::Xor, ast::BinaryOperator::LeftShift,
+															  ast::BinaryOperator::RightShift};
+
+	static constexpr ast::BinaryOperator ARITHMETIC_OPERATORS[] {ast::BinaryOperator::Add,		 ast::BinaryOperator::Subtract,
+																 ast::BinaryOperator::Multiply,	 ast::BinaryOperator::Divide,
+																 ast::BinaryOperator::Remainder, ast::BinaryOperator::Power};
+
+	static constexpr ast::BinaryOperator COMPARISON_OPERATORS[] {ast::BinaryOperator::Equality,
+																 ast::BinaryOperator::Inequality,
+																 ast::BinaryOperator::Less,
+																 ast::BinaryOperator::Greater,
+																 ast::BinaryOperator::LessEqual,
+																 ast::BinaryOperator::GreaterEqual};
 };
 
 SyntaxTree parse(const Source& source, Reporter& reporter)

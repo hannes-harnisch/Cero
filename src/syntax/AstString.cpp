@@ -1,7 +1,5 @@
 #include "AstString.hpp"
 
-#include "cero/util/LookupTable.hpp"
-
 namespace cero
 {
 
@@ -60,63 +58,6 @@ namespace
 		}
 		return {};
 	}
-
-	constexpr inline LookupTable<ast::UnaryOperator, std::string_view> UNARY_OPERATOR_STRINGS = []
-	{
-		using enum ast::UnaryOperator;
-
-		LookupTable<ast::UnaryOperator, std::string_view> t({});
-		t[TryOperator]	 = "try";
-		t[PreIncrement]	 = "prefix ++";
-		t[PreDecrement]	 = "prefix --";
-		t[PostIncrement] = "postfix ++";
-		t[PostDecrement] = "postfix --";
-		t[AddressOf]	 = "&";
-		t[Dereference]	 = "^";
-		t[Negation]		 = "-";
-		t[LogicalNot]	 = "!";
-		t[BitwiseNot]	 = "~";
-		return t;
-	}();
-
-	constexpr inline LookupTable<ast::BinaryOperator, std::string_view> BINARY_OPERATOR_STRINGS = []
-	{
-		using enum ast::BinaryOperator;
-
-		LookupTable<ast::BinaryOperator, std::string_view> t({});
-		t[Add]				= "+";
-		t[Subtract]			= "-";
-		t[Multiply]			= "*";
-		t[Divide]			= "/";
-		t[Remainder]		= "%";
-		t[Power]			= "**";
-		t[LogicalAnd]		= "&&";
-		t[LogicalOr]		= "||";
-		t[BitAnd]			= "&";
-		t[BitOr]			= "|";
-		t[Xor]				= "~";
-		t[LeftShift]		= "<<";
-		t[RightShift]		= ">>";
-		t[Equality]			= "==";
-		t[Inequality]		= "!=";
-		t[Less]				= "<";
-		t[Greater]			= ">";
-		t[LessEqual]		= "<=";
-		t[GreaterEqual]		= ">=";
-		t[Assign]			= "=";
-		t[AddAssign]		= "+=";
-		t[SubtractAssign]	= "-=";
-		t[MultiplyAssign]	= "*=";
-		t[DivideAssign]		= "/=";
-		t[RemainderAssign]	= "%=";
-		t[PowerAssign]		= "**=";
-		t[BitAndAssign]		= "&=";
-		t[BitOrAssign]		= "|=";
-		t[XorAssign]		= "~=";
-		t[LeftShiftAssign]	= "<<=";
-		t[RightShiftAssign] = ">>=";
-		return t;
-	}();
 } // namespace
 
 AstString::AstString(const SyntaxTree& ast, const Source& source) :
