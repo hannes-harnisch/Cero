@@ -32,7 +32,7 @@ enum class Token : uint32_t
 	RightBracket, // ]
 	LeftAngle,	  // <
 	RightAngle,	  // >
-	Equal,		  // =
+	Equals,		  // =
 	Plus,		  // +
 	Minus,		  // -
 	Star,		  // *
@@ -49,34 +49,33 @@ enum class Token : uint32_t
 	Hash,		  // #
 
 	// Two-character tokens
-	ThinArrow,		 // ->
-	ThickArrow,		 // =>
-	ColonColon,		 // ::
-	PlusPlus,		 // ++
-	MinusMinus,		 // --
-	DoubleAmpersand, // &&
-	PipePipe,		 // ||
-	EqualEqual,		 // ==
-	BangEqual,		 // !=
-	LeftAngleEqual,	 // <=
-	RightAngleEqual, // >=
-	StarStar,		 // **
-	LeftAngleAngle,	 // <<
-	RightAngleAngle, // >>
-	PlusEqual,		 // +=
-	MinusEqual,		 // -=
-	StarEqual,		 // *=
-	SlashEqual,		 // /=
-	PercentEqual,	 // %=
-	AmpersandEqual,	 // &=
-	PipeEqual,		 // |=
-	TildeEqual,		 // ~=
+	ThinArrow,			// ->
+	ThickArrow,			// =>
+	ColonColon,			// ::
+	PlusPlus,			// ++
+	MinusMinus,			// --
+	AmpersandAmpersand, // &&
+	PipePipe,			// ||
+	EqualsEquals,		// ==
+	BangEquals,			// !=
+	LeftAngleEquals,	// <=
+	RightAngleEquals,	// >=
+	StarStar,			// **
+	LeftAngleAngle,		// <<
+	PlusEquals,			// +=
+	MinusEquals,		// -=
+	StarEquals,			// *=
+	SlashEquals,		// /=
+	PercentEquals,		// %=
+	AmpersandEquals,	// &=
+	PipeEquals,			// |=
+	TildeEquals,		// ~=
 
 	// Three-character tokens
-	Ellipsis,			  // ...
-	StarStarEqual,		  // **=
-	LeftAngleAngleEqual,  // <<=
-	RightAngleAngleEqual, // >>=
+	Ellipsis,			   // ...
+	StarStarEquals,		   // **=
+	LeftAngleAngleEquals,  // <<=
+	RightAngleAngleEquals, // >>=
 
 	// Keywords
 	Break,

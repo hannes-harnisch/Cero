@@ -354,11 +354,23 @@ CERO_TEST(AmbiguousOperatorChaining)
 	ExhaustiveReporter r;
 	r.expect(4, 20, cero::Message::AmbiguousOperatorChaining, "==");
 	r.expect(4, 25, cero::Message::AmbiguousOperatorChaining, "==");
+	r.expect(5, 20, cero::Message::AmbiguousOperatorChaining, "!=");
+	r.expect(6, 19, cero::Message::AmbiguousOperatorChaining, "<");
+	r.expect(6, 23, cero::Message::AmbiguousOperatorChaining, "<");
+	r.expect(7, 19, cero::Message::AmbiguousOperatorChaining, ">");
+	r.expect(8, 20, cero::Message::AmbiguousOperatorChaining, "<=");
+	r.expect(9, 20, cero::Message::AmbiguousOperatorChaining, ">=");
+	r.expect(9, 25, cero::Message::AmbiguousOperatorChaining, ">=");
 
 	build_test_source(r, R"_____(
 f(bool a, bool b, bool c, bool d)
 {
 	let e = a == b == c == d
+	let f = a != b != c
+	let g = a < b < c < d
+	let h = a > b > c
+	let i = a <= b <= c
+	let j = a >= b >= c >= d
 }
 )_____");
 }
@@ -368,11 +380,32 @@ CERO_TEST(AmbiguousOperatorMixing)
 	ExhaustiveReporter r;
 	r.expect(4, 19, cero::Message::AmbiguousOperatorMixing, ">", "==");
 	r.expect(4, 24, cero::Message::AmbiguousOperatorMixing, "==", "<");
+	r.expect(5, 19, cero::Message::AmbiguousOperatorMixing, "<", "==");
+	r.expect(5, 24, cero::Message::AmbiguousOperatorMixing, "==", ">");
+	r.expect(6, 19, cero::Message::AmbiguousOperatorMixing, "&", "+");
+	r.expect(6, 28, cero::Message::AmbiguousOperatorMixing, "&", "*");
+	r.expect(7, 19, cero::Message::AmbiguousOperatorMixing, "-", "|");
+	r.expect(7, 32, cero::Message::AmbiguousOperatorMixing, "/", "|");
+	r.expect(8, 30, cero::Message::AmbiguousOperatorMixing, "&&", "||");
+	r.expect(9, 30, cero::Message::AmbiguousOperatorMixing, "||", "&&");
+	r.expect(10, 30, cero::Message::AmbiguousOperatorMixing, "&&", "||");
+	r.expect(10, 40, cero::Message::AmbiguousOperatorMixing, "||", "&&");
+	r.expect(11, 30, cero::Message::AmbiguousOperatorMixing, "||", "&&");
+	r.expect(11, 40, cero::Message::AmbiguousOperatorMixing, "&&", "||");
+	r.expect(12, 15, cero::Message::AmbiguousOperatorMixing, "-", "**");
 
 	build_test_source(r, R"_____(
-f(bool a, bool b, bool c, bool d)
+f(float32 a, float32 b, int32 c, int32 d)
 {
 	let e = a > b == c < d
+	let f = a < b == c > d
+	let g = c & d + c == c & d * c
+	let h = c - d | c == c / d | c
+	let i = a == b && c == d || a != d
+	let j = a == b || c == d && a != d
+	let k = a == b && c == d || a != d && b > c
+	let l = a == b || c == d && a != d || b > c
+	let m = -a**b
 }
 )_____");
 }

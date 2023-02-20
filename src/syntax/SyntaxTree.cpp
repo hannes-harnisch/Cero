@@ -35,7 +35,7 @@ std::string SyntaxTree::to_string(const Source& source) const
 
 void SyntaxTree::log(const Source& source) const
 {
-	std::clog << to_string(source);
+	std::cout << to_string(source);
 }
 
 void SyntaxTree::add_to_root(Definition definition)

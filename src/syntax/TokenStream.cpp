@@ -25,7 +25,7 @@ std::string TokenStream::to_string(const Source& source) const
 
 void TokenStream::log(const Source& source) const
 {
-	std::clog << to_string(source);
+	std::cout << to_string(source);
 }
 
 TokenStream::Iterator TokenStream::begin() const

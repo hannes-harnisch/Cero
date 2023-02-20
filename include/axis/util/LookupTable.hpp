@@ -2,6 +2,8 @@
 
 #include <magic_enum.hpp>
 
+#include <array>
+
 namespace cero
 {
 
@@ -17,12 +19,10 @@ class LookupTable
 		return static_cast<size_t>(*max) + 1;
 	}
 
-	Value table[size_from_enum_max<Key>()];
+	std::array<Value, size_from_enum_max<Key>()> table;
 
 public:
-	static constexpr size_t COUNT = std::extent_v<decltype(table)>;
-
-	constexpr LookupTable(Value default_value)
+	constexpr LookupTable(Value default_value = {})
 	{
 		for (auto& value : table)
 			value = default_value;
@@ -30,12 +30,17 @@ public:
 
 	constexpr Value& operator[](Key key)
 	{
-		return table[static_cast<size_t>(key)];
+		return table.at(static_cast<size_t>(key));
 	}
 
 	constexpr Value operator[](Key key) const
 	{
-		return table[static_cast<size_t>(key)];
+		return table.at(static_cast<size_t>(key));
+	}
+
+	constexpr size_t size() const
+	{
+		return table.size();
 	}
 };
 

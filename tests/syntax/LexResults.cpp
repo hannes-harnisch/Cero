@@ -229,24 +229,23 @@ CERO_TEST(LexOperators)
 	auto source = make_test_source(R"_____(
 !
 + - * / %
-<< >>
 == != < > <= >=
 .
 ::
 && ||
 =
-& | ~
+& | ~ << >>
 )_____");
 
 	ExhaustiveReporter r;
 
 	auto tokens = cero::lex(source, r);
-	CHECK(all_tokens_match(tokens, {NewLine,	Bang,	   NewLine,	  Plus,			  Minus,		   Star,
-									Slash,		Percent,   NewLine,	  LeftAngleAngle, RightAngleAngle, NewLine,
-									EqualEqual, BangEqual, LeftAngle, RightAngle,	  LeftAngleEqual,  RightAngleEqual,
-									NewLine,	Dot,	   NewLine,	  ColonColon,	  NewLine,		   DoubleAmpersand,
-									PipePipe,	NewLine,   Equal,	  NewLine,		  Ampersand,	   Pipe,
-									Tilde,		NewLine,   EndOfFile}));
+	CHECK(all_tokens_match(tokens,
+						   {NewLine,		  Bang,		  NewLine,		Plus,		Minus,		Star,		Slash,
+							Percent,		  NewLine,	  EqualsEquals, BangEquals, LeftAngle,	RightAngle, LeftAngleEquals,
+							RightAngleEquals, NewLine,	  Dot,			NewLine,	ColonColon, NewLine,	AmpersandAmpersand,
+							PipePipe,		  NewLine,	  Equals,		NewLine,	Ampersand,	Pipe,		Tilde,
+							LeftAngleAngle,	  RightAngle, RightAngle,	NewLine,	EndOfFile}));
 }
 
 CERO_TEST(LexDotDot)

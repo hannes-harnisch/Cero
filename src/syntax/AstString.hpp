@@ -76,7 +76,7 @@ constexpr inline LookupTable<ast::UnaryOperator, std::string_view> UNARY_OPERATO
 {
 	using enum ast::UnaryOperator;
 
-	LookupTable<ast::UnaryOperator, std::string_view> t({});
+	LookupTable<ast::UnaryOperator, std::string_view> t;
 	t[TryOperator]	 = "try";
 	t[PreIncrement]	 = "prefix ++";
 	t[PreDecrement]	 = "prefix --";
@@ -94,7 +94,7 @@ constexpr inline LookupTable<ast::BinaryOperator, std::string_view> BINARY_OPERA
 {
 	using enum ast::BinaryOperator;
 
-	LookupTable<ast::BinaryOperator, std::string_view> t({});
+	LookupTable<ast::BinaryOperator, std::string_view> t;
 	t[Add]				= "+";
 	t[Subtract]			= "-";
 	t[Multiply]			= "*";
@@ -108,8 +108,8 @@ constexpr inline LookupTable<ast::BinaryOperator, std::string_view> BINARY_OPERA
 	t[Xor]				= "~";
 	t[LeftShift]		= "<<";
 	t[RightShift]		= ">>";
-	t[Equality]			= "==";
-	t[Inequality]		= "!=";
+	t[Equal]			= "==";
+	t[NotEqual]			= "!=";
 	t[Less]				= "<";
 	t[Greater]			= ">";
 	t[LessEqual]		= "<=";
@@ -121,8 +121,8 @@ constexpr inline LookupTable<ast::BinaryOperator, std::string_view> BINARY_OPERA
 	t[DivideAssign]		= "/=";
 	t[RemainderAssign]	= "%=";
 	t[PowerAssign]		= "**=";
-	t[BitAndAssign]		= "&=";
-	t[BitOrAssign]		= "|=";
+	t[AndAssign]		= "&=";
+	t[OrAssign]			= "|=";
 	t[XorAssign]		= "~=";
 	t[LeftShiftAssign]	= "<<=";
 	t[RightShiftAssign] = ">>=";

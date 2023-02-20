@@ -131,7 +131,7 @@ bar(int32 a, int32 b, int32 c) -> bool
 						   .specifier	= Binding::Specifier::Let,
 						   .name		= "u",
 						   .initializer = ast.store(BinaryExpression {
-							   .op	  = BinaryOperator::Equality,
+							   .op	  = BinaryOperator::Equal,
 							   .left  = ast.store(BinaryExpression {
 									.op	   = BinaryOperator::Subtract,
 									.left  = ast.store(Identifier {"a"}),
@@ -148,7 +148,7 @@ bar(int32 a, int32 b, int32 c) -> bool
 						   .specifier	= Binding::Specifier::Let,
 						   .name		= "v",
 						   .initializer = ast.store(BinaryExpression {
-							   .op	  = BinaryOperator::Inequality,
+							   .op	  = BinaryOperator::NotEqual,
 							   .left  = ast.store(BinaryExpression {
 									.op	   = BinaryOperator::Multiply,
 									.left  = ast.store(Identifier {"b"}),
@@ -302,7 +302,7 @@ baz(int32 a, int32 b, int32 c, int32 d) -> bool
 					 .left	= ast.store(BinaryExpression {
 						  .op	 = BinaryOperator::LogicalAnd,
 						  .left	 = ast.store(BinaryExpression {
-							   .op	  = BinaryOperator::Equality,
+							   .op	  = BinaryOperator::Equal,
 							   .left  = ast.store(BinaryExpression {
 									.op	   = BinaryOperator::Add,
 									.left  = ast.store(Identifier {"a"}),
@@ -315,7 +315,7 @@ baz(int32 a, int32 b, int32 c, int32 d) -> bool
 							   }),
 						   }),
 						  .right = ast.store(BinaryExpression {
-							  .op	 = BinaryOperator::Inequality,
+							  .op	 = BinaryOperator::NotEqual,
 							  .left	 = ast.store(BinaryExpression {
 								   .op	  = BinaryOperator::Add,
 								   .left  = ast.store(Identifier {"b"}),

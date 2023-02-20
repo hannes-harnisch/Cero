@@ -20,13 +20,10 @@ class Parser
 	const Source& source;
 	Reporter&	  reporter;
 	ParseCursor	  cursor;
-	uint32_t	  expr_depth			  = 0;
-	uint32_t	  open_groups			  = 0;
-	uint32_t	  open_angles			  = 0;
-	bool		  keep_double_right_angle = true;
-
-	using PrefixParse	 = ExpressionNode (Parser::*)();
-	using NonPrefixParse = ExpressionNode (Parser::*)(Expression);
+	uint32_t	  expr_depth	= 0;
+	uint32_t	  open_groups	= 0;
+	uint32_t	  open_angles	= 0;
+	bool		  should_report = true;
 
 public:
 	Parser(const TokenStream& token_stream, const Source& source, Reporter& reporter) :
@@ -63,6 +60,15 @@ private:
 		Multiplicative,
 		Prefix,
 		Postfix
+	};
+
+	using PrefixParse	 = ExpressionNode (Parser::*)();
+	using NonPrefixParse = ExpressionNode (Parser::*)(Expression);
+
+	struct NonPrefixParseRule
+	{
+		Precedence	   precedence = Precedence::Statement;
+		NonPrefixParse parse_fn	  = nullptr;
 	};
 
 	struct ParseError
@@ -152,7 +158,7 @@ private:
 			throw ParseError();
 
 		OptionalExpression default_argument;
-		if (cursor.match(Token::Equal))
+		if (cursor.match(Token::Equals))
 		{
 			++open_groups;
 			defer
@@ -192,11 +198,9 @@ private:
 		uint32_t saved_expr_depth = expr_depth;
 		uint32_t saved_groups	  = open_groups;
 		uint32_t saved_angles	  = open_angles;
-		bool	 saved_keep		  = keep_double_right_angle;
 		expr_depth				  = 0;
 		open_groups				  = 0;
 		open_angles				  = 0;
-		keep_double_right_angle	  = true;
 
 		std::vector<Expression> statements;
 		while (!cursor.match(Token::RightBrace))
@@ -211,11 +215,20 @@ private:
 			}
 		}
 
-		expr_depth				= saved_expr_depth;
-		open_groups				= saved_groups;
-		open_angles				= saved_angles;
-		keep_double_right_angle = saved_keep;
+		expr_depth	= saved_expr_depth;
+		open_groups = saved_groups;
+		open_angles = saved_angles;
 		return statements;
+	}
+
+	void synchronize_statement()
+	{
+		auto kind = cursor.peek_kind();
+		while (kind != Token::NewLine && kind != Token::RightBrace && kind != Token::EndOfFile)
+		{
+			cursor.advance();
+			kind = cursor.peek_kind();
+		}
 	}
 
 	Expression parse_expression(Precedence precedence = {})
@@ -236,91 +249,50 @@ private:
 		};
 
 		cursor.advance();
-		auto left = ast.store((this->*parse_prefix)());
+		auto expression = ast.store((this->*parse_prefix)());
 		while (auto parse = get_next_non_prefix_parse(precedence))
-		{
-			auto target = cursor.previous();
-			auto right	= ast.store((this->*parse)(left));
-			validate_associativity(left, right, target);
-			left = right;
-		}
-		return left;
+			expression = ast.store((this->*parse)(expression));
+
+		return expression;
 	}
 
-	NonPrefixParse get_next_non_prefix_parse(Precedence precedence)
+	NonPrefixParse get_next_non_prefix_parse(Precedence current_precedence)
 	{
 		bool across_lines = cursor.is_next_new_line();
-		auto kind		  = cursor.next_breakable().kind;
+		auto token		  = cursor.next_breakable();
 
-		if (precedence >= NON_PREFIX_PRECEDENCES[kind])
+		if (token.kind == Token::RightAngle && open_angles != 0)
 			return nullptr;
 
-		if (across_lines && open_groups == 0 && is_unbreakable_operator(kind))
+		auto [next_precedence, parse] = find_non_prefix_parse(token);
+		if (current_precedence >= next_precedence)
 			return nullptr;
 
-		if ((kind == Token::RightAngle || kind == Token::RightAngleAngle) && open_angles != 0)
+		if (across_lines && open_groups == 0 && is_unbreakable_operator(token.kind))
 			return nullptr;
 
 		cursor.advance();
-		return NON_PREFIX_PARSES[kind];
+		return parse;
+	}
+
+	NonPrefixParseRule find_non_prefix_parse(LexicalToken token)
+	{
+		if (token.kind != Token::RightAngle)
+			return NON_PREFIX_PARSES[token.kind];
+
+		auto saved = cursor;
+		cursor.advance();
+		auto next = cursor.next_breakable();
+		if (next.kind == Token::RightAngle && next.offset == token.offset + 1)
+			return {Precedence::Bitwise, &Parser::on_infix_operator<ast::BinaryOperator::RightShift, Precedence::Bitwise>};
+
+		cursor = saved;
+		return {Precedence::Comparison, &Parser::on_infix_operator<ast::BinaryOperator::Greater, Precedence::Comparison>};
 	}
 
 	static bool is_unbreakable_operator(Token t)
 	{
 		return t == Token::LeftParen || t == Token::LeftBracket || t == Token::PlusPlus || t == Token::MinusMinus;
-	}
-
-	void synchronize_statement()
-	{
-		auto kind = cursor.peek_kind();
-		while (kind != Token::NewLine && kind != Token::RightBrace && kind != Token::EndOfFile)
-		{
-			cursor.advance();
-			kind = cursor.peek_kind();
-		}
-	}
-
-	void validate_associativity(Expression left_index, Expression right_index, LexicalToken target)
-	{
-		auto& left_node	 = ast.get(left_index);
-		auto& right_node = ast.get(right_index);
-
-		if (auto right = std::get_if<ast::BinaryExpression>(&right_node))
-		{
-			if (auto left = std::get_if<ast::BinaryExpression>(&left_node))
-				validate_binary_associativity(left->op, right->op, target);
-			else if (auto unary = std::get_if<ast::UnaryExpression>(&left_node))
-				validate_unary_binary_associativity(unary->op, right->op);
-		}
-	}
-
-	void validate_binary_associativity(ast::BinaryOperator left, ast::BinaryOperator right, LexicalToken target)
-	{
-		if ((contains(BITWISE_OPERATORS, left) && contains(ARITHMETIC_OPERATORS, right))
-			|| (contains(ARITHMETIC_OPERATORS, left) && contains(BITWISE_OPERATORS, right)))
-		{
-			auto location = target.locate_in(source);
-			reporter.report(Message::AmbiguousOperatorMixing, location, BINARY_OPERATOR_STRINGS[left],
-							BINARY_OPERATOR_STRINGS[right]);
-		}
-		else if (contains(COMPARISON_OPERATORS, left) && contains(COMPARISON_OPERATORS, right))
-		{
-			auto location = target.locate_in(source);
-			if (left == right)
-				reporter.report(Message::AmbiguousOperatorChaining, location, BINARY_OPERATOR_STRINGS[left]);
-			else
-				reporter.report(Message::AmbiguousOperatorMixing, location, BINARY_OPERATOR_STRINGS[left],
-								BINARY_OPERATOR_STRINGS[right]);
-		}
-	}
-
-	void validate_unary_binary_associativity(ast::UnaryOperator left, ast::BinaryOperator right)
-	{
-		if (left == ast::UnaryOperator::Negate && right == ast::BinaryOperator::Power)
-		{
-			auto location = cursor.peek().locate_in(source);
-			reporter.report(Message::AmbiguousOperatorMixing, location, "-", "**");
-		}
 	}
 
 	ExpressionNode on_name()
@@ -347,48 +319,50 @@ private:
 			--open_angles;
 		};
 
-		const auto saved = cursor;
-
 		std::vector<Expression> generic_args;
 		if (!cursor.match(Token::RightAngle))
 		{
+			auto saved_cursor = cursor;
+			bool fall_back	  = should_fall_back_to_identifier();
+			cursor			  = saved_cursor;
+			if (fall_back)
+			{
+				cursor.retreat_to_last_breakable();
+				return ast::Identifier {name};
+			}
+
 			do
 				generic_args.emplace_back(parse_expression());
 			while (cursor.match(Token::Comma));
-
-			static constexpr std::array fallbacks {Token::Name,			 Token::DecIntLiteral, Token::HexIntLiteral,
-												   Token::BinIntLiteral, Token::OctIntLiteral, Token::FloatLiteral,
-												   Token::CharLiteral,	 Token::StringLiteral, Token::Minus,
-												   Token::Tilde,		 Token::Ampersand,	   Token::Bang,
-												   Token::PlusPlus,		 Token::MinusMinus};
-			if (cursor.match(Token::RightAngle))
-			{
-				auto kind = cursor.next_breakable().kind;
-				if (contains(fallbacks, kind) && expr_depth != 0)
-					return fall_back_to_identifier(saved, name);
-			}
-			else if (cursor.match(Token::RightAngleAngle))
-			{
-				auto kind = cursor.next_breakable().kind;
-				if ((contains(fallbacks, kind) && expr_depth != 0) || (open_angles == 1 && keep_double_right_angle))
-					return fall_back_to_identifier(saved, name);
-
-				if (keep_double_right_angle)
-					cursor.retreat_to_last_breakable();
-
-				keep_double_right_angle ^= true;
-			}
-			else
-				return fall_back_to_identifier(saved, name);
+			cursor.advance();
 		}
 		return ast::GenericIdentifier {name, std::move(generic_args)};
 	}
 
-	ExpressionNode fall_back_to_identifier(ParseCursor saved, std::string_view name)
+	bool should_fall_back_to_identifier()
 	{
-		cursor = std::move(saved);
-		cursor.retreat_to_last_breakable();
-		return ast::Identifier {name};
+		bool saved	  = should_report;
+		should_report = false;
+		defer
+		{
+			should_report = saved;
+		};
+
+		do
+			parse_expression();
+		while (cursor.match(Token::Comma));
+
+		static constexpr Token fallbacks[] {Token::Name,		  Token::DecIntLiteral, Token::HexIntLiteral,
+											Token::BinIntLiteral, Token::OctIntLiteral, Token::FloatLiteral,
+											Token::CharLiteral,	  Token::StringLiteral, Token::Minus,
+											Token::Tilde,		  Token::Ampersand,		Token::Bang,
+											Token::PlusPlus,	  Token::MinusMinus};
+		if (cursor.match(Token::RightAngle))
+		{
+			auto kind = cursor.next_breakable().kind;
+			return (contains(fallbacks, kind) && expr_depth != 0) || (open_angles == 1 && kind == Token::RightAngle);
+		}
+		return true;
 	}
 
 	template<ast::NumericLiteral (*EVALUATE)(std::string_view)>
@@ -436,7 +410,7 @@ private:
 		auto saved = cursor;
 		if (auto name_token = cursor.match(Token::Name))
 		{
-			if (cursor.match(Token::Equal))
+			if (cursor.match(Token::Equals))
 			{
 				auto name		 = name_token->get_lexeme(source);
 				auto initializer = parse_expression();
@@ -449,7 +423,7 @@ private:
 		auto name = expect_name(Message::ExpectNameAfterDeclType);
 
 		OptionalExpression initializer;
-		if (cursor.match(Token::Equal))
+		if (cursor.match(Token::Equals))
 			initializer = OptionalExpression(parse_expression());
 
 		return {specifier, name, OptionalExpression(type), initializer};
@@ -524,7 +498,7 @@ private:
 		{
 			auto next = cursor.next_breakable();
 			if (next.kind == Token::LeftBrace)
-				reporter.report(Message::UnnecessaryColonBeforeBlock, colon->locate_in(source));
+				report(Message::UnnecessaryColonBeforeBlock, colon->locate_in(source));
 		}
 		else
 		{
@@ -572,7 +546,9 @@ private:
 	template<ast::BinaryOperator O, Precedence P>
 	ExpressionNode on_infix_operator(Expression left)
 	{
-		auto right = parse_expression(P);
+		auto target = cursor.previous();
+		auto right	= parse_expression(P);
+		validate_associativity(O, left, right, target);
 		return ast::BinaryExpression {O, left, right};
 	}
 
@@ -580,6 +556,81 @@ private:
 	ExpressionNode on_postfix_operator(Expression left)
 	{
 		return ast::UnaryExpression {O, left};
+	}
+
+	void validate_associativity(ast::BinaryOperator current, Expression left_index, Expression right_index, LexicalToken target)
+	{
+		auto& left_node	 = ast.get(left_index);
+		auto& right_node = ast.get(right_index);
+
+		if (auto right = std::get_if<ast::BinaryExpression>(&right_node))
+			validate_binary_associativity(current, right->op, target);
+
+		if (auto left = std::get_if<ast::BinaryExpression>(&left_node))
+			validate_binary_associativity(left->op, current, target);
+		else if (auto unary = std::get_if<ast::UnaryExpression>(&left_node))
+			validate_unary_binary_associativity(unary->op, current, target);
+	}
+
+	void validate_binary_associativity(ast::BinaryOperator left, ast::BinaryOperator right, LexicalToken target)
+	{
+		bool chains = false;
+		if (associates_arithmetic_and_bitwise(left, right) || associates_different_logical_operators(left, right)
+			|| associates_comparison_operators(left, right, chains))
+		{
+			auto location = target.locate_in(source);
+			if (chains)
+				report(Message::AmbiguousOperatorChaining, location, BINARY_OPERATOR_STRINGS[left]);
+			else
+				report(Message::AmbiguousOperatorMixing, location, BINARY_OPERATOR_STRINGS[left],
+					   BINARY_OPERATOR_STRINGS[right]);
+		}
+	}
+
+	static bool associates_arithmetic_and_bitwise(ast::BinaryOperator left, ast::BinaryOperator right)
+	{
+		static constexpr ast::BinaryOperator bitwise_operators[] {ast::BinaryOperator::BitAnd, ast::BinaryOperator::BitOr,
+																  ast::BinaryOperator::Xor, ast::BinaryOperator::LeftShift,
+																  ast::BinaryOperator::RightShift};
+
+		static constexpr ast::BinaryOperator arithmetic_operators[] {ast::BinaryOperator::Add,
+																	 ast::BinaryOperator::Subtract,
+																	 ast::BinaryOperator::Multiply,
+																	 ast::BinaryOperator::Divide,
+																	 ast::BinaryOperator::Remainder,
+																	 ast::BinaryOperator::Power};
+
+		return contains(bitwise_operators, left) ? contains(arithmetic_operators, right)
+												 : contains(arithmetic_operators, left) && contains(bitwise_operators, right);
+	}
+
+	static bool associates_different_logical_operators(ast::BinaryOperator left, ast::BinaryOperator right)
+	{
+		return left == ast::BinaryOperator::LogicalAnd
+				   ? right == ast::BinaryOperator::LogicalOr
+				   : left == ast::BinaryOperator::LogicalOr && right == ast::BinaryOperator::LogicalAnd;
+	}
+
+	static bool associates_comparison_operators(ast::BinaryOperator left, ast::BinaryOperator right, bool& chains)
+	{
+		static constexpr ast::BinaryOperator comparison_operators[] {ast::BinaryOperator::Equal,
+																	 ast::BinaryOperator::NotEqual,
+																	 ast::BinaryOperator::Less,
+																	 ast::BinaryOperator::Greater,
+																	 ast::BinaryOperator::LessEqual,
+																	 ast::BinaryOperator::GreaterEqual};
+
+		chains = left == right;
+		return contains(comparison_operators, left) && contains(comparison_operators, right);
+	}
+
+	void validate_unary_binary_associativity(ast::UnaryOperator left, ast::BinaryOperator right, LexicalToken target)
+	{
+		if (left == ast::UnaryOperator::Negate && right == ast::BinaryOperator::Power)
+		{
+			auto location = target.locate_in(source);
+			report(Message::AmbiguousOperatorMixing, location, "-", "**");
+		}
 	}
 
 	ExpressionNode on_dot(Expression left)
@@ -733,9 +784,10 @@ private:
 		if (auto name_token = cursor.match(Token::Name))
 			name = name_token->get_lexeme(source);
 
-		if (auto equal = cursor.match(Token::Equal))
+		if (auto equal = cursor.match(Token::Equals))
 		{
-			report(Message::FuncTypeDefaultArgument, *equal);
+			auto location = equal->locate_in(source);
+			report(Message::FuncTypeDefaultArgument, location);
 			throw ParseError();
 		}
 		return {specifier, name, type};
@@ -788,13 +840,14 @@ private:
 	void report_expectation(CheckedMessage<std::string> message, LexicalToken unexpected)
 	{
 		auto location = unexpected.locate_in(source);
-		reporter.report(message, location, unexpected.to_message_string(source));
+		report(message, location, unexpected.to_message_string(source));
 	}
 
-	void report(CheckedMessage<> message, LexicalToken unexpected)
+	template<typename... Args>
+	void report(CheckedMessage<Args...> message, SourceLocation location, Args&&... args)
 	{
-		auto location = unexpected.locate_in(source);
-		reporter.report(message, location);
+		if (should_report)
+			reporter.report(message, location, std::forward<Args>(args)...);
 	}
 
 	static constexpr LookupTable<Token, PrefixParse> PREFIX_PARSES = []
@@ -803,7 +856,7 @@ private:
 		using enum Precedence;
 		using enum ast::UnaryOperator;
 
-		LookupTable<Token, PrefixParse> t(nullptr);
+		LookupTable<Token, PrefixParse> t;
 		t[Name]			 = &Parser::on_name;
 		t[DecIntLiteral] = &Parser::on_numeric_literal<evaluate_dec_int_literal>;
 		t[HexIntLiteral] = &Parser::on_numeric_literal<evaluate_hex_int_literal>;
@@ -837,115 +890,51 @@ private:
 		return t;
 	}();
 
-	static constexpr LookupTable<Token, Precedence> NON_PREFIX_PRECEDENCES = []
-	{
-		using enum Token;
-		using enum Precedence;
-
-		LookupTable<Token, Precedence> t(Statement);
-		t[Equal]				= Assignment;
-		t[PlusEqual]			= Assignment;
-		t[MinusEqual]			= Assignment;
-		t[StarEqual]			= Assignment;
-		t[SlashEqual]			= Assignment;
-		t[PercentEqual]			= Assignment;
-		t[StarStarEqual]		= Assignment;
-		t[AmpersandEqual]		= Assignment;
-		t[PipeEqual]			= Assignment;
-		t[TildeEqual]			= Assignment;
-		t[LeftAngleAngleEqual]	= Assignment;
-		t[RightAngleAngleEqual] = Assignment;
-		t[DoubleAmpersand]		= Logical;
-		t[PipePipe]				= Logical;
-		t[EqualEqual]			= Comparison;
-		t[BangEqual]			= Comparison;
-		t[LeftAngle]			= Comparison;
-		t[RightAngle]			= Comparison;
-		t[LeftAngleEqual]		= Comparison;
-		t[RightAngleEqual]		= Comparison;
-		t[Plus]					= Additive;
-		t[Minus]				= Additive;
-		t[Ampersand]			= Bitwise;
-		t[Pipe]					= Bitwise;
-		t[Tilde]				= Bitwise;
-		t[LeftAngleAngle]		= Bitwise;
-		t[RightAngleAngle]		= Bitwise;
-		t[Star]					= Multiplicative;
-		t[Slash]				= Multiplicative;
-		t[Percent]				= Multiplicative;
-		t[StarStar]				= Prefix;
-		t[Dot]					= Postfix;
-		t[ColonColon]			= Postfix;
-		t[LeftParen]			= Postfix;
-		t[LeftBracket]			= Postfix;
-		t[Caret]				= Postfix;
-		t[PlusPlus]				= Postfix;
-		t[MinusMinus]			= Postfix;
-		return t;
-	}();
-
-	static constexpr LookupTable<Token, NonPrefixParse> NON_PREFIX_PARSES = []
+	static constexpr LookupTable<Token, NonPrefixParseRule> NON_PREFIX_PARSES = []
 	{
 		using enum Token;
 		using enum Precedence;
 		using enum ast::UnaryOperator;
 		using enum ast::BinaryOperator;
 
-		LookupTable<Token, NonPrefixParse> t(nullptr);
-		t[Dot]					= &Parser::on_dot;
-		t[LeftParen]			= &Parser::on_infix_left_paren;
-		t[LeftBracket]			= &Parser::on_infix_left_bracket;
-		t[Equal]				= &Parser::on_infix_operator<Assign, Assignment>;
-		t[PlusEqual]			= &Parser::on_infix_operator<AddAssign, Assignment>;
-		t[MinusEqual]			= &Parser::on_infix_operator<SubtractAssign, Assignment>;
-		t[StarEqual]			= &Parser::on_infix_operator<MultiplyAssign, Assignment>;
-		t[SlashEqual]			= &Parser::on_infix_operator<DivideAssign, Assignment>;
-		t[PercentEqual]			= &Parser::on_infix_operator<RemainderAssign, Assignment>;
-		t[StarStarEqual]		= &Parser::on_infix_operator<PowerAssign, Assignment>;
-		t[AmpersandEqual]		= &Parser::on_infix_operator<BitAndAssign, Assignment>;
-		t[PipeEqual]			= &Parser::on_infix_operator<BitOrAssign, Assignment>;
-		t[TildeEqual]			= &Parser::on_infix_operator<XorAssign, Assignment>;
-		t[LeftAngleAngleEqual]	= &Parser::on_infix_operator<LeftShiftAssign, Assignment>;
-		t[RightAngleAngleEqual] = &Parser::on_infix_operator<RightShiftAssign, Assignment>;
-		t[DoubleAmpersand]		= &Parser::on_infix_operator<LogicalAnd, Logical>;
-		t[PipePipe]				= &Parser::on_infix_operator<LogicalOr, Logical>;
-		t[EqualEqual]			= &Parser::on_infix_operator<Equality, Comparison>;
-		t[BangEqual]			= &Parser::on_infix_operator<Inequality, Comparison>;
-		t[LeftAngle]			= &Parser::on_infix_operator<Less, Comparison>;
-		t[RightAngle]			= &Parser::on_infix_operator<Greater, Comparison>;
-		t[LeftAngleEqual]		= &Parser::on_infix_operator<LessEqual, Comparison>;
-		t[RightAngleEqual]		= &Parser::on_infix_operator<GreaterEqual, Comparison>;
-		t[Plus]					= &Parser::on_infix_operator<Add, Additive>;
-		t[Minus]				= &Parser::on_infix_operator<Subtract, Additive>;
-		t[Star]					= &Parser::on_infix_operator<Multiply, Multiplicative>;
-		t[Slash]				= &Parser::on_infix_operator<Divide, Multiplicative>;
-		t[Percent]				= &Parser::on_infix_operator<Remainder, Multiplicative>;
-		t[Ampersand]			= &Parser::on_infix_operator<BitAnd, Bitwise>;
-		t[Pipe]					= &Parser::on_infix_operator<BitOr, Bitwise>;
-		t[Tilde]				= &Parser::on_infix_operator<Xor, Bitwise>;
-		t[LeftAngleAngle]		= &Parser::on_infix_operator<LeftShift, Bitwise>;
-		t[RightAngleAngle]		= &Parser::on_infix_operator<RightShift, Bitwise>;
-		t[StarStar]				= &Parser::on_infix_operator<Power, Multiplicative>; // one lower to make it right-associative
-		t[Caret]				= &Parser::on_postfix_operator<Dereference>;
-		t[PlusPlus]				= &Parser::on_postfix_operator<PostIncrement>;
-		t[MinusMinus]			= &Parser::on_postfix_operator<PostDecrement>;
+		LookupTable<Token, NonPrefixParseRule> t;
+		t[Equals]				 = {Assignment, &Parser::on_infix_operator<Assign, Assignment>};
+		t[PlusEquals]			 = {Assignment, &Parser::on_infix_operator<AddAssign, Assignment>};
+		t[MinusEquals]			 = {Assignment, &Parser::on_infix_operator<SubtractAssign, Assignment>};
+		t[StarEquals]			 = {Assignment, &Parser::on_infix_operator<MultiplyAssign, Assignment>};
+		t[SlashEquals]			 = {Assignment, &Parser::on_infix_operator<DivideAssign, Assignment>};
+		t[PercentEquals]		 = {Assignment, &Parser::on_infix_operator<RemainderAssign, Assignment>};
+		t[StarStarEquals]		 = {Assignment, &Parser::on_infix_operator<PowerAssign, Assignment>};
+		t[AmpersandEquals]		 = {Assignment, &Parser::on_infix_operator<AndAssign, Assignment>};
+		t[PipeEquals]			 = {Assignment, &Parser::on_infix_operator<OrAssign, Assignment>};
+		t[TildeEquals]			 = {Assignment, &Parser::on_infix_operator<XorAssign, Assignment>};
+		t[LeftAngleAngleEquals]	 = {Assignment, &Parser::on_infix_operator<LeftShiftAssign, Assignment>};
+		t[RightAngleAngleEquals] = {Assignment, &Parser::on_infix_operator<RightShiftAssign, Assignment>};
+		t[AmpersandAmpersand]	 = {Logical, &Parser::on_infix_operator<LogicalAnd, Logical>};
+		t[PipePipe]				 = {Logical, &Parser::on_infix_operator<LogicalOr, Logical>};
+		t[EqualsEquals]			 = {Comparison, &Parser::on_infix_operator<Equal, Comparison>};
+		t[BangEquals]			 = {Comparison, &Parser::on_infix_operator<NotEqual, Comparison>};
+		t[LeftAngle]			 = {Comparison, &Parser::on_infix_operator<Less, Comparison>};
+		t[LeftAngleEquals]		 = {Comparison, &Parser::on_infix_operator<LessEqual, Comparison>};
+		t[RightAngleEquals]		 = {Comparison, &Parser::on_infix_operator<GreaterEqual, Comparison>};
+		t[Plus]					 = {Additive, &Parser::on_infix_operator<Add, Additive>};
+		t[Minus]				 = {Additive, &Parser::on_infix_operator<Subtract, Additive>};
+		t[Ampersand]			 = {Bitwise, &Parser::on_infix_operator<BitAnd, Bitwise>};
+		t[Pipe]					 = {Bitwise, &Parser::on_infix_operator<BitOr, Bitwise>};
+		t[Tilde]				 = {Bitwise, &Parser::on_infix_operator<Xor, Bitwise>};
+		t[LeftAngleAngle]		 = {Bitwise, &Parser::on_infix_operator<LeftShift, Bitwise>};
+		t[Star]					 = {Multiplicative, &Parser::on_infix_operator<Multiply, Multiplicative>};
+		t[Slash]				 = {Multiplicative, &Parser::on_infix_operator<Divide, Multiplicative>};
+		t[Percent]				 = {Multiplicative, &Parser::on_infix_operator<Remainder, Multiplicative>};
+		t[StarStar]	   = {Prefix, &Parser::on_infix_operator<Power, Multiplicative>}; // one lower for right-associativity
+		t[Caret]	   = {Postfix, &Parser::on_postfix_operator<Dereference>};
+		t[PlusPlus]	   = {Postfix, &Parser::on_postfix_operator<PostIncrement>};
+		t[MinusMinus]  = {Postfix, &Parser::on_postfix_operator<PostDecrement>};
+		t[Dot]		   = {Postfix, &Parser::on_dot};
+		t[LeftParen]   = {Postfix, &Parser::on_infix_left_paren};
+		t[LeftBracket] = {Postfix, &Parser::on_infix_left_bracket};
 		return t;
 	}();
-
-	static constexpr ast::BinaryOperator BITWISE_OPERATORS[] {ast::BinaryOperator::BitAnd, ast::BinaryOperator::BitOr,
-															  ast::BinaryOperator::Xor, ast::BinaryOperator::LeftShift,
-															  ast::BinaryOperator::RightShift};
-
-	static constexpr ast::BinaryOperator ARITHMETIC_OPERATORS[] {ast::BinaryOperator::Add,		 ast::BinaryOperator::Subtract,
-																 ast::BinaryOperator::Multiply,	 ast::BinaryOperator::Divide,
-																 ast::BinaryOperator::Remainder, ast::BinaryOperator::Power};
-
-	static constexpr ast::BinaryOperator COMPARISON_OPERATORS[] {ast::BinaryOperator::Equality,
-																 ast::BinaryOperator::Inequality,
-																 ast::BinaryOperator::Less,
-																 ast::BinaryOperator::Greater,
-																 ast::BinaryOperator::LessEqual,
-																 ast::BinaryOperator::GreaterEqual};
 };
 
 SyntaxTree parse(const Source& source, Reporter& reporter)

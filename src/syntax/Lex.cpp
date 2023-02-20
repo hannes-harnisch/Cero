@@ -308,12 +308,12 @@ private:
 		if (match('<'))
 		{
 			if (match('='))
-				return Token::LeftAngleAngleEqual;
+				return Token::LeftAngleAngleEquals;
 
 			return Token::LeftAngleAngle;
 		}
 		if (match('='))
-			return Token::LeftAngleEqual;
+			return Token::LeftAngleEquals;
 
 		return Token::LeftAngle;
 	}
@@ -323,12 +323,12 @@ private:
 		if (match('>'))
 		{
 			if (match('='))
-				return Token::RightAngleAngleEqual;
+				return Token::RightAngleAngleEquals;
 
-			return Token::RightAngleAngle;
+			--cursor; // step back to ensure the extra right angle is not skipped
 		}
 		if (match('='))
-			return Token::RightAngleEqual;
+			return Token::RightAngleEquals;
 
 		return Token::RightAngle;
 	}
@@ -336,11 +336,11 @@ private:
 	Token match_equal()
 	{
 		if (match('='))
-			return Token::EqualEqual;
+			return Token::EqualsEquals;
 		if (match('>'))
 			return Token::ThickArrow;
 
-		return Token::Equal;
+		return Token::Equals;
 	}
 
 	Token match_plus()
@@ -348,7 +348,7 @@ private:
 		if (match('+'))
 			return Token::PlusPlus;
 		if (match('='))
-			return Token::PlusEqual;
+			return Token::PlusEquals;
 
 		return Token::Plus;
 	}
@@ -360,7 +360,7 @@ private:
 		if (match('-'))
 			return Token::MinusMinus;
 		if (match('='))
-			return Token::MinusEqual;
+			return Token::MinusEquals;
 
 		return Token::Minus;
 	}
@@ -370,12 +370,12 @@ private:
 		if (match('*'))
 		{
 			if (match('='))
-				return Token::StarStarEqual;
+				return Token::StarStarEquals;
 
 			return Token::StarStar;
 		}
 		if (match('='))
-			return Token::StarEqual;
+			return Token::StarEquals;
 
 		return Token::Star;
 	}
@@ -393,7 +393,7 @@ private:
 			return Token::BlockComment;
 		}
 		if (match('='))
-			return Token::SlashEqual;
+			return Token::SlashEquals;
 
 		return Token::Slash;
 	}
@@ -437,7 +437,7 @@ private:
 	Token match_percent()
 	{
 		if (match('='))
-			return Token::PercentEqual;
+			return Token::PercentEquals;
 
 		return Token::Percent;
 	}
@@ -445,7 +445,7 @@ private:
 	Token match_bang()
 	{
 		if (match('='))
-			return Token::BangEqual;
+			return Token::BangEquals;
 
 		return Token::Bang;
 	}
@@ -453,9 +453,9 @@ private:
 	Token match_ampersand()
 	{
 		if (match('&'))
-			return Token::DoubleAmpersand;
+			return Token::AmpersandAmpersand;
 		if (match('='))
-			return Token::AmpersandEqual;
+			return Token::AmpersandEquals;
 
 		return Token::Ampersand;
 	}
@@ -465,7 +465,7 @@ private:
 		if (match('|'))
 			return Token::PipePipe;
 		if (match('='))
-			return Token::PipeEqual;
+			return Token::PipeEquals;
 
 		return Token::Pipe;
 	}
@@ -473,7 +473,7 @@ private:
 	Token match_tilde()
 	{
 		if (match('='))
-			return Token::TildeEqual;
+			return Token::TildeEquals;
 
 		return Token::Tilde;
 	}

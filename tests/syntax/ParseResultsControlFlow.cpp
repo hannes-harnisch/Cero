@@ -54,7 +54,7 @@ fibonacci(var uint32 n) -> uint32
 					   }),
 					   ast.store(WhileLoop {
 						   .condition = ast.store(BinaryExpression {
-							   .op	  = BinaryOperator::Inequality,
+							   .op	  = BinaryOperator::NotEqual,
 							   .left  = ast.store(UnaryExpression {
 									.op		 = UnaryOperator::PostDecrement,
 									.operand = ast.store(Identifier {"n"}),

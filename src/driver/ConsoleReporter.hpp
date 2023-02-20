@@ -3,7 +3,6 @@
 #include "cero/driver/Config.hpp"
 #include "cero/driver/Reporter.hpp"
 
-#include <format>
 #include <string>
 #include <vector>
 

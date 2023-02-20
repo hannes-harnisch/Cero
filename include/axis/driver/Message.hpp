@@ -41,7 +41,7 @@ constexpr inline LookupTable<Message, std::string_view> MESSAGE_FORMATS = []
 {
 	using enum Message;
 
-	LookupTable<Message, std::string_view> t({});
+	LookupTable<Message, std::string_view> t;
 	t[SourceInputTooLarge]			  = "source input is too large, limit is {} bytes";
 	t[UnexpectedCharacter]			  = "unexpected character `0x{:x}`";
 	t[MissingClosingQuote]			  = "missing closing quote";

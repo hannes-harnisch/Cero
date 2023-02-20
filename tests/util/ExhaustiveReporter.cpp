@@ -18,11 +18,16 @@ bool ExhaustiveReporter::has_errors() const
 
 void ExhaustiveReporter::on_report(cero::Message message, cero::SourceLocation location, std::format_args args)
 {
-	REQUIRE(!expected_reports.empty());
+	auto message_text = std::vformat(cero::MESSAGE_FORMATS[message], args);
 
-	auto& current	   = expected_reports.front();
-	auto  message_text = std::vformat(cero::MESSAGE_FORMATS[message], args);
-	bool  matches	   = current == Report {message, location, message_text};
+	bool empty = expected_reports.empty();
+	CHECK(!empty);
+	if (empty)
+		return;
+
+	auto& current = expected_reports.front();
+
+	bool matches = current == Report {message, location, message_text};
 	CHECK(matches);
 
 	if (matches)
