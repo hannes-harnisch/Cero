@@ -9,6 +9,13 @@
 namespace cero
 {
 
+enum class Severity
+{
+	Error,
+	Warning,
+	Note,
+};
+
 enum class Message : uint8_t
 {
 	SourceInputTooLarge,
@@ -24,6 +31,7 @@ enum class Message : uint8_t
 	ExpectBraceBeforeFuncBody,
 	ExpectNameAfterDeclType,
 	ExpectExpr,
+	ExpectSemicolon,
 	ExpectNameAfterDot,
 	ExpectColonOrBlock,
 	UnnecessaryColonBeforeBlock,
@@ -55,6 +63,7 @@ constexpr inline LookupTable<Message, std::string_view> MESSAGE_FORMATS = []
 	t[ExpectBraceBeforeFuncBody]	  = "expected `{{` before function body, but found {}";
 	t[ExpectNameAfterDeclType]		  = "expected a name after type in declaration, but found {}";
 	t[ExpectExpr]					  = "expected an expression, but found {}";
+	t[ExpectSemicolon]				  = "expected a `;`, but found {}";
 	t[ExpectNameAfterDot]			  = "expected a member name after `.`, but found {}";
 	t[ExpectColonOrBlock]			  = "expected `:` or `{{` before control flow statement, but found {}";
 	t[UnnecessaryColonBeforeBlock]	  = "`:` is unnecessary before a block";

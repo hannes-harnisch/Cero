@@ -204,7 +204,6 @@ namespace ast
 
 	enum class UnaryOperator
 	{
-		TryOperator,
 		PreIncrement,
 		PreDecrement,
 		PostIncrement,

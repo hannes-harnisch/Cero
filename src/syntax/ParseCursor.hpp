@@ -18,10 +18,10 @@ public:
 
 	std::optional<LexicalToken> match(Token kind);
 
-	LexicalToken next_breakable();
-	bool		 is_next_new_line();
+	LexicalToken next();
+	Token		 next_kind();
 	void		 advance();
-	void		 retreat_to_last_breakable();
+	void		 retreat();
 };
 
 } // namespace cero

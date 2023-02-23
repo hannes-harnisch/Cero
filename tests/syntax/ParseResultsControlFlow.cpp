@@ -10,17 +10,17 @@ CERO_TEST(ParseSimpleFunction)
 	auto source = make_test_source(R"_____(
 fibonacci(var uint32 n) -> uint32
 {
-    var uint32 result = 0
-    var uint32 next   = 1
+    var uint32 result = 0;
+    var uint32 next   = 1;
 
     while n-- != 0
     {
-        let temp = next
-        next = result
-        result += temp
+        let temp = next;
+        next = result;
+        result += temp;
     }
 
-    return result
+    return result;
 }
 )_____");
 

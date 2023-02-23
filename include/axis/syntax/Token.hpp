@@ -8,7 +8,6 @@ namespace cero
 enum class Token : uint32_t
 {
 	Name,
-	NewLine,
 	LineComment,
 	BlockComment,
 	DecIntLiteral,
@@ -88,6 +87,7 @@ enum class Token : uint32_t
 	If,
 	In,
 	Let,
+	Private,
 	Public,
 	Return,
 	Static,

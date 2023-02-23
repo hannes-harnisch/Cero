@@ -1,10 +1,11 @@
 #include "Test.hpp"
 
 #include <cero/driver/Build.hpp>
+#include <cero/util/Traits.hpp>
 
 cero::Source make_test_source(std::string source_text, std::source_location location, const cero::Config& config)
 {
-	auto path = location.function_name();
+	auto path = cero::normalize_function_name(location);
 	return {std::move(source_text), path, config};
 }
 

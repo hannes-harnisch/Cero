@@ -61,7 +61,7 @@ a(int32 _a, float64 _f, int64 _b)
 
 b(int32 i, float64 f)
 {
-	a(i, f, i * i)
+	a(i, f, i * i);
 }
 
 )_____");

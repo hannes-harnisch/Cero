@@ -1,9 +1,10 @@
 #include "ExhaustiveReporter.hpp"
 
+#include <cero/util/Traits.hpp>
 #include <doctest/doctest.h>
 
 ExhaustiveReporter::ExhaustiveReporter(std::source_location location) :
-	test_name(location.function_name())
+	test_name(cero::normalize_function_name(location))
 {}
 
 ExhaustiveReporter::~ExhaustiveReporter()
@@ -11,12 +12,7 @@ ExhaustiveReporter::~ExhaustiveReporter()
 	CHECK(expected_reports.empty());
 }
 
-bool ExhaustiveReporter::has_errors() const
-{
-	return false;
-}
-
-void ExhaustiveReporter::on_report(cero::Message message, cero::SourceLocation location, std::format_args args)
+void ExhaustiveReporter::on_report(cero::Message message, cero::Severity, cero::SourceLocation location, std::format_args args)
 {
 	auto message_text = std::vformat(cero::MESSAGE_FORMATS[message], args);
 
@@ -26,8 +22,7 @@ void ExhaustiveReporter::on_report(cero::Message message, cero::SourceLocation l
 		return;
 
 	auto& current = expected_reports.front();
-
-	bool matches = current == Report {message, location, message_text};
+	bool  matches = current == Report {message, location, message_text};
 	CHECK(matches);
 
 	if (matches)

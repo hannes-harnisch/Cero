@@ -38,7 +38,7 @@ CERO_TEST(MissingParameter)
 	build_test_source(r, R"_____(
 foo(, bool x) -> bool
 {
-	return x
+	return x;
 }
 )_____");
 }
@@ -51,7 +51,7 @@ CERO_TEST(MissingParameterName)
 	build_test_source(r, R"_____(
 foo(bool, bool x) -> bool
 {
-	return x
+	return x;
 }
 )_____");
 }
@@ -61,18 +61,18 @@ CERO_TEST(MissingParameterWithUnexpectedToken)
 	ExhaustiveReporter r;
 	r.expect(2, 5, cero::Message::ExpectType, "`}`");
 	r.expect(2, 5, cero::Message::ExpectParamName, "`}`");
-	r.expect(7, 13, cero::Message::ExpectType, "`%`");
-	r.expect(7, 13, cero::Message::ExpectParamName, "`%`");
+	r.expect(7, 21, cero::Message::ExpectType, "`%`");
+	r.expect(7, 21, cero::Message::ExpectParamName, "`%`");
 
 	build_test_source(r, R"_____(
 foo(}, bool x) -> bool
 {
-	return x
+	return x;
 }
 
-goo(bool x, %) -> bool
+private goo(bool x, %) -> bool
 {
-	return x
+	return x;
 }
 )_____");
 }
@@ -80,18 +80,18 @@ goo(bool x, %) -> bool
 CERO_TEST(MissingParenAfterParameters)
 {
 	ExhaustiveReporter r;
-	r.expect(2, 12, cero::Message::ExpectParenAfterParams, "`->`");
-	r.expect(7, 11, cero::Message::ExpectParenAfterParams, "`}`");
+	r.expect(2, 20, cero::Message::ExpectParenAfterParams, "`->`");
+	r.expect(7, 19, cero::Message::ExpectParenAfterParams, "`}`");
 
 	build_test_source(r, R"_____(
-foo(bool x -> bool
+private foo(bool x -> bool
 {
-	return x
+	return x;
 }
 
-goo(bool x} -> bool
+private goo(bool x} -> bool
 {
-	return x
+	return x;
 }
 )_____");
 }
@@ -101,18 +101,18 @@ CERO_TEST(MissingBraceBeforeFuncBody)
 	ExhaustiveReporter r;
 	r.expect(4, 5, cero::Message::ExpectBraceBeforeFuncBody, "`return`");
 	r.expect(8, 1, cero::Message::ExpectBraceBeforeFuncBody, "`}`");
-	r.expect(10, 7, cero::Message::ExpectBraceBeforeFuncBody, "`-`");
+	r.expect(10, 14, cero::Message::ExpectBraceBeforeFuncBody, "`-`");
 
 	build_test_source(r, R"_____(
 foo(bool x) -> bool
 
-	return x
+	return x;
 }
 
-goo() -> void
+public goo() -> void
 }
 
-hoo() -< void
+public hoo() -< void
 {}
 )_____");
 }
@@ -126,10 +126,10 @@ CERO_TEST(MissingNameInDeclaration)
 	build_test_source(r, R"_____(
 main()
 {
-    let bool x = true
-	let ^bool   = &x
-	let ^bool p = &x
-	let ^bool   = &x
+    let bool x = true;
+	let ^bool   = &x;
+	let ^bool p = &x;
+	let ^bool   = &x;
 }
 )_____");
 }
@@ -161,25 +161,63 @@ foo() {}
 )_____");
 }
 
+CERO_TEST(ExpectSemicolon)
+{
+	ExhaustiveReporter r;
+	r.expect(5, 1, cero::Message::ExpectSemicolon, "`}`");
+
+	build_test_source(r, R"_____(
+a()
+{
+    return 0
+}
+
+b()
+{
+    return 0;
+}
+)_____");
+}
+
 CERO_TEST(MissingNameAfterDot)
 {
 	ExhaustiveReporter r;
-	r.expect(5, 5, cero::Message::ExpectNameAfterDot, "`var`");
+	r.expect(4, 7, cero::Message::ExpectNameAfterDot, "`;`");
 	r.expect(7, 7, cero::Message::ExpectNameAfterDot, "`(`");
 
 	build_test_source(r, R"_____(
 f()
 {
-    x.
-	var y = true
+    x.;
+	var y = true;
 
-	b.()
-	var z = 12
+	b.();
+	var z = 12;
 }
 )_____");
 }
 
-CERO_TEST(MissingColonAfterIfCondition)
+CERO_TEST(MissingColonInIfExpression)
+{
+	ExhaustiveReporter r;
+	r.expect(4, 18, cero::Message::ExpectColonOrBlock, "integer literal `0 `"); // TODO: fix space
+
+	build_test_source(r, R"_____(
+f(bool b) -> int32
+{
+	let x = if b 0 else 1;
+	return x;
+}
+
+g(bool b) -> int32
+{
+	let x = if b: 0 else 1;
+	return x;
+}
+)_____");
+}
+
+CERO_TEST(MissingColonAfterIfStatementCondition)
 {
 	ExhaustiveReporter r;
 	r.expect(5, 9, cero::Message::ExpectColonOrBlock, "`return`");
@@ -188,19 +226,19 @@ CERO_TEST(MissingColonAfterIfCondition)
 f(bool b) -> int32
 {
 	if b
-		return 4
+		return 4;
 
-	print(b)
-	print(b)
-	print(b)
+	print(b);
+	print(b);
+	print(b);
 }
 
 g(bool b) -> int32
 {
 	if b:
-		return 4
+		return 4;
 	else
-		return 5
+		return 5;
 }
 )_____");
 }
@@ -215,16 +253,18 @@ f(bool b) -> int32
 {
 	if b:
 	{
-		return 4
+		return 4;
 	}
+	return 5;
 }
 
 g(bool b) -> int32
 {
 	if b
 	{
-		return 4
+		return 4;
 	}
+	return 5;
 }
 )_____");
 }
@@ -242,7 +282,7 @@ f(bool a, bool b, bool c, bool d) -> bool
 
 g(bool a, bool b, bool c, bool d) -> bool
 {
-	return (a || b) && (c || d)
+	return (a || b) && (c || d);
 }
 )_____");
 }
@@ -262,7 +302,7 @@ f()
 
 g()
 {
-	foo(2)
+	foo(2);
 }
 )_____");
 }
@@ -280,7 +320,7 @@ f([4]int32 x) -> int32
 
 g([4]int32 x) -> int32
 {
-	return x[0]
+	return x[0];
 }
 )_____");
 }
@@ -293,12 +333,12 @@ CERO_TEST(MissingBracketAfterArrayBound)
 	build_test_source(r, R"_____(
 f([4 int32 x) -> int32
 {
-	return x[0]
+	return x[0];
 }
 
 g([4]int32 x) -> int32
 {
-	return x[0]
+	return x[0];
 }
 )_____");
 }
@@ -311,14 +351,14 @@ CERO_TEST(ExpectBraceAfterVariability)
 	build_test_source(r, R"_____(
 f(^var{1 MyList l) -> int32
 {
-	let int32 p = l^[0]
-	return p
+	let int32 p = l^[0];
+	return p;
 }
 
 g(^var{1} MyList p) -> int32
 {
-	let int32 p = l^[0]
-	return p
+	let int32 p = l^[0];
+	return p;
 }
 )_____");
 }
@@ -331,7 +371,7 @@ CERO_TEST(ExpectArrowAfterFuncTypeParams)
 	build_test_source(r, R"_____(
 a(^(int32) f) -> int32
 {
-	return f()
+	return f();
 }
 )_____");
 }
@@ -344,7 +384,7 @@ CERO_TEST(FuncTypeDefaultArgument) // TODO: add check for this in expression con
 	build_test_source(r, R"_____(
 a(^(int32 x = 0)->int32 f) -> int32
 {
-	return f(3)
+	return f(3);
 }
 )_____");
 }
@@ -365,12 +405,12 @@ CERO_TEST(AmbiguousOperatorChaining)
 	build_test_source(r, R"_____(
 f(bool a, bool b, bool c, bool d)
 {
-	let e = a == b == c == d
-	let f = a != b != c
-	let g = a < b < c < d
-	let h = a > b > c
-	let i = a <= b <= c
-	let j = a >= b >= c >= d
+	let e = a == b == c == d;
+	let f = a != b != c;
+	let g = a < b < c < d;
+	let h = a > b > c;
+	let i = a <= b <= c;
+	let j = a >= b >= c >= d;
 }
 )_____");
 }
@@ -397,15 +437,15 @@ CERO_TEST(AmbiguousOperatorMixing)
 	build_test_source(r, R"_____(
 f(float32 a, float32 b, int32 c, int32 d)
 {
-	let e = a > b == c < d
-	let f = a < b == c > d
-	let g = c & d + c == c & d * c
-	let h = c - d | c == c / d | c
-	let i = a == b && c == d || a != d
-	let j = a == b || c == d && a != d
-	let k = a == b && c == d || a != d && b > c
-	let l = a == b || c == d && a != d || b > c
-	let m = -a**b
+	let e = a > b == c < d;
+	let f = a < b == c > d;
+	let g = c & d + c == c & d * c;
+	let h = c - d | c == c / d | c;
+	let i = a == b && c == d || a != d;
+	let j = a == b || c == d && a != d;
+	let k = a == b && c == d || a != d && b > c;
+	let l = a == b || c == d && a != d || b > c;
+	let m = -a**b;
 }
 )_____");
 }

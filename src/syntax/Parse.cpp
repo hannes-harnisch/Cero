@@ -9,8 +9,6 @@
 #include "util/Defer.hpp"
 #include "util/Fail.hpp"
 
-#include <utility>
-
 namespace cero
 {
 
@@ -20,10 +18,9 @@ class Parser
 	const Source& source;
 	Reporter&	  reporter;
 	ParseCursor	  cursor;
-	uint32_t	  expr_depth	= 0;
-	uint32_t	  open_groups	= 0;
-	uint32_t	  open_angles	= 0;
 	bool		  should_report = true;
+	uint32_t	  expr_depth	= 0;
+	uint32_t	  open_angles	= 0;
 
 public:
 	Parser(const TokenStream& token_stream, const Source& source, Reporter& reporter) :
@@ -68,7 +65,7 @@ private:
 	struct NonPrefixParseRule
 	{
 		Precedence	   precedence = Precedence::Statement;
-		NonPrefixParse parse_fn	  = nullptr;
+		NonPrefixParse parse_func = nullptr;
 	};
 
 	struct ParseError
@@ -76,14 +73,20 @@ private:
 
 	Definition parse_definition()
 	{
+		auto access_specifier = ast::AccessSpecifier::None;
+		if (cursor.match(Token::Private))
+			access_specifier = ast::AccessSpecifier::Private;
+		else if (cursor.match(Token::Public))
+			access_specifier = ast::AccessSpecifier::Public;
+
 		if (cursor.match(Token::Name))
-			return parse_function();
+			return parse_function(access_specifier);
 
 		if (cursor.match(Token::Struct))
-			return parse_struct();
+			return parse_struct(access_specifier);
 
 		if (cursor.match(Token::Enum))
-			return parse_enum();
+			return parse_enum(access_specifier);
 
 		report_expectation(Message::ExpectFuncStructEnum, cursor.peek());
 		throw ParseError();
@@ -91,34 +94,28 @@ private:
 
 	void synchronize_definition()
 	{
-		auto kind = cursor.peek_kind();
+		static constexpr Token sync_points[] {Token::Public, Token::Private, Token::Struct, Token::Enum, Token::EndOfFile};
+
+		Token kind;
 		do
 		{
-			while (kind != Token::NewLine)
-			{
-				if (kind == Token::EndOfFile)
-					return;
-
-				cursor.advance();
-				kind = cursor.peek_kind();
-			}
 			cursor.advance();
 			kind = cursor.peek_kind();
 		}
-		while (kind != Token::Name && kind != Token::Struct && kind != Token::Enum && kind != Token::EndOfFile);
+		while (!contains(sync_points, kind));
 	}
 
-	Definition parse_struct()
+	Definition parse_struct(ast::AccessSpecifier)
 	{
 		to_do();
 	}
 
-	Definition parse_enum()
+	Definition parse_enum(ast::AccessSpecifier)
 	{
 		to_do();
 	}
 
-	Definition parse_function()
+	Definition parse_function(ast::AccessSpecifier access_specifier)
 	{
 		auto name = cursor.previous().get_lexeme(source);
 		expect(Token::LeftParen, Message::ExpectParenAfterFuncName);
@@ -128,7 +125,13 @@ private:
 		expect(Token::LeftBrace, Message::ExpectBraceBeforeFuncBody);
 
 		auto statements = parse_block();
-		return ast.store(ast::Function {name, std::move(parameters), std::move(outputs), std::move(statements)});
+		return ast.store(ast::Function {
+			access_specifier,
+			name,
+			std::move(parameters),
+			std::move(outputs),
+			std::move(statements),
+		});
 	}
 
 	std::vector<ast::Function::Parameter> parse_function_definition_parameters()
@@ -159,14 +162,8 @@ private:
 
 		OptionalExpression default_argument;
 		if (cursor.match(Token::Equals))
-		{
-			++open_groups;
-			defer
-			{
-				--open_groups;
-			};
 			default_argument = OptionalExpression(parse_expression());
-		}
+
 		return {specifier, name, type, default_argument};
 	}
 
@@ -196,10 +193,8 @@ private:
 	std::vector<Expression> parse_block()
 	{
 		uint32_t saved_expr_depth = expr_depth;
-		uint32_t saved_groups	  = open_groups;
 		uint32_t saved_angles	  = open_angles;
 		expr_depth				  = 0;
-		open_groups				  = 0;
 		open_angles				  = 0;
 
 		std::vector<Expression> statements;
@@ -208,6 +203,7 @@ private:
 			try
 			{
 				statements.emplace_back(parse_expression());
+				terminate_statement();
 			}
 			catch (ParseError)
 			{
@@ -216,15 +212,21 @@ private:
 		}
 
 		expr_depth	= saved_expr_depth;
-		open_groups = saved_groups;
 		open_angles = saved_angles;
 		return statements;
+	}
+
+	void terminate_statement()
+	{
+		auto kind = cursor.previous().kind;
+		if (kind != Token::RightBrace && kind != Token::Semicolon)
+			expect(Token::Semicolon, Message::ExpectSemicolon);
 	}
 
 	void synchronize_statement()
 	{
 		auto kind = cursor.peek_kind();
-		while (kind != Token::NewLine && kind != Token::RightBrace && kind != Token::EndOfFile)
+		while (kind != Token::Semicolon && kind != Token::RightBrace && kind != Token::EndOfFile)
 		{
 			cursor.advance();
 			kind = cursor.peek_kind();
@@ -233,7 +235,7 @@ private:
 
 	Expression parse_expression(Precedence precedence = {})
 	{
-		auto next = cursor.next_breakable();
+		auto next = cursor.next();
 
 		auto parse_prefix = PREFIX_PARSES[next.kind];
 		if (parse_prefix == nullptr)
@@ -258,17 +260,13 @@ private:
 
 	NonPrefixParse get_next_non_prefix_parse(Precedence current_precedence)
 	{
-		bool across_lines = cursor.is_next_new_line();
-		auto token		  = cursor.next_breakable();
+		auto token = cursor.next();
 
 		if (token.kind == Token::RightAngle && open_angles != 0)
 			return nullptr;
 
 		auto [next_precedence, parse] = find_non_prefix_parse(token);
 		if (current_precedence >= next_precedence)
-			return nullptr;
-
-		if (across_lines && open_groups == 0 && is_unbreakable_operator(token.kind))
 			return nullptr;
 
 		cursor.advance();
@@ -282,7 +280,7 @@ private:
 
 		auto saved = cursor;
 		cursor.advance();
-		auto next = cursor.next_breakable();
+		auto next = cursor.next();
 		if (next.kind == Token::RightAngle && next.offset == token.offset + 1)
 			return {Precedence::Bitwise, &Parser::on_infix_operator<ast::BinaryOperator::RightShift, Precedence::Bitwise>};
 
@@ -290,9 +288,105 @@ private:
 		return {Precedence::Comparison, &Parser::on_infix_operator<ast::BinaryOperator::Greater, Precedence::Comparison>};
 	}
 
-	static bool is_unbreakable_operator(Token t)
+	ExpressionNode on_if()
 	{
-		return t == Token::LeftParen || t == Token::LeftBracket || t == Token::PlusPlus || t == Token::MinusMinus;
+		auto condition = parse_expression();
+		expect_colon_or_block();
+
+		auto then_expr = parse_expression();
+		if (expr_depth == 1)
+			terminate_statement();
+
+		OptionalExpression else_expr;
+		if (cursor.match(Token::Else))
+			else_expr = parse_expression();
+
+		return ast::If {condition, then_expr, else_expr};
+	}
+
+	ExpressionNode on_while()
+	{
+		auto condition = parse_expression();
+		expect_colon_or_block();
+		auto statement = parse_expression();
+		return ast::WhileLoop {condition, statement};
+	}
+
+	ExpressionNode on_for()
+	{
+		to_do();
+	}
+
+	ExpressionNode on_left_brace()
+	{
+		return ast::Block {parse_block()};
+	}
+
+	void expect_colon_or_block()
+	{
+		if (auto colon = cursor.match(Token::Colon))
+		{
+			auto next = cursor.next();
+			if (next.kind == Token::LeftBrace)
+				report(Message::UnnecessaryColonBeforeBlock, colon->locate_in(source));
+		}
+		else
+		{
+			auto next = cursor.next();
+			if (next.kind != Token::LeftBrace)
+				report_expectation(Message::ExpectColonOrBlock, next);
+		}
+	}
+
+	ExpressionNode on_let()
+	{
+		return parse_binding(ast::Binding::Specifier::Let);
+	}
+
+	ExpressionNode on_var()
+	{
+		if (cursor.next_kind() == Token::LeftBrace)
+			return parse_variability();
+
+		return parse_binding(ast::Binding::Specifier::Var);
+	}
+
+	ExpressionNode on_const()
+	{
+		return parse_binding(ast::Binding::Specifier::Const);
+	}
+
+	ExpressionNode on_static()
+	{
+		auto specifier = ast::Binding::Specifier::Static;
+		if (cursor.match(Token::Var))
+			specifier = ast::Binding::Specifier::StaticVar;
+
+		return parse_binding(specifier);
+	}
+
+	ast::Binding parse_binding(ast::Binding::Specifier specifier)
+	{
+		auto saved = cursor;
+		if (auto name_token = cursor.match(Token::Name))
+		{
+			if (cursor.match(Token::Equals))
+			{
+				auto name		 = name_token->get_lexeme(source);
+				auto initializer = parse_expression();
+				return {specifier, name, {}, initializer};
+			}
+			cursor = saved;
+		}
+
+		auto type = parse_type();
+		auto name = expect_name(Message::ExpectNameAfterDeclType);
+
+		OptionalExpression initializer;
+		if (cursor.match(Token::Equals))
+			initializer = parse_expression();
+
+		return {specifier, name, type, initializer};
 	}
 
 	ExpressionNode on_name()
@@ -327,7 +421,7 @@ private:
 			cursor			  = saved_cursor;
 			if (fall_back)
 			{
-				cursor.retreat_to_last_breakable();
+				cursor.retreat();
 				return ast::Identifier {name};
 			}
 
@@ -359,7 +453,7 @@ private:
 											Token::PlusPlus,	  Token::MinusMinus};
 		if (cursor.match(Token::RightAngle))
 		{
-			auto kind = cursor.next_breakable().kind;
+			auto kind = cursor.next_kind();
 			return (contains(fallbacks, kind) && expr_depth != 0) || (open_angles == 1 && kind == Token::RightAngle);
 		}
 		return true;
@@ -378,62 +472,6 @@ private:
 		return evaluate_string_literal(lexeme);
 	}
 
-	ExpressionNode on_let()
-	{
-		return parse_binding(ast::Binding::Specifier::Let);
-	}
-
-	ExpressionNode on_var()
-	{
-		if (cursor.next_breakable().kind == Token::LeftBrace)
-			return parse_variability();
-
-		return parse_binding(ast::Binding::Specifier::Var);
-	}
-
-	ExpressionNode on_const()
-	{
-		return parse_binding(ast::Binding::Specifier::Const);
-	}
-
-	ExpressionNode on_static()
-	{
-		auto specifier = ast::Binding::Specifier::Static;
-		if (cursor.match(Token::Var))
-			specifier = ast::Binding::Specifier::StaticVar;
-
-		return parse_binding(specifier);
-	}
-
-	ast::Binding parse_binding(ast::Binding::Specifier specifier)
-	{
-		auto saved = cursor;
-		if (auto name_token = cursor.match(Token::Name))
-		{
-			if (cursor.match(Token::Equals))
-			{
-				auto name		 = name_token->get_lexeme(source);
-				auto initializer = parse_expression();
-				return {specifier, name, {}, OptionalExpression(initializer)};
-			}
-			cursor = saved;
-		}
-
-		auto type = parse_type();
-		auto name = expect_name(Message::ExpectNameAfterDeclType);
-
-		OptionalExpression initializer;
-		if (cursor.match(Token::Equals))
-			initializer = OptionalExpression(parse_expression());
-
-		return {specifier, name, OptionalExpression(type), initializer};
-	}
-
-	ExpressionNode on_prefix_left_brace()
-	{
-		return ast::Block {parse_block()};
-	}
-
 	ExpressionNode on_prefix_left_paren()
 	{
 		return parse_call({}); // TODO: function type
@@ -448,10 +486,8 @@ private:
 	{
 		uint32_t saved = open_angles;
 		open_angles	   = 0;
-		++open_groups;
 		defer
 		{
-			--open_groups;
 			open_angles = saved;
 		};
 
@@ -464,48 +500,6 @@ private:
 			expect(Token::RightBracket, Message::ExpectBracketAfterIndex);
 		}
 		return arguments;
-	}
-
-	ExpressionNode on_if()
-	{
-		auto condition = parse_expression();
-		expect_colon_or_block();
-		auto then_expr = parse_expression();
-
-		OptionalExpression else_expr;
-		if (cursor.match(Token::Else))
-			else_expr = OptionalExpression(parse_expression());
-
-		return ast::If {condition, then_expr, else_expr};
-	}
-
-	ExpressionNode on_while()
-	{
-		auto condition = parse_expression();
-		expect_colon_or_block();
-		auto statement = parse_expression();
-		return ast::WhileLoop {condition, statement};
-	}
-
-	ExpressionNode on_for()
-	{
-		to_do();
-	}
-
-	void expect_colon_or_block()
-	{
-		if (auto colon = cursor.match(Token::Colon))
-		{
-			auto next = cursor.next_breakable();
-			if (next.kind == Token::LeftBrace)
-				report(Message::UnnecessaryColonBeforeBlock, colon->locate_in(source));
-		}
-		else
-		{
-			auto next = cursor.next_breakable();
-			if (next.kind != Token::LeftBrace)
-				report_expectation(Message::ExpectColonOrBlock, next);
-		}
 	}
 
 	ExpressionNode on_break()
@@ -530,16 +524,16 @@ private:
 
 	OptionalExpression parse_optional_operand()
 	{
-		if (cursor.is_next_new_line())
+		if (cursor.next_kind() == Token::Semicolon)
 			return {};
 
 		return parse_expression();
 	}
 
-	template<ast::UnaryOperator O, Precedence P>
+	template<ast::UnaryOperator O>
 	ExpressionNode on_prefix_operator()
 	{
-		auto right = parse_expression(P);
+		auto right = parse_expression(Precedence::Prefix);
 		return ast::UnaryExpression {O, right};
 	}
 
@@ -648,10 +642,8 @@ private:
 	{
 		uint32_t saved = open_angles;
 		open_angles	   = 0;
-		++open_groups;
 		defer
 		{
-			--open_groups;
 			open_angles = saved;
 		};
 
@@ -814,7 +806,7 @@ private:
 
 	void expect(Token kind, CheckedMessage<std::string> message)
 	{
-		auto token = cursor.next_breakable();
+		auto token = cursor.next();
 		if (token.kind == kind)
 			cursor.advance();
 		else
@@ -826,7 +818,7 @@ private:
 
 	std::string_view expect_name(CheckedMessage<std::string> message)
 	{
-		auto token = cursor.next_breakable();
+		auto token = cursor.next();
 		if (token.kind == Token::Name)
 		{
 			cursor.advance();
@@ -853,11 +845,18 @@ private:
 	static constexpr LookupTable<Token, PrefixParse> PREFIX_PARSES = []
 	{
 		using enum Token;
-		using enum Precedence;
 		using enum ast::UnaryOperator;
 
 		LookupTable<Token, PrefixParse> t;
 		t[Name]			 = &Parser::on_name;
+		t[If]			 = &Parser::on_if;
+		t[While]		 = &Parser::on_while;
+		t[For]			 = &Parser::on_for;
+		t[LeftBrace]	 = &Parser::on_left_brace;
+		t[Let]			 = &Parser::on_let;
+		t[Var]			 = &Parser::on_var;
+		t[Static]		 = &Parser::on_static;
+		t[Const]		 = &Parser::on_const;
 		t[DecIntLiteral] = &Parser::on_numeric_literal<evaluate_dec_int_literal>;
 		t[HexIntLiteral] = &Parser::on_numeric_literal<evaluate_hex_int_literal>;
 		t[BinIntLiteral] = &Parser::on_numeric_literal<evaluate_bin_int_literal>;
@@ -865,27 +864,18 @@ private:
 		t[FloatLiteral]	 = &Parser::on_numeric_literal<evaluate_float_literal>;
 		t[CharLiteral]	 = &Parser::on_numeric_literal<evaluate_char_literal>;
 		t[StringLiteral] = &Parser::on_string_literal;
-		t[Let]			 = &Parser::on_let;
-		t[Var]			 = &Parser::on_var;
-		t[Const]		 = &Parser::on_const;
-		t[Static]		 = &Parser::on_static;
-		t[LeftBrace]	 = &Parser::on_prefix_left_brace;
 		t[LeftParen]	 = &Parser::on_prefix_left_paren;
 		t[LeftBracket]	 = &Parser::on_prefix_left_bracket;
-		t[If]			 = &Parser::on_if;
-		t[While]		 = &Parser::on_while;
-		t[For]			 = &Parser::on_for;
 		t[Break]		 = &Parser::on_break;
 		t[Continue]		 = &Parser::on_continue;
 		t[Return]		 = &Parser::on_return;
 		t[Throw]		 = &Parser::on_throw;
-		t[Try]			 = &Parser::on_prefix_operator<TryOperator, Statement>;
-		t[Ampersand]	 = &Parser::on_prefix_operator<AddressOf, Prefix>;
-		t[Minus]		 = &Parser::on_prefix_operator<Negate, Prefix>;
-		t[Bang]			 = &Parser::on_prefix_operator<LogicalNot, Prefix>;
-		t[Tilde]		 = &Parser::on_prefix_operator<BitwiseNot, Prefix>;
-		t[PlusPlus]		 = &Parser::on_prefix_operator<PreIncrement, Prefix>;
-		t[MinusMinus]	 = &Parser::on_prefix_operator<PreDecrement, Prefix>;
+		t[Ampersand]	 = &Parser::on_prefix_operator<AddressOf>;
+		t[Minus]		 = &Parser::on_prefix_operator<Negate>;
+		t[Bang]			 = &Parser::on_prefix_operator<LogicalNot>;
+		t[Tilde]		 = &Parser::on_prefix_operator<BitwiseNot>;
+		t[PlusPlus]		 = &Parser::on_prefix_operator<PreIncrement>;
+		t[MinusMinus]	 = &Parser::on_prefix_operator<PreDecrement>;
 		t[Caret]		 = &Parser::on_caret;
 		return t;
 	}();
@@ -926,13 +916,13 @@ private:
 		t[Star]					 = {Multiplicative, &Parser::on_infix_operator<Multiply, Multiplicative>};
 		t[Slash]				 = {Multiplicative, &Parser::on_infix_operator<Divide, Multiplicative>};
 		t[Percent]				 = {Multiplicative, &Parser::on_infix_operator<Remainder, Multiplicative>};
-		t[StarStar]	   = {Prefix, &Parser::on_infix_operator<Power, Multiplicative>}; // one lower for right-associativity
-		t[Caret]	   = {Postfix, &Parser::on_postfix_operator<Dereference>};
-		t[PlusPlus]	   = {Postfix, &Parser::on_postfix_operator<PostIncrement>};
-		t[MinusMinus]  = {Postfix, &Parser::on_postfix_operator<PostDecrement>};
-		t[Dot]		   = {Postfix, &Parser::on_dot};
-		t[LeftParen]   = {Postfix, &Parser::on_infix_left_paren};
-		t[LeftBracket] = {Postfix, &Parser::on_infix_left_bracket};
+		t[StarStar]				 = {Prefix, &Parser::on_infix_operator<Power, Multiplicative>}; // lower for right-associativity
+		t[Caret]				 = {Postfix, &Parser::on_postfix_operator<Dereference>};
+		t[PlusPlus]				 = {Postfix, &Parser::on_postfix_operator<PostIncrement>};
+		t[MinusMinus]			 = {Postfix, &Parser::on_postfix_operator<PostDecrement>};
+		t[Dot]					 = {Postfix, &Parser::on_dot};
+		t[LeftParen]			 = {Postfix, &Parser::on_infix_left_paren};
+		t[LeftBracket]			 = {Postfix, &Parser::on_infix_left_bracket};
 		return t;
 	}();
 };

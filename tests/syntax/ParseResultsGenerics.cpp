@@ -10,32 +10,32 @@ CERO_TEST(ParseGenericReturnType)
 	auto source = make_test_source(R"_____(
 a() -> List<List<int32> >
 {
-	return ()
+	return ();
 }
 
 b() -> List<List<int32>>
 {
-	return ()
+	return ();
 }
 
 c() -> List<List<List<int32> > >
 {
-	return ()
+	return ();
 }
 
 d() -> List<List<List<int32> >>
 {
-	return ()
+	return ();
 }
 
 e() -> List<List<List<int32>> >
 {
-	return ()
+	return ();
 }
 
 f() -> List<List<List<int32>>>
 {
-	return ()
+	return ();
 }
 )_____");
 
@@ -176,7 +176,7 @@ CERO_TEST(ParseLessAndRightShift)
 	auto source = make_test_source(R"_____(
 oof(int32 a, int32 b) -> bool
 {
-	return a < b >> (16 - 4)
+	return a < b >> (16 - 4);
 }
 )_____");
 
@@ -229,7 +229,7 @@ CERO_TEST(ParseAmbiguousGenericCallVsComparisonArguments)
 	auto source = make_test_source(R"_____(
 ouch(float32 e) -> float64
 {
-	return a(b<c, d>(e))
+	return a(b<c, d>(e));
 }
 )_____");
 
@@ -268,7 +268,7 @@ CERO_TEST(ParseComparisonArgumentsVsGenericPattern)
 	auto source = make_test_source(R"_____(
 ouch(float32 e) -> float64
 {
-	return a(b < c, d > e)
+	return a(b < c, d > e);
 }
 )_____");
 
@@ -310,12 +310,12 @@ CERO_TEST(ParseComparisonAndRightShiftAsGenericArgument)
 	auto source = make_test_source(R"_____(
 woof() -> A<(B > C)>
 {
-	return ()
+	return ();
 }
 
 meow() -> A<(D >> E)>
 {
-	return ()
+	return ();
 }
 )_____");
 
@@ -485,13 +485,13 @@ CERO_TEST(ParseVariableWithGenericType)
 	auto source = make_test_source(R"_____(
 bark()
 {
-	let List<int32> _a = ()
-	let List<List<int32>> _b = ()
-	let List<List<int32> > _c = ()
-	let List<List<List<int32> > > _d = ()
-	let List<List<List<int32> >> _e = ()
-	let List<List<List<int32>> > _f = ()
-	let List<List<List<int32>>> _g = ()
+	let List<int32> _a = ();
+	let List<List<int32>> _b = ();
+	let List<List<int32> > _c = ();
+	let List<List<List<int32> > > _d = ();
+	let List<List<List<int32> >> _e = ();
+	let List<List<List<int32>> > _f = ();
+	let List<List<List<int32>>> _g = ();
 }
 )_____");
 

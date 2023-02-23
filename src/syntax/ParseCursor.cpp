@@ -24,7 +24,7 @@ LexicalToken ParseCursor::previous() const
 
 std::optional<LexicalToken> ParseCursor::match(Token kind)
 {
-	auto token = next_breakable();
+	auto token = next();
 	if (token.kind == kind)
 	{
 		advance();
@@ -33,18 +33,7 @@ std::optional<LexicalToken> ParseCursor::match(Token kind)
 	return {};
 }
 
-LexicalToken ParseCursor::next_breakable()
-{
-	auto kind = cursor->kind;
-	while (kind == Token::NewLine || kind == Token::LineComment || kind == Token::BlockComment)
-	{
-		advance();
-		kind = cursor->kind;
-	}
-	return *cursor;
-}
-
-bool ParseCursor::is_next_new_line()
+LexicalToken ParseCursor::next()
 {
 	auto kind = cursor->kind;
 	while (kind == Token::LineComment || kind == Token::BlockComment)
@@ -52,7 +41,18 @@ bool ParseCursor::is_next_new_line()
 		advance();
 		kind = cursor->kind;
 	}
-	return kind == Token::NewLine;
+	return *cursor;
+}
+
+Token ParseCursor::next_kind()
+{
+	auto kind = cursor->kind;
+	while (kind == Token::LineComment || kind == Token::BlockComment)
+	{
+		advance();
+		kind = cursor->kind;
+	}
+	return kind;
 }
 
 void ParseCursor::advance()
@@ -60,7 +60,7 @@ void ParseCursor::advance()
 	++cursor;
 }
 
-void ParseCursor::retreat_to_last_breakable()
+void ParseCursor::retreat()
 {
 	Token kind;
 	do
@@ -68,7 +68,7 @@ void ParseCursor::retreat_to_last_breakable()
 		--cursor;
 		kind = cursor->kind;
 	}
-	while (kind == Token::NewLine || kind == Token::LineComment || kind == Token::BlockComment);
+	while (kind == Token::LineComment || kind == Token::BlockComment);
 }
 
 } // namespace cero

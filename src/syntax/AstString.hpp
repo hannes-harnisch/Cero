@@ -77,7 +77,6 @@ constexpr inline LookupTable<ast::UnaryOperator, std::string_view> UNARY_OPERATO
 	using enum ast::UnaryOperator;
 
 	LookupTable<ast::UnaryOperator, std::string_view> t;
-	t[TryOperator]	 = "try";
 	t[PreIncrement]	 = "prefix ++";
 	t[PreDecrement]	 = "prefix --";
 	t[PostIncrement] = "postfix ++";

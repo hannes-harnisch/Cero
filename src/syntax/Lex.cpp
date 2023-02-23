@@ -18,11 +18,12 @@ namespace
 		};
 		using enum Token;
 		static constexpr Keyword KEYWORDS[] {
-			{"break", Break},	{"catch", Catch},	{"const", Const},	{"continue", Continue},
-			{"else", Else},		{"enum", Enum},		{"for", For},		{"if", If},
-			{"in", In},			{"let", Let},		{"public", Public}, {"return", Return},
-			{"static", Static}, {"struct", Struct}, {"switch", Switch}, {"throw", Throw},
-			{"try", Try},		{"use", Use},		{"var", Var},		{"while", While},
+			{"break", Break},	{"catch", Catch},	{"const", Const},	  {"continue", Continue},
+			{"else", Else},		{"enum", Enum},		{"for", For},		  {"if", If},
+			{"in", In},			{"let", Let},		{"private", Private}, {"public", Public},
+			{"return", Return}, {"static", Static}, {"struct", Struct},	  {"switch", Switch},
+			{"throw", Throw},	{"try", Try},		{"use", Use},		  {"var", Var},
+			{"while", While},
 		};
 
 		for (auto& keyword : KEYWORDS)
@@ -82,8 +83,8 @@ private:
 			case '\t':
 			case '\v':
 			case '\f':
-			case '\r': return;
-			case '\n': kind = NewLine; break;
+			case '\r':
+			case '\n': return;
 			case '0':
 			case '1':
 			case '2':

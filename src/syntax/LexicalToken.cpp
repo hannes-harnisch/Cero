@@ -13,7 +13,6 @@ namespace
 		switch (kind)
 		{
 			case Name: return "name `{}`";
-			case NewLine: return "new line";
 			case LineComment:
 			case BlockComment: return "comment";
 			case DecIntLiteral:
@@ -43,10 +42,7 @@ std::string LexicalToken::to_log_string(const Source& source) const
 {
 	auto token_kind = magic_enum::enum_name(kind);
 	auto lexeme		= get_lexeme(source);
-	if (kind == Token::NewLine)
-		lexeme = "";
-
-	auto location = locate_in(source);
+	auto location	= locate_in(source);
 	return std::format("{} `{}` [{}]", token_kind, lexeme, location.to_string());
 }
 

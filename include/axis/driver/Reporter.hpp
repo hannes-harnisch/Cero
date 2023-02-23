@@ -10,6 +10,9 @@ namespace cero
 
 class Reporter
 {
+	bool has_error_reports	= false;
+	bool warnings_as_errors = false;
+
 public:
 	virtual ~Reporter() = default;
 
@@ -19,10 +22,13 @@ public:
 		on_report(message.value, location, std::make_format_args(std::forward<Args>(args)...));
 	}
 
-	virtual bool has_errors() const = 0;
+	bool has_errors() const;
+	void set_warnings_as_errors(bool value);
 
 protected:
-	virtual void on_report(Message message, SourceLocation location, std::format_args args) = 0;
+	virtual void on_report(Message message, Severity severity, SourceLocation location, std::format_args args) = 0;
+
+	void on_report(Message message, SourceLocation location, std::format_args args);
 };
 
 } // namespace cero

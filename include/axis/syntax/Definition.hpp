@@ -16,6 +16,13 @@ struct Definition
 
 namespace ast
 {
+	enum class AccessSpecifier : uint8_t
+	{
+		None,
+		Private,
+		Public
+	};
+
 	struct Function
 	{
 		struct Parameter
@@ -26,6 +33,7 @@ namespace ast
 			OptionalExpression default_argument;
 		};
 
+		AccessSpecifier				access;
 		std::string_view			name;
 		std::vector<Parameter>		parameters;
 		std::vector<FunctionOutput> outputs;
@@ -34,11 +42,13 @@ namespace ast
 
 	struct Struct
 	{
+		AccessSpecifier	 access;
 		std::string_view name;
 	};
 
 	struct Enum
 	{
+		AccessSpecifier	 access;
 		std::string_view name;
 	};
 } // namespace ast

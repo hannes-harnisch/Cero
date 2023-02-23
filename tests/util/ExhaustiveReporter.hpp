@@ -35,9 +35,11 @@ public:
 		on_expect(line, column, message.value, std::make_format_args(std::forward<Args>(args)...));
 	}
 
-	bool has_errors() const override;
-
 private:
-	void on_report(cero::Message message, cero::SourceLocation location, std::format_args args) override;
+	void on_report(cero::Message		message,
+				   cero::Severity		severity,
+				   cero::SourceLocation location,
+				   std::format_args		args) override;
+
 	void on_expect(uint32_t line, uint32_t column, cero::Message message, std::format_args args);
 };

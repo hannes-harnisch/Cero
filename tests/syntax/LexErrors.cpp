@@ -25,13 +25,14 @@ main()
 CERO_TEST(MissingClosingQuote)
 {
 	ExhaustiveReporter r;
-	r.expect(4, 27, cero::Message::MissingClosingQuote);
-	r.expect(5, 16, cero::Message::MissingClosingQuote);
+	r.expect(4, 28, cero::Message::MissingClosingQuote);
+	r.expect(5, 17, cero::Message::MissingClosingQuote);
+	r.expect(5, 5, cero::Message::ExpectSemicolon, "`let`");
 	build_test_source(r, R"_____(
 foo()
 {
-	let string = "Oh no...
-	let ch = 'x
+	let string = "Oh no...;
+	let ch = 'x;
 }
 )_____");
 }
