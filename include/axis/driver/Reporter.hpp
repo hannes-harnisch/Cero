@@ -28,6 +28,7 @@ public:
 protected:
 	virtual void on_report(Message message, Severity severity, SourceLocation location, std::format_args args) = 0;
 
+private:
 	void on_report(Message message, SourceLocation location, std::format_args args);
 };
 

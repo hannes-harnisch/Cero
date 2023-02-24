@@ -200,7 +200,7 @@ f()
 CERO_TEST(MissingColonInIfExpression)
 {
 	ExhaustiveReporter r;
-	r.expect(4, 18, cero::Message::ExpectColonOrBlock, "integer literal `0 `"); // TODO: fix space
+	r.expect(4, 18, cero::Message::ExpectColonOrBlock, "integer literal `0`");
 
 	build_test_source(r, R"_____(
 f(bool b) -> int32

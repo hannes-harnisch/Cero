@@ -10,7 +10,7 @@ bool is_dec_digit(char c)
 
 bool is_hex_digit(char c)
 {
-	return is_dec_digit(c) || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
+	return is_dec_digit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
 
 bool is_standard_ascii(char c)
@@ -21,6 +21,11 @@ bool is_standard_ascii(char c)
 bool is_ascii_word_character(char c)
 {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_';
+}
+
+bool is_whitespace(char c)
+{
+	return c == ' ' || (c >= '\t' && c <= '\r');
 }
 
 namespace

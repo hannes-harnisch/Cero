@@ -18,11 +18,17 @@ namespace
 		};
 		using enum Token;
 		static constexpr Keyword KEYWORDS[] {
-			{"break", Break},	{"catch", Catch},	{"const", Const},	  {"continue", Continue},
-			{"else", Else},		{"enum", Enum},		{"for", For},		  {"if", If},
-			{"in", In},			{"let", Let},		{"private", Private}, {"public", Public},
-			{"return", Return}, {"static", Static}, {"struct", Struct},	  {"switch", Switch},
-			{"throw", Throw},	{"try", Try},		{"use", Use},		  {"var", Var},
+			{"break", Break},	{"catch", Catch},
+			{"const", Const},	{"continue", Continue},
+			{"do", Do},			{"else", Else},
+			{"enum", Enum},		{"for", For},
+			{"if", If},			{"in", In},
+			{"let", Let},		{"private", Private},
+			{"public", Public}, {"restrict", Restrict},
+			{"return", Return}, {"static", Static},
+			{"struct", Struct}, {"switch", Switch},
+			{"throw", Throw},	{"try", Try},
+			{"use", Use},		{"var", Var},
 			{"while", While},
 		};
 
@@ -71,20 +77,18 @@ public:
 private:
 	void next_token(TokenStream& stream)
 	{
-		auto token_begin = cursor;
-
 		Token kind;
-
-		char current = *cursor++;
+		auto  token_begin = cursor;
+		char  current	  = *cursor++;
 		switch (current)
 		{
 			using enum Token;
 			case ' ':
 			case '\t':
+			case '\n':
 			case '\v':
 			case '\f':
-			case '\r':
-			case '\n': return;
+			case '\r': return;
 			case '0':
 			case '1':
 			case '2':
@@ -234,24 +238,23 @@ private:
 	{
 		if (first == '0' && cursor != source_end)
 		{
-			switch (*cursor)
+			switch (*cursor++)
 			{
-				case 'x':
-					++cursor;
-					eat_number_literal(is_hex_digit);
-					return Token::HexIntLiteral;
-				case 'b':
-					++cursor;
-					eat_number_literal(is_dec_digit);
-					return Token::BinIntLiteral;
-				case 'o':
-					++cursor;
-					eat_number_literal(is_dec_digit);
-					return Token::OctIntLiteral;
+				case 'x': eat_number_literal(is_hex_digit); return Token::HexIntLiteral;
+				case 'b': eat_number_literal(is_dec_digit); return Token::BinIntLiteral;
+				case 'o': eat_number_literal(is_dec_digit); return Token::OctIntLiteral;
 			}
+			--cursor;
 		}
 
 		eat_number_literal(is_dec_digit);
+		auto saved = cursor;
+		while (cursor != source_end)
+		{
+			if (!is_whitespace(*cursor))
+				break;
+			++cursor;
+		}
 
 		if (cursor != source_end && *cursor == '.')
 		{
@@ -263,37 +266,47 @@ private:
 			else
 				cursor = cursor_at_dot;
 		}
+		else
+			cursor = saved;
+
 		return Token::DecIntLiteral;
 	}
 
 	void eat_number_literal(bool (*char_predicate)(char))
 	{
+		auto token_end = cursor;
 		while (cursor != source_end)
 		{
 			char it = *cursor;
-
-			if (!char_predicate(it) && it != ' ' && it != '\t')
+			if (char_predicate(it))
+				token_end = cursor + 1;
+			else if (!is_whitespace(it))
 				break;
 
 			++cursor;
 		}
+		cursor = token_end;
 	}
 
 	bool eat_decimal_number()
 	{
-		bool ate = false;
+		auto token_end	= cursor;
+		bool ate_number = false;
 		while (cursor != source_end)
 		{
 			char it = *cursor;
-
 			if (is_dec_digit(it))
-				ate = true;
-			else if (it != ' ' && it != '\t')
+			{
+				token_end  = cursor + 1;
+				ate_number = true;
+			}
+			else if (!is_whitespace(it))
 				break;
 
 			++cursor;
 		}
-		return ate;
+		cursor = token_end;
+		return ate_number;
 	}
 
 	Token match_colon()

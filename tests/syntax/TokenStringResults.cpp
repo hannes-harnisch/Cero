@@ -9,10 +9,10 @@ CERO_TEST(TokenStringForBracketsLiterals)
 
 	auto source = make_test_source(R"_____(
 () [] {} <>
-foo "bar" 'baz' 123 456
-0x12345 456 aff
-0b011 01  101
-0o03423362 63
+foo "bar" 'baz' 123 456;
+0x12345 456 aff;
+0b011 01  101;
+0o03423362 63;
 1.345634634 234623
 )_____");
 
@@ -29,9 +29,13 @@ Name `foo` [Test_TokenStringForBracketsLiterals:3:1]
 StringLiteral `"bar"` [Test_TokenStringForBracketsLiterals:3:5]
 CharLiteral `'baz'` [Test_TokenStringForBracketsLiterals:3:11]
 DecIntLiteral `123 456` [Test_TokenStringForBracketsLiterals:3:17]
+Semicolon `;` [Test_TokenStringForBracketsLiterals:3:24]
 HexIntLiteral `0x12345 456 aff` [Test_TokenStringForBracketsLiterals:4:1]
+Semicolon `;` [Test_TokenStringForBracketsLiterals:4:16]
 BinIntLiteral `0b011 01  101` [Test_TokenStringForBracketsLiterals:5:1]
+Semicolon `;` [Test_TokenStringForBracketsLiterals:5:14]
 OctIntLiteral `0o03423362 63` [Test_TokenStringForBracketsLiterals:6:1]
+Semicolon `;` [Test_TokenStringForBracketsLiterals:6:14]
 FloatLiteral `1.345634634 234623` [Test_TokenStringForBracketsLiterals:7:1]
 EndOfFile `` [Test_TokenStringForBracketsLiterals:8:1]
 )_____");
