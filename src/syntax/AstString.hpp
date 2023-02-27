@@ -1,13 +1,14 @@
 #pragma once
 
 #include "cero/driver/Source.hpp"
+#include "cero/syntax/AstVisitor.hpp"
 #include "cero/syntax/SyntaxTree.hpp"
 #include "cero/util/LookupTable.hpp"
 
 namespace cero
 {
 
-class AstString
+class AstString : public AstVisitor
 {
 	struct Edge
 	{
@@ -36,40 +37,41 @@ private:
 	void add_line(std::string_view text);
 	void add_body_line(std::string_view text);
 	void add_tail_line(std::string_view text);
-	void visit_each_in(const auto& list);
 	void visit(Definition definition);
-	void visit_node(const ast::Function& function);
-	void visit(const ast::Function::Parameter& parameter);
-	void visit(const ast::FunctionType::Parameter& parameter);
-	void visit(const ast::FunctionOutput& output);
-	void visit_node(const ast::Struct& struct_definition);
-	void visit_node(const ast::Enum& enum_definition);
 	void visit(Expression expression);
 	void visit_body(Expression expression);
 	void visit_tail(Expression expression);
 	void visit_optional(OptionalExpression optional_expression);
-	void visit_node(ast::Identifier id);
-	void visit_node(const ast::GenericIdentifier& generic_id);
-	void visit_node(const ast::Variability& variability);
-	void visit_node(const ast::ArrayType& array_type);
-	void visit_node(const ast::PointerType& pointer_type);
-	void visit_node(const ast::FunctionType& function_type);
-	void visit_node(const ast::NumericLiteral& numeric_literal);
-	void visit_node(const ast::StringLiteral& string_literal);
-	void visit_node(const ast::Binding& binding);
-	void visit_node(const ast::Block& block);
-	void visit_node(const ast::If& if_expression);
-	void visit_node(const ast::WhileLoop& while_loop);
-	void visit_node(const ast::ForLoop& for_loop);
-	void visit_node(const ast::Break& break_expression);
-	void visit_node(const ast::Continue& continue_expression);
-	void visit_node(const ast::Return& return_expression);
-	void visit_node(const ast::Throw& throw_expression);
-	void visit_node(const ast::MemberAccess& member_access);
-	void visit_node(const ast::Call& call);
-	void visit_node(const ast::Index& index);
-	void visit_node(const ast::UnaryExpression& unary_expression);
-	void visit_node(const ast::BinaryExpression& binary_expression);
+	void visit_each_in(const auto& list);
+	void visit(const ast::Root& root) override;
+	void visit(const ast::Function& function) override;
+	void visit(const ast::Function::Parameter& parameter);
+	void visit(const ast::FunctionOutput& output);
+	void visit(const ast::Struct& struct_definition) override;
+	void visit(const ast::Enum& enum_definition) override;
+	void visit(const ast::Identifier& id) override;
+	void visit(const ast::GenericIdentifier& generic_id) override;
+	void visit(const ast::Variability& variability) override;
+	void visit(const ast::ArrayType& array_type) override;
+	void visit(const ast::PointerType& pointer_type) override;
+	void visit(const ast::FunctionType& function_type) override;
+	void visit(const ast::FunctionType::Parameter& parameter);
+	void visit(const ast::NumericLiteral& numeric_literal) override;
+	void visit(const ast::StringLiteral& string_literal) override;
+	void visit(const ast::Binding& binding) override;
+	void visit(const ast::Block& block) override;
+	void visit(const ast::If& if_expression) override;
+	void visit(const ast::WhileLoop& while_loop) override;
+	void visit(const ast::ForLoop& for_loop) override;
+	void visit(const ast::Break& break_expression) override;
+	void visit(const ast::Continue& continue_expression) override;
+	void visit(const ast::Return& return_expression) override;
+	void visit(const ast::Throw& throw_expression) override;
+	void visit(const ast::MemberAccess& member_access) override;
+	void visit(const ast::Call& call) override;
+	void visit(const ast::Index& index) override;
+	void visit(const ast::UnaryExpression& unary_expression) override;
+	void visit(const ast::BinaryExpression& binary_expression) override;
 };
 
 constexpr inline LookupTable<ast::UnaryOperator, std::string_view> UNARY_OPERATOR_STRINGS = []

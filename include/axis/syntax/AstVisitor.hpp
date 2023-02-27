@@ -12,6 +12,7 @@ class AstVisitor
 public:
 	virtual ~AstVisitor() = default;
 
+	virtual void visit(const ast::Root&)			  = 0;
 	virtual void visit(const ast::Function&)		  = 0;
 	virtual void visit(const ast::Struct&)			  = 0;
 	virtual void visit(const ast::Enum&)			  = 0;

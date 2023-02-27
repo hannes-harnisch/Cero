@@ -18,76 +18,76 @@ foo(int32 a, int32 b) -> int32
 )_____");
 
 	ExhaustiveReporter r;
-	cero::SyntaxTree   ast;
-	ast.add_to_root(ast.store(Function {
+	cero::AstBuilder   b;
+	b.add_to_root(b.store(Function {
 		.name		= "foo",
 		.parameters = {Function::Parameter {
 						   .specifier = ParameterSpecifier::In,
 						   .name	  = "a",
-						   .type	  = ast.store(Identifier {"int32"}),
+						   .type	  = b.store(Identifier {"int32"}),
 					   },
 					   Function::Parameter {
 						   .specifier = ParameterSpecifier::In,
 						   .name	  = "b",
-						   .type	  = ast.store(Identifier {"int32"}),
+						   .type	  = b.store(Identifier {"int32"}),
 					   }},
 		.outputs	= {FunctionOutput {
-			   .type = ast.store(Identifier {"int32"}),
+			   .type = b.store(Identifier {"int32"}),
 		   }},
-		.statements = {ast.store(Binding {
+		.statements = {b.store(Binding {
 						   .specifier	= Binding::Specifier::Let,
 						   .name		= "c",
-						   .initializer = ast.store(BinaryExpression {
+						   .initializer = b.store(BinaryExpression {
 							   .op	  = BinaryOperator::Add,
-							   .left  = ast.store(Identifier {"a"}),
-							   .right = ast.store(Identifier {"b"}),
+							   .left  = b.store(Identifier {"a"}),
+							   .right = b.store(Identifier {"b"}),
 						   }),
 					   }),
-					   ast.store(Binding {
+					   b.store(Binding {
 						   .specifier	= Binding::Specifier::Let,
 						   .name		= "d",
-						   .initializer = ast.store(BinaryExpression {
+						   .initializer = b.store(BinaryExpression {
 							   .op	  = BinaryOperator::Add,
-							   .left  = ast.store(Identifier {"a"}),
-							   .right = ast.store(BinaryExpression {
+							   .left  = b.store(Identifier {"a"}),
+							   .right = b.store(BinaryExpression {
 								   .op	  = BinaryOperator::Multiply,
-								   .left  = ast.store(Identifier {"b"}),
-								   .right = ast.store(Identifier {"c"}),
+								   .left  = b.store(Identifier {"b"}),
+								   .right = b.store(Identifier {"c"}),
 							   }),
 						   }),
 					   }),
-					   ast.store(Binding {
+					   b.store(Binding {
 						   .specifier	= Binding::Specifier::Let,
 						   .name		= "e",
-						   .initializer = ast.store(BinaryExpression {
+						   .initializer = b.store(BinaryExpression {
 							   .op	  = BinaryOperator::Divide,
-							   .left  = ast.store(Call {
-									.arguments = {ast.store(BinaryExpression {
+							   .left  = b.store(Call {
+									.arguments = {b.store(BinaryExpression {
 										.op	   = BinaryOperator::Subtract,
-										.left  = ast.store(Identifier {"d"}),
-										.right = ast.store(Identifier {"a"}),
+										.left  = b.store(Identifier {"d"}),
+										.right = b.store(Identifier {"a"}),
 									})},
 								}),
-							   .right = ast.store(Identifier {"c"}),
+							   .right = b.store(Identifier {"c"}),
 						   }),
 					   }),
-					   ast.store(Return {
-						   .expression = ast.store(BinaryExpression {
+					   b.store(Return {
+						   .expression = b.store(BinaryExpression {
 							   .op	  = BinaryOperator::Multiply,
-							   .left  = ast.store(BinaryExpression {
+							   .left  = b.store(BinaryExpression {
 									.op	   = BinaryOperator::Power,
-									.left  = ast.store(Identifier {"e"}),
-									.right = ast.store(NumericLiteral {
+									.left  = b.store(Identifier {"e"}),
+									.right = b.store(NumericLiteral {
 										.kind = Literal::Decimal,
 									}),
 								}),
-							   .right = ast.store(Identifier {"b"}),
+							   .right = b.store(Identifier {"b"}),
 						   }),
 					   })},
 	}));
 
 	auto result = cero::parse(source, r);
-	CHECK(result == ast);
+	CHECK(result == cero::SyntaxTree(b));
 }
 
 CERO_TEST(ParseAdditiveAndComparisonOperators)
@@ -106,156 +106,156 @@ bar(int32 a, int32 b, int32 c) -> bool
 )_____");
 
 	ExhaustiveReporter r;
-	cero::SyntaxTree   ast;
-	ast.add_to_root(ast.store(Function {
+	cero::AstBuilder   b;
+	b.add_to_root(b.store(Function {
 		.name		= "bar",
 		.parameters = {Function::Parameter {
 						   .specifier = ParameterSpecifier::In,
 						   .name	  = "a",
-						   .type	  = ast.store(Identifier {"int32"}),
+						   .type	  = b.store(Identifier {"int32"}),
 					   },
 					   Function::Parameter {
 						   .specifier = ParameterSpecifier::In,
 						   .name	  = "b",
-						   .type	  = ast.store(Identifier {"int32"}),
+						   .type	  = b.store(Identifier {"int32"}),
 					   },
 					   Function::Parameter {
 						   .specifier = ParameterSpecifier::In,
 						   .name	  = "c",
-						   .type	  = ast.store(Identifier {"int32"}),
+						   .type	  = b.store(Identifier {"int32"}),
 					   }},
 		.outputs	= {FunctionOutput {
-			   .type = ast.store(Identifier {"bool"}),
+			   .type = b.store(Identifier {"bool"}),
 		   }},
-		.statements = {ast.store(Binding {
+		.statements = {b.store(Binding {
 						   .specifier	= Binding::Specifier::Let,
 						   .name		= "u",
-						   .initializer = ast.store(BinaryExpression {
+						   .initializer = b.store(BinaryExpression {
 							   .op	  = BinaryOperator::Equal,
-							   .left  = ast.store(BinaryExpression {
+							   .left  = b.store(BinaryExpression {
 									.op	   = BinaryOperator::Subtract,
-									.left  = ast.store(Identifier {"a"}),
-									.right = ast.store(Identifier {"b"}),
+									.left  = b.store(Identifier {"a"}),
+									.right = b.store(Identifier {"b"}),
 								}),
-							   .right = ast.store(BinaryExpression {
+							   .right = b.store(BinaryExpression {
 								   .op	  = BinaryOperator::Add,
-								   .left  = ast.store(Identifier {"b"}),
-								   .right = ast.store(Identifier {"c"}),
+								   .left  = b.store(Identifier {"b"}),
+								   .right = b.store(Identifier {"c"}),
 							   }),
 						   }),
 					   }),
-					   ast.store(Binding {
+					   b.store(Binding {
 						   .specifier	= Binding::Specifier::Let,
 						   .name		= "v",
-						   .initializer = ast.store(BinaryExpression {
+						   .initializer = b.store(BinaryExpression {
 							   .op	  = BinaryOperator::NotEqual,
-							   .left  = ast.store(BinaryExpression {
+							   .left  = b.store(BinaryExpression {
 									.op	   = BinaryOperator::Multiply,
-									.left  = ast.store(Identifier {"b"}),
-									.right = ast.store(Identifier {"a"}),
+									.left  = b.store(Identifier {"b"}),
+									.right = b.store(Identifier {"a"}),
 								}),
-							   .right = ast.store(BinaryExpression {
+							   .right = b.store(BinaryExpression {
 								   .op	  = BinaryOperator::Divide,
-								   .left  = ast.store(Identifier {"c"}),
-								   .right = ast.store(Identifier {"a"}),
+								   .left  = b.store(Identifier {"c"}),
+								   .right = b.store(Identifier {"a"}),
 							   }),
 						   }),
 					   }),
-					   ast.store(Binding {
+					   b.store(Binding {
 						   .specifier	= Binding::Specifier::Let,
 						   .name		= "w",
-						   .initializer = ast.store(BinaryExpression {
+						   .initializer = b.store(BinaryExpression {
 							   .op	  = BinaryOperator::Greater,
-							   .left  = ast.store(BinaryExpression {
+							   .left  = b.store(BinaryExpression {
 									.op	   = BinaryOperator::Add,
-									.left  = ast.store(Identifier {"c"}),
-									.right = ast.store(Identifier {"b"}),
+									.left  = b.store(Identifier {"c"}),
+									.right = b.store(Identifier {"b"}),
 								}),
-							   .right = ast.store(BinaryExpression {
+							   .right = b.store(BinaryExpression {
 								   .op	  = BinaryOperator::Multiply,
-								   .left  = ast.store(Identifier {"b"}),
-								   .right = ast.store(Identifier {"a"}),
+								   .left  = b.store(Identifier {"b"}),
+								   .right = b.store(Identifier {"a"}),
 							   }),
 						   }),
 					   }),
-					   ast.store(Binding {
+					   b.store(Binding {
 						   .specifier	= Binding::Specifier::Let,
 						   .name		= "x",
-						   .initializer = ast.store(BinaryExpression {
+						   .initializer = b.store(BinaryExpression {
 							   .op	  = BinaryOperator::Less,
-							   .left  = ast.store(BinaryExpression {
+							   .left  = b.store(BinaryExpression {
 									.op	   = BinaryOperator::Divide,
-									.left  = ast.store(Identifier {"b"}),
-									.right = ast.store(Identifier {"a"}),
+									.left  = b.store(Identifier {"b"}),
+									.right = b.store(Identifier {"a"}),
 								}),
-							   .right = ast.store(BinaryExpression {
+							   .right = b.store(BinaryExpression {
 								   .op	  = BinaryOperator::Subtract,
-								   .left  = ast.store(Identifier {"c"}),
-								   .right = ast.store(Identifier {"b"}),
+								   .left  = b.store(Identifier {"c"}),
+								   .right = b.store(Identifier {"b"}),
 							   }),
 						   }),
 					   }),
-					   ast.store(Binding {
+					   b.store(Binding {
 						   .specifier	= Binding::Specifier::Let,
 						   .name		= "y",
-						   .initializer = ast.store(BinaryExpression {
+						   .initializer = b.store(BinaryExpression {
 							   .op	  = BinaryOperator::LessEqual,
-							   .left  = ast.store(BinaryExpression {
+							   .left  = b.store(BinaryExpression {
 									.op	   = BinaryOperator::Multiply,
-									.left  = ast.store(Identifier {"a"}),
-									.right = ast.store(Identifier {"c"}),
+									.left  = b.store(Identifier {"a"}),
+									.right = b.store(Identifier {"c"}),
 								}),
-							   .right = ast.store(BinaryExpression {
+							   .right = b.store(BinaryExpression {
 								   .op	  = BinaryOperator::Subtract,
-								   .left  = ast.store(Identifier {"b"}),
-								   .right = ast.store(Identifier {"a"}),
+								   .left  = b.store(Identifier {"b"}),
+								   .right = b.store(Identifier {"a"}),
 							   }),
 						   }),
 					   }),
-					   ast.store(Binding {
+					   b.store(Binding {
 						   .specifier	= Binding::Specifier::Let,
 						   .name		= "z",
-						   .initializer = ast.store(BinaryExpression {
+						   .initializer = b.store(BinaryExpression {
 							   .op	  = BinaryOperator::GreaterEqual,
-							   .left  = ast.store(BinaryExpression {
+							   .left  = b.store(BinaryExpression {
 									.op	   = BinaryOperator::Add,
-									.left  = ast.store(Identifier {"b"}),
-									.right = ast.store(Identifier {"c"}),
+									.left  = b.store(Identifier {"b"}),
+									.right = b.store(Identifier {"c"}),
 								}),
-							   .right = ast.store(BinaryExpression {
+							   .right = b.store(BinaryExpression {
 								   .op	  = BinaryOperator::Divide,
-								   .left  = ast.store(Identifier {"a"}),
-								   .right = ast.store(Identifier {"c"}),
+								   .left  = b.store(Identifier {"a"}),
+								   .right = b.store(Identifier {"c"}),
 							   }),
 						   }),
 					   }),
-					   ast.store(Return {
-						   .expression = ast.store(BinaryExpression {
+					   b.store(Return {
+						   .expression = b.store(BinaryExpression {
 							   .op	  = BinaryOperator::LogicalOr,
-							   .left  = ast.store(BinaryExpression {
+							   .left  = b.store(BinaryExpression {
 									.op	   = BinaryOperator::LogicalOr,
-									.left  = ast.store(BinaryExpression {
+									.left  = b.store(BinaryExpression {
 										 .op	= BinaryOperator::LogicalOr,
-										 .left	= ast.store(BinaryExpression {
+										 .left	= b.store(BinaryExpression {
 											  .op	 = BinaryOperator::LogicalOr,
-											  .left	 = ast.store(BinaryExpression {
+											  .left	 = b.store(BinaryExpression {
 												   .op	  = BinaryOperator::LogicalOr,
-												   .left  = ast.store(Identifier {"u"}),
-												   .right = ast.store(Identifier {"v"}),
+												   .left  = b.store(Identifier {"u"}),
+												   .right = b.store(Identifier {"v"}),
 										   }),
-											  .right = ast.store(Identifier {"w"}),
+											  .right = b.store(Identifier {"w"}),
 										  }),
-										 .right = ast.store(Identifier {"x"}),
+										 .right = b.store(Identifier {"x"}),
 									 }),
-									.right = ast.store(Identifier {"y"}),
+									.right = b.store(Identifier {"y"}),
 								}),
-							   .right = ast.store(Identifier {"z"}),
+							   .right = b.store(Identifier {"z"}),
 						   }),
 					   })},
 	}));
 
 	auto result = cero::parse(source, r);
-	CHECK(result == ast);
+	CHECK(result == cero::SyntaxTree(b));
 }
 
 CERO_TEST(ParseComparisonAndLogicalOperators)
@@ -268,81 +268,81 @@ baz(int32 a, int32 b, int32 c, int32 d) -> bool
 )_____");
 
 	ExhaustiveReporter r;
-	cero::SyntaxTree   ast;
-	ast.add_to_root(ast.store(Function {
+	cero::AstBuilder   b;
+	b.add_to_root(b.store(Function {
 		.name		= "baz",
 		.parameters = {Function::Parameter {
 						   .specifier = ParameterSpecifier::In,
 						   .name	  = "a",
-						   .type	  = ast.store(Identifier {"int32"}),
+						   .type	  = b.store(Identifier {"int32"}),
 					   },
 					   Function::Parameter {
 						   .specifier = ParameterSpecifier::In,
 						   .name	  = "b",
-						   .type	  = ast.store(Identifier {"int32"}),
+						   .type	  = b.store(Identifier {"int32"}),
 					   },
 					   Function::Parameter {
 						   .specifier = ParameterSpecifier::In,
 						   .name	  = "c",
-						   .type	  = ast.store(Identifier {"int32"}),
+						   .type	  = b.store(Identifier {"int32"}),
 					   },
 					   Function::Parameter {
 						   .specifier = ParameterSpecifier::In,
 						   .name	  = "d",
-						   .type	  = ast.store(Identifier {"int32"}),
+						   .type	  = b.store(Identifier {"int32"}),
 					   }},
 		.outputs	= {FunctionOutput {
-			   .type = ast.store(Identifier {"bool"}),
+			   .type = b.store(Identifier {"bool"}),
 		   }},
-		.statements = {ast.store(Return {
-			.expression = ast.store(BinaryExpression {
+		.statements = {b.store(Return {
+			.expression = b.store(BinaryExpression {
 				.op	   = BinaryOperator::LogicalAnd,
-				.left  = ast.store(BinaryExpression {
+				.left  = b.store(BinaryExpression {
 					 .op	= BinaryOperator::LogicalAnd,
-					 .left	= ast.store(BinaryExpression {
+					 .left	= b.store(BinaryExpression {
 						  .op	 = BinaryOperator::LogicalAnd,
-						  .left	 = ast.store(BinaryExpression {
+						  .left	 = b.store(BinaryExpression {
 							   .op	  = BinaryOperator::Equal,
-							   .left  = ast.store(BinaryExpression {
+							   .left  = b.store(BinaryExpression {
 									.op	   = BinaryOperator::Add,
-									.left  = ast.store(Identifier {"a"}),
-									.right = ast.store(Identifier {"b"}),
+									.left  = b.store(Identifier {"a"}),
+									.right = b.store(Identifier {"b"}),
 							}),
-							   .right = ast.store(BinaryExpression {
+							   .right = b.store(BinaryExpression {
 								   .op	  = BinaryOperator::Add,
-								   .left  = ast.store(Identifier {"b"}),
-								   .right = ast.store(Identifier {"c"}),
+								   .left  = b.store(Identifier {"b"}),
+								   .right = b.store(Identifier {"c"}),
 							   }),
 						   }),
-						  .right = ast.store(BinaryExpression {
+						  .right = b.store(BinaryExpression {
 							  .op	 = BinaryOperator::NotEqual,
-							  .left	 = ast.store(BinaryExpression {
+							  .left	 = b.store(BinaryExpression {
 								   .op	  = BinaryOperator::Add,
-								   .left  = ast.store(Identifier {"b"}),
-								   .right = ast.store(Identifier {"c"}),
+								   .left  = b.store(Identifier {"b"}),
+								   .right = b.store(Identifier {"c"}),
 							   }),
-							  .right = ast.store(BinaryExpression {
+							  .right = b.store(BinaryExpression {
 								  .op	 = BinaryOperator::Add,
-								  .left	 = ast.store(Identifier {"c"}),
-								  .right = ast.store(Identifier {"d"}),
+								  .left	 = b.store(Identifier {"c"}),
+								  .right = b.store(Identifier {"d"}),
 							  }),
 						  }),
 					  }),
-					 .right = ast.store(BinaryExpression {
+					 .right = b.store(BinaryExpression {
 						 .op	= BinaryOperator::Less,
-						 .left	= ast.store(Identifier {"a"}),
-						 .right = ast.store(Identifier {"c"}),
+						 .left	= b.store(Identifier {"a"}),
+						 .right = b.store(Identifier {"c"}),
 					 }),
 				 }),
-				.right = ast.store(BinaryExpression {
+				.right = b.store(BinaryExpression {
 					.op	   = BinaryOperator::Greater,
-					.left  = ast.store(Identifier {"a"}),
-					.right = ast.store(Identifier {"d"}),
+					.left  = b.store(Identifier {"a"}),
+					.right = b.store(Identifier {"d"}),
 				}),
 			}),
 		})},
 	}));
 
 	auto result = cero::parse(source, r);
-	CHECK(result == ast);
+	CHECK(result == cero::SyntaxTree(b));
 }

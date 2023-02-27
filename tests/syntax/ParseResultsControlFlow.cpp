@@ -25,67 +25,67 @@ fibonacci(var uint32 n) -> uint32
 )_____");
 
 	ExhaustiveReporter r;
-	cero::SyntaxTree   ast;
-	ast.add_to_root(ast.store(Function {
+	cero::AstBuilder   b;
+	b.add_to_root(b.store(Function {
 		.name		= "fibonacci",
 		.parameters = {Function::Parameter {
 			.specifier = ParameterSpecifier::Var,
 			.name	   = "n",
-			.type	   = ast.store(Identifier {"uint32"}),
+			.type	   = b.store(Identifier {"uint32"}),
 		}},
 		.outputs	= {FunctionOutput {
-			   .type = ast.store(Identifier {"uint32"}),
+			   .type = b.store(Identifier {"uint32"}),
 		   }},
-		.statements = {ast.store(Binding {
+		.statements = {b.store(Binding {
 						   .specifier	= Binding::Specifier::Var,
 						   .name		= "result",
-						   .type		= ast.store(Identifier {"uint32"}),
-						   .initializer = ast.store(NumericLiteral {
+						   .type		= b.store(Identifier {"uint32"}),
+						   .initializer = b.store(NumericLiteral {
 							   .kind = Literal::Decimal,
 						   }),
 					   }),
-					   ast.store(Binding {
+					   b.store(Binding {
 						   .specifier	= Binding::Specifier::Var,
 						   .name		= "next",
-						   .type		= ast.store(Identifier {"uint32"}),
-						   .initializer = ast.store(NumericLiteral {
+						   .type		= b.store(Identifier {"uint32"}),
+						   .initializer = b.store(NumericLiteral {
 							   .kind = Literal::Decimal,
 						   }),
 					   }),
-					   ast.store(WhileLoop {
-						   .condition = ast.store(BinaryExpression {
+					   b.store(WhileLoop {
+						   .condition = b.store(BinaryExpression {
 							   .op	  = BinaryOperator::NotEqual,
-							   .left  = ast.store(UnaryExpression {
+							   .left  = b.store(UnaryExpression {
 									.op		 = UnaryOperator::PostDecrement,
-									.operand = ast.store(Identifier {"n"}),
+									.operand = b.store(Identifier {"n"}),
 								}),
-							   .right = ast.store(NumericLiteral {
+							   .right = b.store(NumericLiteral {
 								   .kind = Literal::Decimal,
 							   }),
 						   }),
-						   .statement = ast.store(Block {
-							   .statements = {ast.store(Binding {
+						   .statement = b.store(Block {
+							   .statements = {b.store(Binding {
 												  .specifier   = Binding::Specifier::Let,
 												  .name		   = "temp",
-												  .initializer = ast.store(Identifier {"next"}),
+												  .initializer = b.store(Identifier {"next"}),
 											  }),
-											  ast.store(BinaryExpression {
+											  b.store(BinaryExpression {
 												  .op	 = BinaryOperator::Assign,
-												  .left	 = ast.store(Identifier {"next"}),
-												  .right = ast.store(Identifier {"result"}),
+												  .left	 = b.store(Identifier {"next"}),
+												  .right = b.store(Identifier {"result"}),
 											  }),
-											  ast.store(BinaryExpression {
+											  b.store(BinaryExpression {
 												  .op	 = BinaryOperator::AddAssign,
-												  .left	 = ast.store(Identifier {"result"}),
-												  .right = ast.store(Identifier {"temp"}),
+												  .left	 = b.store(Identifier {"result"}),
+												  .right = b.store(Identifier {"temp"}),
 											  })},
 						   }),
 					   }),
-					   ast.store(Return {
-						   .expression = ast.store(Identifier {"result"}),
+					   b.store(Return {
+						   .expression = b.store(Identifier {"result"}),
 					   })},
 	}));
 
 	auto result = cero::parse(source, r);
-	CHECK(result == ast);
+	CHECK(result == cero::SyntaxTree(b));
 }

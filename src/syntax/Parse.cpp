@@ -1,5 +1,6 @@
 #include "cero/syntax/Parse.hpp"
 
+#include "cero/syntax/AstBuilder.hpp"
 #include "cero/syntax/Lex.hpp"
 #include "cero/syntax/Literal.hpp"
 #include "cero/util/LookupTable.hpp"
@@ -14,7 +15,7 @@ namespace cero
 
 class Parser
 {
-	SyntaxTree	  ast;
+	AstBuilder	  ast;
 	const Source& source;
 	Reporter&	  reporter;
 	ParseCursor	  cursor;
@@ -42,7 +43,7 @@ public:
 				synchronize_definition();
 			}
 		}
-		return std::move(ast);
+		return SyntaxTree(std::move(ast));
 	}
 
 private:
@@ -700,11 +701,6 @@ private:
 
 	Expression parse_type()
 	{
-		return ast.store(parse_type_node());
-	}
-
-	ExpressionNode parse_type_node()
-	{
 		const auto saved = expr_depth;
 		expr_depth		 = 1;
 		defer
@@ -713,14 +709,14 @@ private:
 		};
 
 		if (cursor.match(Token::Caret))
-			return parse_pointer_type();
+			return ast.store(parse_pointer_type());
 		if (cursor.match(Token::LeftBracket))
-			return parse_array_type();
+			return ast.store(parse_array_type());
 		if (cursor.match(Token::LeftParen))
-			return parse_function_type();
+			return ast.store(parse_function_type());
 
 		auto name = expect_name(Message::ExpectType);
-		return parse_identifier(name);
+		return ast.store(parse_identifier(name));
 	}
 
 	ExpressionNode parse_array_type()

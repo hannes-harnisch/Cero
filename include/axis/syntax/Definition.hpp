@@ -16,6 +16,11 @@ struct Definition
 
 namespace ast
 {
+	struct Root
+	{
+		std::vector<Definition> root_definitions;
+	};
+
 	enum class AccessSpecifier : uint8_t
 	{
 		None,

@@ -248,11 +248,12 @@ private:
 		}
 
 		eat_number_literal(is_dec_digit);
-		auto saved = cursor;
+		auto cursor_at_token_end = cursor;
 		while (cursor != source_end)
 		{
 			if (!is_whitespace(*cursor))
 				break;
+
 			++cursor;
 		}
 
@@ -267,46 +268,44 @@ private:
 				cursor = cursor_at_dot;
 		}
 		else
-			cursor = saved;
+			cursor = cursor_at_token_end;
 
 		return Token::DecIntLiteral;
 	}
 
 	void eat_number_literal(bool (*char_predicate)(char))
 	{
-		auto token_end = cursor;
-		while (cursor != source_end)
+		auto proxy = cursor;
+		while (proxy != source_end)
 		{
-			char it = *cursor;
+			char it = *proxy;
 			if (char_predicate(it))
-				token_end = cursor + 1;
+				cursor = proxy + 1;
 			else if (!is_whitespace(it))
 				break;
 
-			++cursor;
+			++proxy;
 		}
-		cursor = token_end;
 	}
 
 	bool eat_decimal_number()
 	{
-		auto token_end	= cursor;
-		bool ate_number = false;
-		while (cursor != source_end)
+		auto proxy	 = cursor;
+		bool matched = false;
+		while (proxy != source_end)
 		{
-			char it = *cursor;
+			char it = *proxy;
 			if (is_dec_digit(it))
 			{
-				token_end  = cursor + 1;
-				ate_number = true;
+				cursor	= proxy + 1;
+				matched = true;
 			}
 			else if (!is_whitespace(it))
 				break;
 
-			++cursor;
+			++proxy;
 		}
-		cursor = token_end;
-		return ate_number;
+		return matched;
 	}
 
 	Token match_colon()

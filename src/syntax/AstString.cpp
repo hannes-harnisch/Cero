@@ -70,7 +70,7 @@ AstString::AstString(const SyntaxTree& ast, const Source& source) :
 
 std::string AstString::build()
 {
-	visit_each_in(ast.get_root());
+	ast.visit(*this);
 	return std::move(string);
 }
 
@@ -111,6 +111,38 @@ void AstString::add_tail_line(std::string_view text)
 	add_line(text);
 }
 
+void AstString::visit(Definition definition)
+{
+	ast.visit(*this, definition);
+}
+
+void AstString::visit(Expression expression)
+{
+	ast.visit(*this, expression);
+}
+
+void AstString::visit_body(Expression expression)
+{
+	set_tail(false);
+	visit(expression);
+}
+
+void AstString::visit_tail(Expression expression)
+{
+	set_tail(true);
+	visit(expression);
+}
+
+void AstString::visit_optional(OptionalExpression optional_expression)
+{
+	if (optional_expression.is_null())
+		return;
+
+	push_level();
+	visit_tail(optional_expression.get());
+	pop_level();
+}
+
 void AstString::visit_each_in(const auto& list)
 {
 	for (size_t i = 0; i != list.size(); ++i)
@@ -120,13 +152,12 @@ void AstString::visit_each_in(const auto& list)
 	}
 }
 
-void AstString::visit(Definition definition)
+void AstString::visit(const ast::Root& root)
 {
-	auto& ast_node = ast.get(definition);
-	std::visit([&](auto& node) { visit_node(node); }, ast_node);
+	visit_each_in(root.root_definitions);
 }
 
-void AstString::visit_node(const ast::Function& function)
+void AstString::visit(const ast::Function& function)
 {
 	add_line(std::format("function `{}`", function.name));
 	push_level();
@@ -164,15 +195,6 @@ void AstString::visit(const ast::Function::Parameter& parameter)
 	pop_level();
 }
 
-void AstString::visit(const ast::FunctionType::Parameter& parameter)
-{
-	add_line(std::format("{} parameter `{}`", to_string(parameter.specifier), parameter.name));
-
-	push_level();
-	visit_tail(parameter.type);
-	pop_level();
-}
-
 void AstString::visit(const ast::FunctionOutput& output)
 {
 	if (output.name.empty())
@@ -185,7 +207,7 @@ void AstString::visit(const ast::FunctionOutput& output)
 	pop_level();
 }
 
-void AstString::visit_node(const ast::Struct& struct_definition)
+void AstString::visit(const ast::Struct& struct_definition)
 {
 	add_line(std::format("struct `{}`", struct_definition.name));
 	push_level();
@@ -193,7 +215,7 @@ void AstString::visit_node(const ast::Struct& struct_definition)
 	pop_level();
 }
 
-void AstString::visit_node(const ast::Enum& enum_definition)
+void AstString::visit(const ast::Enum& enum_definition)
 {
 	add_line(std::format("enum `{}`", enum_definition.name));
 	push_level();
@@ -201,40 +223,12 @@ void AstString::visit_node(const ast::Enum& enum_definition)
 	pop_level();
 }
 
-void AstString::visit(Expression expression)
-{
-	auto& ast_node = ast.get(expression);
-	std::visit([&](auto& node) { visit_node(node); }, ast_node);
-}
-
-void AstString::visit_body(Expression expression)
-{
-	set_tail(false);
-	visit(expression);
-}
-
-void AstString::visit_tail(Expression expression)
-{
-	set_tail(true);
-	visit(expression);
-}
-
-void AstString::visit_optional(OptionalExpression optional_expression)
-{
-	if (optional_expression.is_null())
-		return;
-
-	push_level();
-	visit_tail(optional_expression.get());
-	pop_level();
-}
-
-void AstString::visit_node(ast::Identifier id)
+void AstString::visit(const ast::Identifier& id)
 {
 	add_line(std::format("identifier `{}`", id.name));
 }
 
-void AstString::visit_node(const ast::GenericIdentifier& generic_id)
+void AstString::visit(const ast::GenericIdentifier& generic_id)
 {
 	add_line(std::format("generic identifier `{}`", generic_id.name));
 	push_level();
@@ -242,7 +236,7 @@ void AstString::visit_node(const ast::GenericIdentifier& generic_id)
 	pop_level();
 }
 
-void AstString::visit_node(const ast::Variability& variability)
+void AstString::visit(const ast::Variability& variability)
 {
 	add_line(std::format("variability `{}`", to_string(variability.specifier)));
 	push_level();
@@ -250,7 +244,7 @@ void AstString::visit_node(const ast::Variability& variability)
 	pop_level();
 }
 
-void AstString::visit_node(const ast::ArrayType& array_type)
+void AstString::visit(const ast::ArrayType& array_type)
 {
 	add_line("array type");
 	push_level();
@@ -273,13 +267,13 @@ void AstString::visit_node(const ast::ArrayType& array_type)
 	pop_level();
 }
 
-void AstString::visit_node(const ast::PointerType& pointer_type)
+void AstString::visit(const ast::PointerType& pointer_type)
 {
 	add_line("pointer type");
 	push_level();
 
 	set_tail(false);
-	visit_node(pointer_type.variability);
+	visit(pointer_type.variability);
 
 	add_tail_line("type");
 
@@ -290,7 +284,7 @@ void AstString::visit_node(const ast::PointerType& pointer_type)
 	pop_level();
 }
 
-void AstString::visit_node(const ast::FunctionType& function_type)
+void AstString::visit(const ast::FunctionType& function_type)
 {
 	add_line("function type");
 	push_level();
@@ -308,17 +302,26 @@ void AstString::visit_node(const ast::FunctionType& function_type)
 	pop_level();
 }
 
-void AstString::visit_node(const ast::NumericLiteral& numeric_literal)
+void AstString::visit(const ast::FunctionType::Parameter& parameter)
+{
+	add_line(std::format("{} parameter `{}`", to_string(parameter.specifier), parameter.name));
+
+	push_level();
+	visit_tail(parameter.type);
+	pop_level();
+}
+
+void AstString::visit(const ast::NumericLiteral& numeric_literal)
 {
 	add_line(std::format("{} literal `{}`", to_string(numeric_literal.kind), " ---TODO--- "));
 }
 
-void AstString::visit_node(const ast::StringLiteral& string_literal)
+void AstString::visit(const ast::StringLiteral& string_literal)
 {
 	add_line(std::format("string literal `{}`", string_literal.value));
 }
 
-void AstString::visit_node(const ast::Binding& binding)
+void AstString::visit(const ast::Binding& binding)
 {
 	add_line(std::format("{} binding `{}`", to_string(binding.specifier), binding.name));
 	push_level();
@@ -345,7 +348,7 @@ void AstString::visit_node(const ast::Binding& binding)
 	pop_level();
 }
 
-void AstString::visit_node(const ast::Block& block)
+void AstString::visit(const ast::Block& block)
 {
 	add_line("block");
 	push_level();
@@ -353,7 +356,7 @@ void AstString::visit_node(const ast::Block& block)
 	pop_level();
 }
 
-void AstString::visit_node(const ast::If& if_expression)
+void AstString::visit(const ast::If& if_expression)
 {
 	add_line("if");
 	push_level();
@@ -382,7 +385,7 @@ void AstString::visit_node(const ast::If& if_expression)
 	pop_level();
 }
 
-void AstString::visit_node(const ast::WhileLoop& while_loop)
+void AstString::visit(const ast::WhileLoop& while_loop)
 {
 	add_line("while");
 	push_level();
@@ -393,7 +396,7 @@ void AstString::visit_node(const ast::WhileLoop& while_loop)
 	pop_level();
 }
 
-void AstString::visit_node(const ast::ForLoop& for_loop)
+void AstString::visit(const ast::ForLoop& for_loop)
 {
 	add_line("for");
 	push_level();
@@ -405,31 +408,31 @@ void AstString::visit_node(const ast::ForLoop& for_loop)
 	pop_level();
 }
 
-void AstString::visit_node(const ast::Break& break_expression)
+void AstString::visit(const ast::Break& break_expression)
 {
 	add_line("break");
 	visit_optional(break_expression.label);
 }
 
-void AstString::visit_node(const ast::Continue& continue_expression)
+void AstString::visit(const ast::Continue& continue_expression)
 {
 	add_line("continue");
 	visit_optional(continue_expression.label);
 }
 
-void AstString::visit_node(const ast::Return& return_expression)
+void AstString::visit(const ast::Return& return_expression)
 {
 	add_line("return");
 	visit_optional(return_expression.expression);
 }
 
-void AstString::visit_node(const ast::Throw& throw_expression)
+void AstString::visit(const ast::Throw& throw_expression)
 {
 	add_line("throw");
 	visit_optional(throw_expression.expression);
 }
 
-void AstString::visit_node(const ast::MemberAccess& member_access)
+void AstString::visit(const ast::MemberAccess& member_access)
 {
 	add_line("member access");
 	push_level();
@@ -440,7 +443,7 @@ void AstString::visit_node(const ast::MemberAccess& member_access)
 	pop_level();
 }
 
-void AstString::visit_node(const ast::Call& call)
+void AstString::visit(const ast::Call& call)
 {
 	bool has_callee = !call.callee.is_null();
 	if (!has_callee && call.arguments.size() == 1)
@@ -463,7 +466,7 @@ void AstString::visit_node(const ast::Call& call)
 	pop_level();
 }
 
-void AstString::visit_node(const ast::Index& index)
+void AstString::visit(const ast::Index& index)
 {
 	add_line("index expression");
 	push_level();
@@ -478,7 +481,7 @@ void AstString::visit_node(const ast::Index& index)
 	pop_level();
 }
 
-void AstString::visit_node(const ast::UnaryExpression& unary_expression)
+void AstString::visit(const ast::UnaryExpression& unary_expression)
 {
 	add_line(std::format("`{}`", UNARY_OPERATOR_STRINGS[unary_expression.op]));
 	push_level();
@@ -488,7 +491,7 @@ void AstString::visit_node(const ast::UnaryExpression& unary_expression)
 	pop_level();
 }
 
-void AstString::visit_node(const ast::BinaryExpression& binary_expression)
+void AstString::visit(const ast::BinaryExpression& binary_expression)
 {
 	add_line(std::format("`{}`", BINARY_OPERATOR_STRINGS[binary_expression.op]));
 	push_level();

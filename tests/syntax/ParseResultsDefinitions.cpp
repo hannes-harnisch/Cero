@@ -13,8 +13,8 @@ main()
 )_____");
 
 	ExhaustiveReporter r;
-	cero::SyntaxTree   ast;
-	ast.add_to_root(ast.store(Function {
+	cero::AstBuilder   b;
+	b.add_to_root(b.store(Function {
 		.name		= "main",
 		.parameters = {},
 		.outputs	= {},
@@ -22,5 +22,5 @@ main()
 	}));
 
 	auto result = cero::parse(source, r);
-	CHECK(result == ast);
+	CHECK(result == cero::SyntaxTree(b));
 }

@@ -6,19 +6,27 @@
 namespace cero
 {
 
-std::span<const Definition> SyntaxTree::get_root() const
+SyntaxTree::SyntaxTree(AstBuilder builder) :
+	expression_nodes(std::move(builder.expression_nodes)),
+	definition_nodes(std::move(builder.definition_nodes)),
+	root(std::move(builder.root))
+{}
+
+void SyntaxTree::visit(AstVisitor& visitor) const
 {
-	return root_definitions;
+	visitor.visit(root);
 }
 
-const ExpressionNode& SyntaxTree::get(Expression expression) const
+void SyntaxTree::visit(AstVisitor& visitor, Expression expression) const
 {
-	return expression_nodes.at(expression.index);
+	auto& ast_node = expression_nodes.at(expression.index);
+	std::visit([&](auto& node) { visitor.visit(node); }, ast_node);
 }
 
-const DefinitionNode& SyntaxTree::get(Definition definition) const
+void SyntaxTree::visit(AstVisitor& visitor, Definition definition) const
 {
-	return definition_nodes.at(definition.index);
+	auto& ast_node = definition_nodes.at(definition.index);
+	std::visit([&](auto& node) { visitor.visit(node); }, ast_node);
 }
 
 bool SyntaxTree::operator==(const SyntaxTree& other) const
@@ -36,25 +44,6 @@ std::string SyntaxTree::to_string(const Source& source) const
 void SyntaxTree::log(const Source& source) const
 {
 	std::cout << to_string(source);
-}
-
-void SyntaxTree::add_to_root(Definition definition)
-{
-	root_definitions.emplace_back(definition);
-}
-
-Expression SyntaxTree::store(ExpressionNode node)
-{
-	expression_nodes.emplace_back(std::move(node));
-	auto index = static_cast<AstIndex>(expression_nodes.size() - 1);
-	return Expression(index);
-}
-
-Definition SyntaxTree::store(DefinitionNode node)
-{
-	definition_nodes.emplace_back(std::move(node));
-	auto index = static_cast<AstIndex>(definition_nodes.size() - 1);
-	return Definition(index);
 }
 
 } // namespace cero

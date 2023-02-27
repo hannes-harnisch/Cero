@@ -40,135 +40,135 @@ f() -> List<List<List<int32>>>
 )_____");
 
 	ExhaustiveReporter r;
-	cero::SyntaxTree   ast;
-	ast.add_to_root(ast.store(Function {
+	cero::AstBuilder   b;
+	b.add_to_root(b.store(Function {
 		.name		= "a",
 		.parameters = {},
 		.outputs	= {FunctionOutput {
-			   .type = ast.store(GenericIdentifier {
+			   .type = b.store(GenericIdentifier {
 				   .name	  = "List",
-				   .arguments = {ast.store(GenericIdentifier {
+				   .arguments = {b.store(GenericIdentifier {
 					   .name	  = "List",
-					   .arguments = {ast.store(Identifier {"int32"})},
+					   .arguments = {b.store(Identifier {"int32"})},
 				   })},
 			   }),
 		   }},
-		.statements = {ast.store(Return {
-			.expression = ast.store(Call {
+		.statements = {b.store(Return {
+			.expression = b.store(Call {
 				.arguments = {},
 			}),
 		})},
 	}));
 
-	ast.add_to_root(ast.store(Function {
+	b.add_to_root(b.store(Function {
 		.name		= "b",
 		.parameters = {},
 		.outputs	= {FunctionOutput {
-			   .type = ast.store(GenericIdentifier {
+			   .type = b.store(GenericIdentifier {
 				   .name	  = "List",
-				   .arguments = {ast.store(GenericIdentifier {
+				   .arguments = {b.store(GenericIdentifier {
 					   .name	  = "List",
-					   .arguments = {ast.store(Identifier {"int32"})},
+					   .arguments = {b.store(Identifier {"int32"})},
 				   })},
 			   }),
 		   }},
-		.statements = {ast.store(Return {
-			.expression = ast.store(Call {
+		.statements = {b.store(Return {
+			.expression = b.store(Call {
 				.arguments = {},
 			}),
 		})},
 	}));
 
-	ast.add_to_root(ast.store(Function {
+	b.add_to_root(b.store(Function {
 		.name		= "c",
 		.parameters = {},
 		.outputs	= {FunctionOutput {
-			   .type = ast.store(GenericIdentifier {
+			   .type = b.store(GenericIdentifier {
 				   .name	  = "List",
-				   .arguments = {ast.store(GenericIdentifier {
+				   .arguments = {b.store(GenericIdentifier {
 					   .name	  = "List",
-					   .arguments = {ast.store(GenericIdentifier {
+					   .arguments = {b.store(GenericIdentifier {
 						   .name	  = "List",
-						   .arguments = {ast.store(Identifier {"int32"})},
+						   .arguments = {b.store(Identifier {"int32"})},
 					   })},
 				   })},
 			   }),
 		   }},
-		.statements = {ast.store(Return {
-			.expression = ast.store(Call {
+		.statements = {b.store(Return {
+			.expression = b.store(Call {
 				.arguments = {},
 			}),
 		})},
 	}));
 
-	ast.add_to_root(ast.store(Function {
+	b.add_to_root(b.store(Function {
 		.name		= "d",
 		.parameters = {},
 		.outputs	= {FunctionOutput {
-			   .type = ast.store(GenericIdentifier {
+			   .type = b.store(GenericIdentifier {
 				   .name	  = "List",
-				   .arguments = {ast.store(GenericIdentifier {
+				   .arguments = {b.store(GenericIdentifier {
 					   .name	  = "List",
-					   .arguments = {ast.store(GenericIdentifier {
+					   .arguments = {b.store(GenericIdentifier {
 						   .name	  = "List",
-						   .arguments = {ast.store(Identifier {"int32"})},
+						   .arguments = {b.store(Identifier {"int32"})},
 					   })},
 				   })},
 			   }),
 		   }},
-		.statements = {ast.store(Return {
-			.expression = ast.store(Call {
+		.statements = {b.store(Return {
+			.expression = b.store(Call {
 				.arguments = {},
 			}),
 		})},
 	}));
 
-	ast.add_to_root(ast.store(Function {
+	b.add_to_root(b.store(Function {
 		.name		= "e",
 		.parameters = {},
 		.outputs	= {FunctionOutput {
-			   .type = ast.store(GenericIdentifier {
+			   .type = b.store(GenericIdentifier {
 				   .name	  = "List",
-				   .arguments = {ast.store(GenericIdentifier {
+				   .arguments = {b.store(GenericIdentifier {
 					   .name	  = "List",
-					   .arguments = {ast.store(GenericIdentifier {
+					   .arguments = {b.store(GenericIdentifier {
 						   .name	  = "List",
-						   .arguments = {ast.store(Identifier {"int32"})},
+						   .arguments = {b.store(Identifier {"int32"})},
 					   })},
 				   })},
 			   }),
 		   }},
-		.statements = {ast.store(Return {
-			.expression = ast.store(Call {
+		.statements = {b.store(Return {
+			.expression = b.store(Call {
 				.arguments = {},
 			}),
 		})},
 	}));
 
-	ast.add_to_root(ast.store(Function {
+	b.add_to_root(b.store(Function {
 		.name		= "f",
 		.parameters = {},
 		.outputs	= {FunctionOutput {
-			   .type = ast.store(GenericIdentifier {
+			   .type = b.store(GenericIdentifier {
 				   .name	  = "List",
-				   .arguments = {ast.store(GenericIdentifier {
+				   .arguments = {b.store(GenericIdentifier {
 					   .name	  = "List",
-					   .arguments = {ast.store(GenericIdentifier {
+					   .arguments = {b.store(GenericIdentifier {
 						   .name	  = "List",
-						   .arguments = {ast.store(Identifier {"int32"})},
+						   .arguments = {b.store(Identifier {"int32"})},
 					   })},
 				   })},
 			   }),
 		   }},
-		.statements = {ast.store(Return {
-			.expression = ast.store(Call {
+		.statements = {b.store(Return {
+			.expression = b.store(Call {
 				.arguments = {},
 			}),
 		})},
 	}));
 
 	auto result = cero::parse(source, r);
-	CHECK(result == ast);
+	CHECK(result == cero::SyntaxTree(b));
 }
 
 CERO_TEST(ParseLessAndRightShift)
@@ -181,36 +181,36 @@ oof(int32 a, int32 b) -> bool
 )_____");
 
 	ExhaustiveReporter r;
-	cero::SyntaxTree   ast;
-	ast.add_to_root(ast.store(Function {
+	cero::AstBuilder   b;
+	b.add_to_root(b.store(Function {
 		.name		= "oof",
 		.parameters = {Function::Parameter {
 						   .specifier = ParameterSpecifier::In,
 						   .name	  = "a",
-						   .type	  = ast.store(Identifier {"int32"}),
+						   .type	  = b.store(Identifier {"int32"}),
 					   },
 					   Function::Parameter {
 						   .specifier = ParameterSpecifier::In,
 						   .name	  = "b",
-						   .type	  = ast.store(Identifier {"int32"}),
+						   .type	  = b.store(Identifier {"int32"}),
 					   }},
 		.outputs	= {FunctionOutput {
-			   .type = ast.store(Identifier {"bool"}),
+			   .type = b.store(Identifier {"bool"}),
 		   }},
-		.statements = {ast.store(Return {
-			.expression = ast.store(BinaryExpression {
+		.statements = {b.store(Return {
+			.expression = b.store(BinaryExpression {
 				.op	   = BinaryOperator::Less,
-				.left  = ast.store(Identifier {"a"}),
-				.right = ast.store(BinaryExpression {
+				.left  = b.store(Identifier {"a"}),
+				.right = b.store(BinaryExpression {
 					.op	   = BinaryOperator::RightShift,
-					.left  = ast.store(Identifier {"b"}),
-					.right = ast.store(Call {
-						.arguments = {ast.store(BinaryExpression {
+					.left  = b.store(Identifier {"b"}),
+					.right = b.store(Call {
+						.arguments = {b.store(BinaryExpression {
 							.op	   = BinaryOperator::Subtract,
-							.left  = ast.store(NumericLiteral {
+							.left  = b.store(NumericLiteral {
 								 .kind = Literal::Decimal,
 							 }),
-							.right = ast.store(NumericLiteral {
+							.right = b.store(NumericLiteral {
 								.kind = Literal::Decimal,
 							}),
 						})},
@@ -221,7 +221,7 @@ oof(int32 a, int32 b) -> bool
 	}));
 
 	auto result = cero::parse(source, r);
-	CHECK(result == ast);
+	CHECK(result == cero::SyntaxTree(b));
 }
 
 CERO_TEST(ParseAmbiguousGenericCallVsComparisonArguments)
@@ -234,33 +234,33 @@ ouch(float32 e) -> float64
 )_____");
 
 	ExhaustiveReporter r;
-	cero::SyntaxTree   ast;
-	ast.add_to_root(ast.store(Function {
+	cero::AstBuilder   b;
+	b.add_to_root(b.store(Function {
 		.name		= "ouch",
 		.parameters = {Function::Parameter {
 			.specifier = ParameterSpecifier::In,
 			.name	   = "e",
-			.type	   = ast.store(Identifier {"float32"}),
+			.type	   = b.store(Identifier {"float32"}),
 		}},
 		.outputs	= {FunctionOutput {
-			   .type = ast.store(Identifier {"float64"}),
+			   .type = b.store(Identifier {"float64"}),
 		   }},
-		.statements = {ast.store(Return {
-			.expression = ast.store(Call {
-				.callee	   = ast.store(Identifier {"a"}),
-				.arguments = {ast.store(Call {
-					.callee	   = ast.store(GenericIdentifier {
+		.statements = {b.store(Return {
+			.expression = b.store(Call {
+				.callee	   = b.store(Identifier {"a"}),
+				.arguments = {b.store(Call {
+					.callee	   = b.store(GenericIdentifier {
 						   .name	  = "b",
-						   .arguments = {ast.store(Identifier {"c"}), ast.store(Identifier {"d"})},
+						   .arguments = {b.store(Identifier {"c"}), b.store(Identifier {"d"})},
 					   }),
-					.arguments = {ast.store(Identifier {"e"})},
+					.arguments = {b.store(Identifier {"e"})},
 				})},
 			}),
 		})},
 	}));
 
 	auto result = cero::parse(source, r);
-	CHECK(result == ast);
+	CHECK(result == cero::SyntaxTree(b));
 }
 
 CERO_TEST(ParseComparisonArgumentsVsGenericPattern)
@@ -273,36 +273,36 @@ ouch(float32 e) -> float64
 )_____");
 
 	ExhaustiveReporter r;
-	cero::SyntaxTree   ast;
-	ast.add_to_root(ast.store(Function {
+	cero::AstBuilder   b;
+	b.add_to_root(b.store(Function {
 		.name		= "ouch",
 		.parameters = {Function::Parameter {
 			.specifier = ParameterSpecifier::In,
 			.name	   = "e",
-			.type	   = ast.store(Identifier {"float32"}),
+			.type	   = b.store(Identifier {"float32"}),
 		}},
 		.outputs	= {FunctionOutput {
-			   .type = ast.store(Identifier {"float64"}),
+			   .type = b.store(Identifier {"float64"}),
 		   }},
-		.statements = {ast.store(Return {
-			.expression = ast.store(Call {
-				.callee	   = ast.store(Identifier {"a"}),
-				.arguments = {ast.store(BinaryExpression {
+		.statements = {b.store(Return {
+			.expression = b.store(Call {
+				.callee	   = b.store(Identifier {"a"}),
+				.arguments = {b.store(BinaryExpression {
 								  .op	 = BinaryOperator::Less,
-								  .left	 = ast.store(Identifier {"b"}),
-								  .right = ast.store(Identifier {"c"}),
+								  .left	 = b.store(Identifier {"b"}),
+								  .right = b.store(Identifier {"c"}),
 							  }),
-							  ast.store(BinaryExpression {
+							  b.store(BinaryExpression {
 								  .op	 = BinaryOperator::Greater,
-								  .left	 = ast.store(Identifier {"d"}),
-								  .right = ast.store(Identifier {"e"}),
+								  .left	 = b.store(Identifier {"d"}),
+								  .right = b.store(Identifier {"e"}),
 							  })},
 			}),
 		})},
 	}));
 
 	auto result = cero::parse(source, r);
-	CHECK(result == ast);
+	CHECK(result == cero::SyntaxTree(b));
 }
 
 CERO_TEST(ParseComparisonAndRightShiftAsGenericArgument)
@@ -320,53 +320,53 @@ meow() -> A<(D >> E)>
 )_____");
 
 	ExhaustiveReporter r;
-	cero::SyntaxTree   ast;
-	ast.add_to_root(ast.store(Function {
+	cero::AstBuilder   b;
+	b.add_to_root(b.store(Function {
 		.name		= "woof",
 		.parameters = {},
 		.outputs	= {FunctionOutput {
-			   .type = ast.store(GenericIdentifier {
+			   .type = b.store(GenericIdentifier {
 				   .name	  = "A",
-				   .arguments = {ast.store(Call {
-					   .arguments = {ast.store(BinaryExpression {
+				   .arguments = {b.store(Call {
+					   .arguments = {b.store(BinaryExpression {
 						   .op	  = BinaryOperator::Greater,
-						   .left  = ast.store(Identifier {"B"}),
-						   .right = ast.store(Identifier {"C"}),
+						   .left  = b.store(Identifier {"B"}),
+						   .right = b.store(Identifier {"C"}),
 					   })},
 				   })},
 			   }),
 		   }},
-		.statements = {ast.store(Return {
-			.expression = ast.store(Call {
+		.statements = {b.store(Return {
+			.expression = b.store(Call {
 				.arguments = {},
 			}),
 		})},
 	}));
 
-	ast.add_to_root(ast.store(Function {
+	b.add_to_root(b.store(Function {
 		.name		= "meow",
 		.parameters = {},
 		.outputs	= {FunctionOutput {
-			   .type = ast.store(GenericIdentifier {
+			   .type = b.store(GenericIdentifier {
 				   .name	  = "A",
-				   .arguments = {ast.store(Call {
-					   .arguments = {ast.store(BinaryExpression {
+				   .arguments = {b.store(Call {
+					   .arguments = {b.store(BinaryExpression {
 						   .op	  = BinaryOperator::RightShift,
-						   .left  = ast.store(Identifier {"D"}),
-						   .right = ast.store(Identifier {"E"}),
+						   .left  = b.store(Identifier {"D"}),
+						   .right = b.store(Identifier {"E"}),
 					   })},
 				   })},
 			   }),
 		   }},
-		.statements = {ast.store(Return {
-			.expression = ast.store(Call {
+		.statements = {b.store(Return {
+			.expression = b.store(Call {
 				.arguments = {},
 			}),
 		})},
 	}));
 
 	auto result = cero::parse(source, r);
-	CHECK(result == ast);
+	CHECK(result == cero::SyntaxTree(b));
 }
 
 CERO_TEST(ParseGenericParameters)
@@ -383,49 +383,49 @@ moo(List<int32> _a,
 )_____");
 
 	ExhaustiveReporter r;
-	cero::SyntaxTree   ast;
-	ast.add_to_root(ast.store(Function {
+	cero::AstBuilder   b;
+	b.add_to_root(b.store(Function {
 		.name		= "moo",
 		.parameters = {Function::Parameter {
 						   .specifier = ParameterSpecifier::In,
 						   .name	  = "_a",
-						   .type	  = ast.store(GenericIdentifier {
+						   .type	  = b.store(GenericIdentifier {
 									.name	   = "List",
-									.arguments = {ast.store(Identifier {"int32"})},
+									.arguments = {b.store(Identifier {"int32"})},
 							}),
 					   },
 					   Function::Parameter {
 						   .specifier = ParameterSpecifier::In,
 						   .name	  = "_b",
-						   .type	  = ast.store(GenericIdentifier {
+						   .type	  = b.store(GenericIdentifier {
 									.name	   = "List",
-									.arguments = {ast.store(GenericIdentifier {
+									.arguments = {b.store(GenericIdentifier {
 										.name	   = "List",
-										.arguments = {ast.store(Identifier {"int32"})},
+										.arguments = {b.store(Identifier {"int32"})},
 								})},
 							}),
 					   },
 					   Function::Parameter {
 						   .specifier = ParameterSpecifier::In,
 						   .name	  = "_c",
-						   .type	  = ast.store(GenericIdentifier {
+						   .type	  = b.store(GenericIdentifier {
 									.name	   = "List",
-									.arguments = {ast.store(GenericIdentifier {
+									.arguments = {b.store(GenericIdentifier {
 										.name	   = "List",
-										.arguments = {ast.store(Identifier {"int32"})},
+										.arguments = {b.store(Identifier {"int32"})},
 								})},
 							}),
 					   },
 					   Function::Parameter {
 						   .specifier = ParameterSpecifier::In,
 						   .name	  = "_d",
-						   .type	  = ast.store(GenericIdentifier {
+						   .type	  = b.store(GenericIdentifier {
 									.name	   = "List",
-									.arguments = {ast.store(GenericIdentifier {
+									.arguments = {b.store(GenericIdentifier {
 										.name	   = "List",
-										.arguments = {ast.store(GenericIdentifier {
+										.arguments = {b.store(GenericIdentifier {
 											.name	   = "List",
-											.arguments = {ast.store(Identifier {"int32"})},
+											.arguments = {b.store(Identifier {"int32"})},
 									})},
 								})},
 							}),
@@ -433,13 +433,13 @@ moo(List<int32> _a,
 					   Function::Parameter {
 						   .specifier = ParameterSpecifier::In,
 						   .name	  = "_e",
-						   .type	  = ast.store(GenericIdentifier {
+						   .type	  = b.store(GenericIdentifier {
 									.name	   = "List",
-									.arguments = {ast.store(GenericIdentifier {
+									.arguments = {b.store(GenericIdentifier {
 										.name	   = "List",
-										.arguments = {ast.store(GenericIdentifier {
+										.arguments = {b.store(GenericIdentifier {
 											.name	   = "List",
-											.arguments = {ast.store(Identifier {"int32"})},
+											.arguments = {b.store(Identifier {"int32"})},
 									})},
 								})},
 							}),
@@ -447,13 +447,13 @@ moo(List<int32> _a,
 					   Function::Parameter {
 						   .specifier = ParameterSpecifier::In,
 						   .name	  = "_f",
-						   .type	  = ast.store(GenericIdentifier {
+						   .type	  = b.store(GenericIdentifier {
 									.name	   = "List",
-									.arguments = {ast.store(GenericIdentifier {
+									.arguments = {b.store(GenericIdentifier {
 										.name	   = "List",
-										.arguments = {ast.store(GenericIdentifier {
+										.arguments = {b.store(GenericIdentifier {
 											.name	   = "List",
-											.arguments = {ast.store(Identifier {"int32"})},
+											.arguments = {b.store(Identifier {"int32"})},
 									})},
 								})},
 							}),
@@ -461,13 +461,13 @@ moo(List<int32> _a,
 					   Function::Parameter {
 						   .specifier = ParameterSpecifier::In,
 						   .name	  = "_g",
-						   .type	  = ast.store(GenericIdentifier {
+						   .type	  = b.store(GenericIdentifier {
 									.name	   = "List",
-									.arguments = {ast.store(GenericIdentifier {
+									.arguments = {b.store(GenericIdentifier {
 										.name	   = "List",
-										.arguments = {ast.store(GenericIdentifier {
+										.arguments = {b.store(GenericIdentifier {
 											.name	   = "List",
-											.arguments = {ast.store(Identifier {"int32"})},
+											.arguments = {b.store(Identifier {"int32"})},
 									})},
 								})},
 							}),
@@ -477,7 +477,7 @@ moo(List<int32> _a,
 	}));
 
 	auto result = cero::parse(source, r);
-	CHECK(result == ast);
+	CHECK(result == cero::SyntaxTree(b));
 }
 
 CERO_TEST(ParseVariableWithGenericType)
@@ -496,120 +496,120 @@ bark()
 )_____");
 
 	ExhaustiveReporter r;
-	cero::SyntaxTree   ast;
-	ast.add_to_root(ast.store(Function {
+	cero::AstBuilder   b;
+	b.add_to_root(b.store(Function {
 		.name		= "bark",
 		.parameters = {},
 		.outputs	= {},
-		.statements = {ast.store(Binding {
+		.statements = {b.store(Binding {
 						   .specifier	= Binding::Specifier::Let,
 						   .name		= "_a",
-						   .type		= ast.store(GenericIdentifier {
+						   .type		= b.store(GenericIdentifier {
 									  .name		 = "List",
-									  .arguments = {ast.store(Identifier {"int32"})},
+									  .arguments = {b.store(Identifier {"int32"})},
 							  }),
-						   .initializer = ast.store(Call {
+						   .initializer = b.store(Call {
 							   .arguments = {},
 						   }),
 					   }),
-					   ast.store(Binding {
+					   b.store(Binding {
 						   .specifier	= Binding::Specifier::Let,
 						   .name		= "_b",
-						   .type		= ast.store(GenericIdentifier {
+						   .type		= b.store(GenericIdentifier {
 									  .name		 = "List",
-									  .arguments = {ast.store(GenericIdentifier {
+									  .arguments = {b.store(GenericIdentifier {
 										  .name		 = "List",
-										  .arguments = {ast.store(Identifier {"int32"})},
+										  .arguments = {b.store(Identifier {"int32"})},
 								  })},
 							  }),
-						   .initializer = ast.store(Call {
+						   .initializer = b.store(Call {
 							   .arguments = {},
 						   }),
 					   }),
-					   ast.store(Binding {
+					   b.store(Binding {
 						   .specifier	= Binding::Specifier::Let,
 						   .name		= "_c",
-						   .type		= ast.store(GenericIdentifier {
+						   .type		= b.store(GenericIdentifier {
 									  .name		 = "List",
-									  .arguments = {ast.store(GenericIdentifier {
+									  .arguments = {b.store(GenericIdentifier {
 										  .name		 = "List",
-										  .arguments = {ast.store(Identifier {"int32"})},
+										  .arguments = {b.store(Identifier {"int32"})},
 								  })},
 							  }),
-						   .initializer = ast.store(Call {
+						   .initializer = b.store(Call {
 							   .arguments = {},
 						   }),
 					   }),
-					   ast.store(Binding {
+					   b.store(Binding {
 						   .specifier	= Binding::Specifier::Let,
 						   .name		= "_d",
-						   .type		= ast.store(GenericIdentifier {
+						   .type		= b.store(GenericIdentifier {
 									  .name		 = "List",
-									  .arguments = {ast.store(GenericIdentifier {
+									  .arguments = {b.store(GenericIdentifier {
 										  .name		 = "List",
-										  .arguments = {ast.store(GenericIdentifier {
+										  .arguments = {b.store(GenericIdentifier {
 											  .name		 = "List",
-											  .arguments = {ast.store(Identifier {"int32"})},
+											  .arguments = {b.store(Identifier {"int32"})},
 									  })},
 								  })},
 							  }),
-						   .initializer = ast.store(Call {
+						   .initializer = b.store(Call {
 							   .arguments = {},
 						   }),
 					   }),
-					   ast.store(Binding {
+					   b.store(Binding {
 						   .specifier	= Binding::Specifier::Let,
 						   .name		= "_e",
-						   .type		= ast.store(GenericIdentifier {
+						   .type		= b.store(GenericIdentifier {
 									  .name		 = "List",
-									  .arguments = {ast.store(GenericIdentifier {
+									  .arguments = {b.store(GenericIdentifier {
 										  .name		 = "List",
-										  .arguments = {ast.store(GenericIdentifier {
+										  .arguments = {b.store(GenericIdentifier {
 											  .name		 = "List",
-											  .arguments = {ast.store(Identifier {"int32"})},
+											  .arguments = {b.store(Identifier {"int32"})},
 									  })},
 								  })},
 							  }),
-						   .initializer = ast.store(Call {
+						   .initializer = b.store(Call {
 							   .arguments = {},
 						   }),
 					   }),
-					   ast.store(Binding {
+					   b.store(Binding {
 						   .specifier	= Binding::Specifier::Let,
 						   .name		= "_f",
-						   .type		= ast.store(GenericIdentifier {
+						   .type		= b.store(GenericIdentifier {
 									  .name		 = "List",
-									  .arguments = {ast.store(GenericIdentifier {
+									  .arguments = {b.store(GenericIdentifier {
 										  .name		 = "List",
-										  .arguments = {ast.store(GenericIdentifier {
+										  .arguments = {b.store(GenericIdentifier {
 											  .name		 = "List",
-											  .arguments = {ast.store(Identifier {"int32"})},
+											  .arguments = {b.store(Identifier {"int32"})},
 									  })},
 								  })},
 							  }),
-						   .initializer = ast.store(Call {
+						   .initializer = b.store(Call {
 							   .arguments = {},
 						   }),
 					   }),
-					   ast.store(Binding {
+					   b.store(Binding {
 						   .specifier	= Binding::Specifier::Let,
 						   .name		= "_g",
-						   .type		= ast.store(GenericIdentifier {
+						   .type		= b.store(GenericIdentifier {
 									  .name		 = "List",
-									  .arguments = {ast.store(GenericIdentifier {
+									  .arguments = {b.store(GenericIdentifier {
 										  .name		 = "List",
-										  .arguments = {ast.store(GenericIdentifier {
+										  .arguments = {b.store(GenericIdentifier {
 											  .name		 = "List",
-											  .arguments = {ast.store(Identifier {"int32"})},
+											  .arguments = {b.store(Identifier {"int32"})},
 									  })},
 								  })},
 							  }),
-						   .initializer = ast.store(Call {
+						   .initializer = b.store(Call {
 							   .arguments = {},
 						   }),
 					   })},
 	}));
 
 	auto result = cero::parse(source, r);
-	CHECK(result == ast);
+	CHECK(result == cero::SyntaxTree(b));
 }
