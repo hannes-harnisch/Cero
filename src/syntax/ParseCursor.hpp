@@ -10,7 +10,7 @@ class ParseCursor
 	TokenStream::Iterator cursor;
 
 public:
-	explicit ParseCursor(TokenStream::Iterator cursor);
+	explicit ParseCursor(const TokenStream& token_stream);
 
 	Token		 peek_kind() const;
 	LexicalToken peek() const;

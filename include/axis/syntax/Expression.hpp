@@ -10,38 +10,38 @@
 namespace cero
 {
 
-using AstIndex = uint32_t;
+using AstId = uint32_t;
 
-struct Expression
+struct ExpressionId
 {
-	AstIndex index;
+	AstId id;
 
-	explicit Expression(AstIndex index) :
-		index(index)
+	explicit ExpressionId(AstId id) :
+		id(id)
 	{}
 };
 
-class OptionalExpression
+class OptionalExpressionId
 {
-	static constexpr AstIndex NULL_INDEX = ~0u;
+	static constexpr AstId NULL_ID = ~0u;
 
-	Expression expression;
+	ExpressionId expression;
 
 public:
-	OptionalExpression() :
-		expression(NULL_INDEX)
+	OptionalExpressionId() :
+		expression(NULL_ID)
 	{}
 
-	OptionalExpression(Expression expression) :
+	OptionalExpressionId(ExpressionId expression) :
 		expression(expression)
 	{}
 
 	bool is_null() const
 	{
-		return expression.index == NULL_INDEX;
+		return expression.id == NULL_ID;
 	}
 
-	Expression get() const
+	ExpressionId get() const
 	{
 		return expression;
 	}
@@ -56,8 +56,8 @@ namespace ast
 
 	struct GenericIdentifier
 	{
-		std::string_view		name;
-		std::vector<Expression> arguments;
+		std::string_view		  name;
+		std::vector<ExpressionId> arguments;
 	};
 
 	struct Variability
@@ -70,20 +70,20 @@ namespace ast
 			VarUnbounded
 		};
 
-		Specifier				specifier = Specifier::In;
-		std::vector<Expression> arguments;
+		Specifier				  specifier = Specifier::In;
+		std::vector<ExpressionId> arguments;
 	};
 
 	struct ArrayType
 	{
-		OptionalExpression bound;
-		Expression		   element_type;
+		OptionalExpressionId bound;
+		ExpressionId		 element_type;
 	};
 
 	struct PointerType
 	{
-		Variability variability;
-		Expression	type;
+		Variability	 variability;
+		ExpressionId type;
 	};
 
 	enum class ParameterSpecifier : uint8_t
@@ -95,7 +95,7 @@ namespace ast
 
 	struct FunctionOutput
 	{
-		Expression		 type;
+		ExpressionId	 type;
 		std::string_view name;
 	};
 
@@ -105,7 +105,7 @@ namespace ast
 		{
 			ParameterSpecifier specifier = {};
 			std::string_view   name;
-			Expression		   type;
+			ExpressionId	   type;
 		};
 
 		std::vector<Parameter>		parameters;
@@ -123,83 +123,83 @@ namespace ast
 			StaticVar
 		};
 
-		Specifier		   specifier = {};
-		std::string_view   name;
-		OptionalExpression type;
-		OptionalExpression initializer;
+		Specifier			 specifier = {};
+		std::string_view	 name;
+		OptionalExpressionId type;
+		OptionalExpressionId initializer;
 	};
 
 	struct Block
 	{
-		std::vector<Expression> statements;
+		std::vector<ExpressionId> statements;
 	};
 
 	struct If
 	{
-		Expression		   condition;
-		Expression		   then_expression;
-		OptionalExpression else_expression;
+		ExpressionId		 condition;
+		ExpressionId		 then_expression;
+		OptionalExpressionId else_expression;
 	};
 
 	struct WhileLoop
 	{
-		Expression condition;
-		Expression statement;
+		ExpressionId condition;
+		ExpressionId statement;
 	};
 
 	struct ForLoop
 	{
-		Expression binding;
-		Expression range_expression;
-		Expression statement;
+		ExpressionId binding;
+		ExpressionId range_expression;
+		ExpressionId statement;
 	};
 
 	struct Break
 	{
-		OptionalExpression label;
+		OptionalExpressionId label;
 	};
 
 	struct Continue
 	{
-		OptionalExpression label;
+		OptionalExpressionId label;
 	};
 
 	struct Return
 	{
-		OptionalExpression expression;
+		OptionalExpressionId expression;
 	};
 
 	struct Throw
 	{
-		OptionalExpression expression;
+		OptionalExpressionId expression;
 	};
 
 	struct MemberAccess
 	{
-		Expression		 target;
+		ExpressionId	 target;
 		std::string_view member;
 	};
 
 	struct Group
 	{
-		std::vector<Expression> arguments;
+		std::vector<ExpressionId> arguments;
 	};
 
 	struct Call
 	{
-		OptionalExpression		callee;
-		std::vector<Expression> arguments;
+		OptionalExpressionId	  callee;
+		std::vector<ExpressionId> arguments;
 	};
 
 	struct Index
 	{
-		Expression				target;
-		std::vector<Expression> arguments;
+		ExpressionId			  target;
+		std::vector<ExpressionId> arguments;
 	};
 
 	struct ArrayLiteral
 	{
-		std::vector<Expression> elements;
+		std::vector<ExpressionId> elements;
 	};
 
 	enum class UnaryOperator
@@ -218,7 +218,7 @@ namespace ast
 	struct UnaryExpression
 	{
 		UnaryOperator op;
-		Expression	  operand;
+		ExpressionId  operand;
 	};
 
 	enum class BinaryOperator
@@ -259,32 +259,32 @@ namespace ast
 	struct BinaryExpression
 	{
 		BinaryOperator op;
-		Expression	   left;
-		Expression	   right;
+		ExpressionId   left;
+		ExpressionId   right;
 	};
 } // namespace ast
 
-using ExpressionNode = std::variant<ast::Identifier,
-									ast::GenericIdentifier,
-									ast::Variability,
-									ast::ArrayType,
-									ast::PointerType,
-									ast::FunctionType,
-									ast::NumericLiteral,
-									ast::StringLiteral,
-									ast::Binding,
-									ast::Block,
-									ast::If,
-									ast::WhileLoop,
-									ast::ForLoop,
-									ast::Break,
-									ast::Continue,
-									ast::Return,
-									ast::Throw,
-									ast::MemberAccess,
-									ast::Call,
-									ast::Index,
-									ast::UnaryExpression,
-									ast::BinaryExpression>;
+using Expression = std::variant<ast::Identifier,
+								ast::GenericIdentifier,
+								ast::Variability,
+								ast::ArrayType,
+								ast::PointerType,
+								ast::FunctionType,
+								ast::NumericLiteral,
+								ast::StringLiteral,
+								ast::Binding,
+								ast::Block,
+								ast::If,
+								ast::WhileLoop,
+								ast::ForLoop,
+								ast::Break,
+								ast::Continue,
+								ast::Return,
+								ast::Throw,
+								ast::MemberAccess,
+								ast::Call,
+								ast::Index,
+								ast::UnaryExpression,
+								ast::BinaryExpression>;
 
 } // namespace cero

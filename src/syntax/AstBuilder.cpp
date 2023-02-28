@@ -3,33 +3,33 @@
 namespace cero
 {
 
-const ExpressionNode& AstBuilder::get(Expression expression) const
+const Expression& AstBuilder::get(ExpressionId expression) const
 {
-	return expression_nodes.at(expression.index);
+	return expression_nodes.at(expression.id);
 }
 
-const DefinitionNode& AstBuilder::get(Definition definition) const
+const Definition& AstBuilder::get(DefinitionId definition) const
 {
-	return definition_nodes.at(definition.index);
+	return definition_nodes.at(definition.id);
 }
 
-void AstBuilder::add_to_root(Definition definition)
+void AstBuilder::add_to_root(DefinitionId definition)
 {
 	root.root_definitions.emplace_back(definition);
 }
 
-Expression AstBuilder::store(ExpressionNode node)
+ExpressionId AstBuilder::store(Expression node)
 {
 	expression_nodes.emplace_back(std::move(node));
-	auto index = static_cast<AstIndex>(expression_nodes.size() - 1);
-	return Expression(index);
+	auto id = static_cast<AstId>(expression_nodes.size() - 1);
+	return ExpressionId(id);
 }
 
-Definition AstBuilder::store(DefinitionNode node)
+DefinitionId AstBuilder::store(Definition node)
 {
 	definition_nodes.emplace_back(std::move(node));
-	auto index = static_cast<AstIndex>(definition_nodes.size() - 1);
-	return Definition(index);
+	auto id = static_cast<AstId>(definition_nodes.size() - 1);
+	return DefinitionId(id);
 }
 
 } // namespace cero

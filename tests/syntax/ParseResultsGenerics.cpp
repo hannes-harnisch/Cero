@@ -485,13 +485,13 @@ CERO_TEST(ParseVariableWithGenericType)
 	auto source = make_test_source(R"_____(
 bark()
 {
-	let List<int32> _a = ();
-	let List<List<int32>> _b = ();
-	let List<List<int32> > _c = ();
-	let List<List<List<int32> > > _d = ();
-	let List<List<List<int32> >> _e = ();
-	let List<List<List<int32>> > _f = ();
-	let List<List<List<int32>>> _g = ();
+	List<int32> _a = ();
+	List<List<int32>> _b = ();
+	List<List<int32> > _c = ();
+	List<List<List<int32> > > _d = ();
+	List<List<List<int32> >> _e = ();
+	List<List<List<int32>> > _f = ();
+	List<List<List<int32>>> _g = ();
 }
 )_____");
 

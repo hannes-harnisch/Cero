@@ -5,12 +5,12 @@
 namespace cero
 {
 
-struct Definition
+struct DefinitionId
 {
-	AstIndex index;
+	AstId id;
 
-	explicit Definition(AstIndex index) :
-		index(index)
+	explicit DefinitionId(AstId id) :
+		id(id)
 	{}
 };
 
@@ -18,7 +18,7 @@ namespace ast
 {
 	struct Root
 	{
-		std::vector<Definition> root_definitions;
+		std::vector<DefinitionId> root_definitions;
 	};
 
 	enum class AccessSpecifier : uint8_t
@@ -32,17 +32,17 @@ namespace ast
 	{
 		struct Parameter
 		{
-			ParameterSpecifier specifier = {};
-			std::string_view   name;
-			Expression		   type;
-			OptionalExpression default_argument;
+			ParameterSpecifier	 specifier = {};
+			std::string_view	 name;
+			ExpressionId		 type;
+			OptionalExpressionId default_argument;
 		};
 
 		AccessSpecifier				access;
 		std::string_view			name;
 		std::vector<Parameter>		parameters;
 		std::vector<FunctionOutput> outputs;
-		std::vector<Expression>		statements;
+		std::vector<ExpressionId>	statements;
 	};
 
 	struct Struct
@@ -58,6 +58,6 @@ namespace ast
 	};
 } // namespace ast
 
-using DefinitionNode = std::variant<ast::Function, ast::Struct, ast::Enum>;
+using Definition = std::variant<ast::Function, ast::Struct, ast::Enum>;
 
 } // namespace cero

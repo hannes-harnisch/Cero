@@ -84,6 +84,7 @@ enum class Token : uint32_t
 	Do,
 	Else,
 	Enum,
+	Extern,
 	For,
 	If,
 	In,

@@ -3,8 +3,8 @@
 namespace cero
 {
 
-ParseCursor::ParseCursor(cero::TokenStream::Iterator cursor) :
-	cursor(cursor)
+ParseCursor::ParseCursor(const TokenStream& token_stream) :
+	cursor(token_stream.begin())
 {}
 
 Token ParseCursor::peek_kind() const

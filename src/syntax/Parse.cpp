@@ -27,7 +27,7 @@ public:
 	Parser(const TokenStream& token_stream, const Source& source, Reporter& reporter) :
 		source(source),
 		reporter(reporter),
-		cursor(token_stream.begin())
+		cursor(token_stream)
 	{}
 
 	SyntaxTree parse()
@@ -60,8 +60,8 @@ private:
 		Postfix
 	};
 
-	using PrefixParse	 = ExpressionNode (Parser::*)();
-	using NonPrefixParse = ExpressionNode (Parser::*)(Expression);
+	using PrefixParse	 = Expression (Parser::*)();
+	using NonPrefixParse = Expression (Parser::*)(ExpressionId);
 
 	struct NonPrefixParseRule
 	{
@@ -72,7 +72,7 @@ private:
 	struct ParseError
 	{};
 
-	Definition parse_definition()
+	DefinitionId parse_definition()
 	{
 		auto access_specifier = ast::AccessSpecifier::None;
 		if (cursor.match(Token::Private))
@@ -106,17 +106,17 @@ private:
 		while (!contains(sync_points, kind));
 	}
 
-	Definition parse_struct(ast::AccessSpecifier)
+	DefinitionId parse_struct(ast::AccessSpecifier)
 	{
 		to_do();
 	}
 
-	Definition parse_enum(ast::AccessSpecifier)
+	DefinitionId parse_enum(ast::AccessSpecifier)
 	{
 		to_do();
 	}
 
-	Definition parse_function(ast::AccessSpecifier access_specifier)
+	DefinitionId parse_function(ast::AccessSpecifier access_specifier)
 	{
 		auto name = cursor.previous().get_lexeme(source);
 		expect(Token::LeftParen, Message::ExpectParenAfterFuncName);
@@ -161,9 +161,9 @@ private:
 		if (name.empty())
 			throw ParseError();
 
-		OptionalExpression default_argument;
+		OptionalExpressionId default_argument;
 		if (cursor.match(Token::Equals))
-			default_argument = OptionalExpression(parse_expression());
+			default_argument = parse_expression();
 
 		return {specifier, name, type, default_argument};
 	}
@@ -191,30 +191,64 @@ private:
 		return {type, name};
 	}
 
-	std::vector<Expression> parse_block()
+	std::vector<ExpressionId> parse_block()
 	{
 		uint32_t saved_expr_depth = expr_depth;
 		uint32_t saved_angles	  = open_angles;
-		expr_depth				  = 0;
-		open_angles				  = 0;
 
-		std::vector<Expression> statements;
+		expr_depth	= 0;
+		open_angles = 0;
+
+		std::vector<ExpressionId> statements;
 		while (!cursor.match(Token::RightBrace))
 		{
 			try
 			{
-				statements.emplace_back(parse_expression());
-				terminate_statement();
+				statements.emplace_back(parse_statement());
 			}
 			catch (ParseError)
 			{
-				synchronize_statement();
+				bool at_end = synchronize_statement();
+				if (at_end)
+					break;
 			}
 		}
 
 		expr_depth	= saved_expr_depth;
 		open_angles = saved_angles;
 		return statements;
+	}
+
+	bool synchronize_statement()
+	{
+		Token kind = cursor.peek_kind();
+		while (kind != Token::EndOfFile)
+		{
+			if (kind == Token::Semicolon)
+			{
+				cursor.advance();
+				return false;
+			}
+			if (kind == Token::RightBrace)
+				return false;
+
+			cursor.advance();
+			kind = cursor.peek_kind();
+		}
+		return true;
+	}
+
+	ExpressionId parse_statement()
+	{
+		auto expression = parse_expression();
+
+		auto kind = cursor.previous().kind;
+		if (kind != Token::RightBrace && kind != Token::Semicolon)
+			if (auto name = cursor.match(Token::Name))
+				expression = ast.store(on_trailing_name(expression, *name));
+
+		terminate_statement();
+		return expression;
 	}
 
 	void terminate_statement()
@@ -224,17 +258,26 @@ private:
 			expect(Token::Semicolon, Message::ExpectSemicolon);
 	}
 
-	void synchronize_statement()
+	Expression on_trailing_name(ExpressionId left, LexicalToken name_token)
 	{
-		auto kind = cursor.peek_kind();
-		while (kind != Token::Semicolon && kind != Token::RightBrace && kind != Token::EndOfFile)
+		auto& node = ast.get(left);
+		if (!holds_any_of<ast::Identifier, ast::GenericIdentifier, ast::MemberAccess, ast::ArrayType, ast::PointerType,
+						  ast::FunctionType>(node))
 		{
-			cursor.advance();
-			kind = cursor.peek_kind();
+			report_expectation(Message::ExpectSemicolon, name_token);
+			throw ParseError();
 		}
+
+		auto name = name_token.get_lexeme(source);
+
+		OptionalExpressionId initializer;
+		if (cursor.match(Token::Equals))
+			initializer = parse_expression();
+
+		return ast::Binding {ast::Binding::Specifier::Let, name, left, initializer};
 	}
 
-	Expression parse_expression(Precedence precedence = {})
+	ExpressionId parse_expression(Precedence precedence = Precedence::Statement)
 	{
 		auto next = cursor.next();
 
@@ -289,7 +332,7 @@ private:
 		return {Precedence::Comparison, &Parser::on_infix_operator<ast::BinaryOperator::Greater, Precedence::Comparison>};
 	}
 
-	ExpressionNode on_if()
+	Expression on_if()
 	{
 		auto condition = parse_expression();
 		expect_colon_or_block();
@@ -298,14 +341,14 @@ private:
 		if (expr_depth == 1)
 			terminate_statement();
 
-		OptionalExpression else_expr;
+		OptionalExpressionId else_expr;
 		if (cursor.match(Token::Else))
 			else_expr = parse_expression();
 
 		return ast::If {condition, then_expr, else_expr};
 	}
 
-	ExpressionNode on_while()
+	Expression on_while()
 	{
 		auto condition = parse_expression();
 		expect_colon_or_block();
@@ -313,12 +356,12 @@ private:
 		return ast::WhileLoop {condition, statement};
 	}
 
-	ExpressionNode on_for()
+	Expression on_for()
 	{
 		to_do();
 	}
 
-	ExpressionNode on_left_brace()
+	Expression on_left_brace()
 	{
 		return ast::Block {parse_block()};
 	}
@@ -339,12 +382,18 @@ private:
 		}
 	}
 
-	ExpressionNode on_let()
+	Expression on_let()
 	{
-		return parse_binding(ast::Binding::Specifier::Let);
+		auto name = expect_name(Message::ExpectNameAfterLet);
+
+		OptionalExpressionId initializer;
+		if (cursor.match(Token::Equals))
+			initializer = parse_expression();
+
+		return ast::Binding {ast::Binding::Specifier::Let, name, {}, initializer};
 	}
 
-	ExpressionNode on_var()
+	Expression on_var()
 	{
 		if (cursor.next_kind() == Token::LeftBrace)
 			return parse_variability();
@@ -352,12 +401,12 @@ private:
 		return parse_binding(ast::Binding::Specifier::Var);
 	}
 
-	ExpressionNode on_const()
+	Expression on_const()
 	{
 		return parse_binding(ast::Binding::Specifier::Const);
 	}
 
-	ExpressionNode on_static()
+	Expression on_static()
 	{
 		auto specifier = ast::Binding::Specifier::Static;
 		if (cursor.match(Token::Var))
@@ -383,20 +432,20 @@ private:
 		auto type = parse_type();
 		auto name = expect_name(Message::ExpectNameAfterDeclType);
 
-		OptionalExpression initializer;
+		OptionalExpressionId initializer;
 		if (cursor.match(Token::Equals))
 			initializer = parse_expression();
 
 		return {specifier, name, type, initializer};
 	}
 
-	ExpressionNode on_name()
+	Expression on_name()
 	{
 		auto name = cursor.previous().get_lexeme(source);
 		return parse_identifier(name);
 	}
 
-	ExpressionNode parse_identifier(std::string_view name)
+	Expression parse_identifier(std::string_view name)
 	{
 		if (cursor.match(Token::LeftAngle))
 			return parse_generic_identifier(name);
@@ -404,7 +453,7 @@ private:
 		return ast::Identifier {name};
 	}
 
-	ExpressionNode parse_generic_identifier(std::string_view name)
+	Expression parse_generic_identifier(std::string_view name)
 	{
 		++open_angles;
 		--expr_depth;
@@ -414,7 +463,7 @@ private:
 			--open_angles;
 		};
 
-		std::vector<Expression> generic_args;
+		std::vector<ExpressionId> generic_args;
 		if (!cursor.match(Token::RightAngle))
 		{
 			auto saved_cursor = cursor;
@@ -461,29 +510,29 @@ private:
 	}
 
 	template<ast::NumericLiteral (*EVALUATE)(std::string_view)>
-	ExpressionNode on_numeric_literal()
+	Expression on_numeric_literal()
 	{
 		auto lexeme = cursor.previous().get_lexeme(source);
 		return EVALUATE(lexeme);
 	}
 
-	ExpressionNode on_string_literal()
+	Expression on_string_literal()
 	{
 		auto lexeme = cursor.previous().get_lexeme(source);
 		return evaluate_string_literal(lexeme);
 	}
 
-	ExpressionNode on_prefix_left_paren()
+	Expression on_prefix_left_paren()
 	{
 		return parse_call({}); // TODO: function type
 	}
 
-	ExpressionNode on_prefix_left_bracket()
+	Expression on_prefix_left_bracket()
 	{
 		return parse_array_type(); // TODO: array literal
 	}
 
-	std::vector<Expression> parse_bracketed_arguments()
+	std::vector<ExpressionId> parse_bracketed_arguments()
 	{
 		uint32_t saved = open_angles;
 		open_angles	   = 0;
@@ -492,7 +541,7 @@ private:
 			open_angles = saved;
 		};
 
-		std::vector<Expression> arguments;
+		std::vector<ExpressionId> arguments;
 		if (!cursor.match(Token::RightBracket))
 		{
 			do
@@ -503,43 +552,44 @@ private:
 		return arguments;
 	}
 
-	ExpressionNode on_break()
+	Expression on_break()
 	{
-		return ast::Break {parse_optional_operand()};
+		return ast::Break {parse_optional_expression()};
 	}
 
-	ExpressionNode on_continue()
+	Expression on_continue()
 	{
-		return ast::Continue {parse_optional_operand()};
+		return ast::Continue {parse_optional_expression()};
 	}
 
-	ExpressionNode on_return()
+	Expression on_return()
 	{
-		return ast::Return {parse_optional_operand()};
+		return ast::Return {parse_optional_expression()};
 	}
 
-	ExpressionNode on_throw()
+	Expression on_throw()
 	{
-		return ast::Throw {parse_optional_operand()};
+		return ast::Throw {parse_optional_expression()};
 	}
 
-	OptionalExpression parse_optional_operand()
+	OptionalExpressionId parse_optional_expression()
 	{
-		if (cursor.next_kind() == Token::Semicolon)
+		auto next = cursor.next_kind();
+		if (PREFIX_PARSES[next] == nullptr)
 			return {};
 
 		return parse_expression();
 	}
 
 	template<ast::UnaryOperator O>
-	ExpressionNode on_prefix_operator()
+	Expression on_prefix_operator()
 	{
 		auto right = parse_expression(Precedence::Prefix);
 		return ast::UnaryExpression {O, right};
 	}
 
 	template<ast::BinaryOperator O, Precedence P>
-	ExpressionNode on_infix_operator(Expression left)
+	Expression on_infix_operator(ExpressionId left)
 	{
 		auto target = cursor.previous();
 		auto right	= parse_expression(P);
@@ -548,15 +598,15 @@ private:
 	}
 
 	template<ast::UnaryOperator O>
-	ExpressionNode on_postfix_operator(Expression left)
+	Expression on_postfix_operator(ExpressionId left)
 	{
 		return ast::UnaryExpression {O, left};
 	}
 
-	void validate_associativity(ast::BinaryOperator current, Expression left_index, Expression right_index, LexicalToken target)
+	void validate_associativity(ast::BinaryOperator current, ExpressionId left_id, ExpressionId right_id, LexicalToken target)
 	{
-		auto& left_node	 = ast.get(left_index);
-		auto& right_node = ast.get(right_index);
+		auto& left_node	 = ast.get(left_id);
+		auto& right_node = ast.get(right_id);
 
 		if (auto right = std::get_if<ast::BinaryExpression>(&right_node))
 			validate_binary_associativity(current, right->op, target);
@@ -628,18 +678,18 @@ private:
 		}
 	}
 
-	ExpressionNode on_dot(Expression left)
+	Expression on_dot(ExpressionId left)
 	{
 		auto member = expect_name(Message::ExpectNameAfterDot);
 		return ast::MemberAccess {left, member};
 	}
 
-	ExpressionNode on_infix_left_paren(Expression left)
+	Expression on_infix_left_paren(ExpressionId left)
 	{
-		return parse_call(OptionalExpression(left));
+		return parse_call(left);
 	}
 
-	ExpressionNode parse_call(OptionalExpression callee)
+	Expression parse_call(OptionalExpressionId callee)
 	{
 		uint32_t saved = open_angles;
 		open_angles	   = 0;
@@ -648,7 +698,7 @@ private:
 			open_angles = saved;
 		};
 
-		std::vector<Expression> arguments;
+		std::vector<ExpressionId> arguments;
 		if (!cursor.match(Token::RightParen))
 		{
 			do
@@ -659,12 +709,12 @@ private:
 		return ast::Call {callee, std::move(arguments)};
 	}
 
-	ExpressionNode on_infix_left_bracket(Expression left)
+	Expression on_infix_left_bracket(ExpressionId left)
 	{
 		return ast::Index {left, parse_bracketed_arguments()};
 	}
 
-	ExpressionNode on_caret()
+	Expression on_caret()
 	{
 		return parse_pointer_type();
 	}
@@ -673,7 +723,7 @@ private:
 	{
 		auto specifier = ast::Variability::Specifier::Var;
 
-		std::vector<Expression> arguments;
+		std::vector<ExpressionId> arguments;
 		if (cursor.match(Token::LeftBrace))
 		{
 			uint32_t saved = open_angles;
@@ -699,7 +749,7 @@ private:
 		return {specifier, std::move(arguments)};
 	}
 
-	Expression parse_type()
+	ExpressionId parse_type()
 	{
 		const auto saved = expr_depth;
 		expr_depth		 = 1;
@@ -719,15 +769,20 @@ private:
 		return ast.store(parse_identifier(name));
 	}
 
-	ExpressionNode parse_array_type()
+	Expression parse_array_type()
 	{
-		auto bound = parse_expression();
-		expect(Token::RightBracket, Message::ExpectBracketAfterArrayBound);
+		OptionalExpressionId bound;
+		if (!cursor.match(Token::RightBracket))
+		{
+			bound = parse_expression();
+			expect(Token::RightBracket, Message::ExpectBracketAfterArrayBound);
+		}
+
 		auto type = parse_type();
-		return ast::ArrayType {OptionalExpression(bound), type};
+		return ast::ArrayType {bound, type};
 	}
 
-	ExpressionNode parse_pointer_type()
+	Expression parse_pointer_type()
 	{
 		ast::Variability variability;
 		if (cursor.match(Token::Var))
@@ -737,7 +792,7 @@ private:
 		return ast::PointerType {variability, type};
 	}
 
-	ExpressionNode parse_function_type()
+	Expression parse_function_type()
 	{
 		auto parameters = parse_function_type_parameters();
 		expect(Token::ThinArrow, Message::ExpectArrowAfterFuncTypeParams);

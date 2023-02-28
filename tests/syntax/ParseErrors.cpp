@@ -117,19 +117,33 @@ public hoo() -< void
 )_____");
 }
 
-CERO_TEST(MissingNameInDeclaration)
+CERO_TEST(MissingNameAfterLet)
 {
 	ExhaustiveReporter r;
-	r.expect(5, 17, cero::Message::ExpectNameAfterDeclType, "`=`");
-	r.expect(7, 17, cero::Message::ExpectNameAfterDeclType, "`=`");
+	r.expect(4, 9, cero::Message::ExpectNameAfterLet, "`=`");
 
 	build_test_source(r, R"_____(
 main()
 {
-    let bool x = true;
-	let ^bool   = &x;
-	let ^bool p = &x;
-	let ^bool   = &x;
+	let = true;
+	let i = 0;
+}
+)_____");
+}
+
+CERO_TEST(MissingNameInDeclaration)
+{
+	ExhaustiveReporter r;
+	r.expect(5, 19, cero::Message::ExpectNameAfterDeclType, "`=`");
+	r.expect(7, 19, cero::Message::ExpectNameAfterDeclType, "`=`");
+
+	build_test_source(r, R"_____(
+main()
+{
+	const bool x = true;
+	const ^bool   = &x;
+	const ^bool p = &x;
+	const ^bool   = &x;
 }
 )_____");
 }
@@ -165,6 +179,7 @@ CERO_TEST(ExpectSemicolon)
 {
 	ExhaustiveReporter r;
 	r.expect(5, 1, cero::Message::ExpectSemicolon, "`}`");
+	r.expect(14, 11, cero::Message::ExpectSemicolon, "name `c`");
 
 	build_test_source(r, R"_____(
 a()
@@ -175,6 +190,11 @@ a()
 b()
 {
     return 0;
+}
+
+c(int32 a, int32 b)
+{
+	a + b c;
 }
 )_____");
 }

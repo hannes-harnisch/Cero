@@ -111,29 +111,29 @@ void AstString::add_tail_line(std::string_view text)
 	add_line(text);
 }
 
-void AstString::visit(Definition definition)
+void AstString::visit(DefinitionId definition)
 {
 	ast.visit(*this, definition);
 }
 
-void AstString::visit(Expression expression)
+void AstString::visit(ExpressionId expression)
 {
 	ast.visit(*this, expression);
 }
 
-void AstString::visit_body(Expression expression)
+void AstString::visit_body(ExpressionId expression)
 {
 	set_tail(false);
 	visit(expression);
 }
 
-void AstString::visit_tail(Expression expression)
+void AstString::visit_tail(ExpressionId expression)
 {
 	set_tail(true);
 	visit(expression);
 }
 
-void AstString::visit_optional(OptionalExpression optional_expression)
+void AstString::visit_optional(OptionalExpressionId optional_expression)
 {
 	if (optional_expression.is_null())
 		return;
@@ -223,16 +223,16 @@ void AstString::visit(const ast::Enum& enum_definition)
 	pop_level();
 }
 
-void AstString::visit(const ast::Identifier& id)
+void AstString::visit(const ast::Identifier& identifier)
 {
-	add_line(std::format("identifier `{}`", id.name));
+	add_line(std::format("identifier `{}`", identifier.name));
 }
 
-void AstString::visit(const ast::GenericIdentifier& generic_id)
+void AstString::visit(const ast::GenericIdentifier& generic_identifier)
 {
-	add_line(std::format("generic identifier `{}`", generic_id.name));
+	add_line(std::format("generic identifier `{}`", generic_identifier.name));
 	push_level();
-	visit_each_in(generic_id.arguments);
+	visit_each_in(generic_identifier.arguments);
 	pop_level();
 }
 

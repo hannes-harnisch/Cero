@@ -6,19 +6,19 @@
 namespace cero
 {
 
-class AstComparator : public AstVisitor
+class AstCompare : public AstVisitor
 {
 	const SyntaxTree&	  left_ast;
 	const SyntaxTree&	  right_ast;
 	const void*			  left_node = nullptr;
 	const std::type_info* left_type = nullptr;
-	Definition			  right_def;
-	Expression			  right_expr;
+	DefinitionId		  right_def;
+	ExpressionId		  right_expr;
 	bool				  ready = false;
 	bool				  equal = true;
 
 public:
-	AstComparator(const SyntaxTree& left, const SyntaxTree& right);
+	AstCompare(const SyntaxTree& left, const SyntaxTree& right);
 
 	bool compare();
 
@@ -30,8 +30,8 @@ private:
 	void visit(const ast::Function& function) override;
 	void visit(const ast::Struct& struct_definition) override;
 	void visit(const ast::Enum& enum_definition) override;
-	void visit(const ast::Identifier& id) override;
-	void visit(const ast::GenericIdentifier& generic_id) override;
+	void visit(const ast::Identifier& identifier) override;
+	void visit(const ast::GenericIdentifier& generic_identifier) override;
 	void visit(const ast::Variability& variability) override;
 	void visit(const ast::ArrayType& array_type) override;
 	void visit(const ast::PointerType& pointer_type) override;
@@ -72,9 +72,9 @@ private:
 	template<typename T>
 	bool equate(std::span<T> left, std::span<T> right);
 
-	bool equate(Definition left, Definition right);
-	bool equate(Expression left, Expression right);
-	bool equate(OptionalExpression left, OptionalExpression right);
+	bool equate(DefinitionId left, DefinitionId right);
+	bool equate(ExpressionId left, ExpressionId right);
+	bool equate(OptionalExpressionId left, OptionalExpressionId right);
 };
 
 } // namespace cero

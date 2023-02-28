@@ -1,6 +1,6 @@
 #include "cero/syntax/SyntaxTree.hpp"
 
-#include "syntax/AstComparator.hpp"
+#include "syntax/AstCompare.hpp"
 #include "syntax/AstString.hpp"
 
 namespace cero
@@ -17,22 +17,22 @@ void SyntaxTree::visit(AstVisitor& visitor) const
 	visitor.visit(root);
 }
 
-void SyntaxTree::visit(AstVisitor& visitor, Expression expression) const
+void SyntaxTree::visit(AstVisitor& visitor, ExpressionId expression) const
 {
-	auto& ast_node = expression_nodes.at(expression.index);
+	auto& ast_node = expression_nodes.at(expression.id);
 	std::visit([&](auto& node) { visitor.visit(node); }, ast_node);
 }
 
-void SyntaxTree::visit(AstVisitor& visitor, Definition definition) const
+void SyntaxTree::visit(AstVisitor& visitor, DefinitionId definition) const
 {
-	auto& ast_node = definition_nodes.at(definition.index);
+	auto& ast_node = definition_nodes.at(definition.id);
 	std::visit([&](auto& node) { visitor.visit(node); }, ast_node);
 }
 
 bool SyntaxTree::operator==(const SyntaxTree& other) const
 {
-	AstComparator comparator(*this, other);
-	return comparator.compare();
+	AstCompare cmp(*this, other);
+	return cmp.compare();
 }
 
 std::string SyntaxTree::to_string(const Source& source) const

@@ -37,11 +37,11 @@ private:
 	void add_line(std::string_view text);
 	void add_body_line(std::string_view text);
 	void add_tail_line(std::string_view text);
-	void visit(Definition definition);
-	void visit(Expression expression);
-	void visit_body(Expression expression);
-	void visit_tail(Expression expression);
-	void visit_optional(OptionalExpression optional_expression);
+	void visit(DefinitionId definition);
+	void visit(ExpressionId expression);
+	void visit_body(ExpressionId expression);
+	void visit_tail(ExpressionId expression);
+	void visit_optional(OptionalExpressionId optional_expression);
 	void visit_each_in(const auto& list);
 	void visit(const ast::Root& root) override;
 	void visit(const ast::Function& function) override;
@@ -49,8 +49,8 @@ private:
 	void visit(const ast::FunctionOutput& output);
 	void visit(const ast::Struct& struct_definition) override;
 	void visit(const ast::Enum& enum_definition) override;
-	void visit(const ast::Identifier& id) override;
-	void visit(const ast::GenericIdentifier& generic_id) override;
+	void visit(const ast::Identifier& identifier) override;
+	void visit(const ast::GenericIdentifier& generic_identifier) override;
 	void visit(const ast::Variability& variability) override;
 	void visit(const ast::ArrayType& array_type) override;
 	void visit(const ast::PointerType& pointer_type) override;

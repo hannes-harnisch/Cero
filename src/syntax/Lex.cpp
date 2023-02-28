@@ -18,18 +18,11 @@ namespace
 		};
 		using enum Token;
 		static constexpr Keyword KEYWORDS[] {
-			{"break", Break},	{"catch", Catch},
-			{"const", Const},	{"continue", Continue},
-			{"do", Do},			{"else", Else},
-			{"enum", Enum},		{"for", For},
-			{"if", If},			{"in", In},
-			{"let", Let},		{"private", Private},
-			{"public", Public}, {"restrict", Restrict},
-			{"return", Return}, {"static", Static},
-			{"struct", Struct}, {"switch", Switch},
-			{"throw", Throw},	{"try", Try},
-			{"use", Use},		{"var", Var},
-			{"while", While},
+			{"break", Break},	{"catch", Catch},	{"const", Const},	  {"continue", Continue}, {"do", Do},
+			{"else", Else},		{"enum", Enum},		{"extern", Extern},	  {"for", For},			  {"if", If},
+			{"in", In},			{"let", Let},		{"private", Private}, {"public", Public},	  {"restrict", Restrict},
+			{"return", Return}, {"static", Static}, {"struct", Struct},	  {"switch", Switch},	  {"throw", Throw},
+			{"try", Try},		{"use", Use},		{"var", Var},		  {"while", While},
 		};
 
 		for (auto& keyword : KEYWORDS)

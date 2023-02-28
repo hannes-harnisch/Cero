@@ -17,8 +17,8 @@ struct LexicalToken
 	static constexpr size_t MAX_LENGTH	= (1 << LENGTH_BITS) - 1;
 
 	Token	 kind : KIND_BITS	  = {};
-	uint32_t length : LENGTH_BITS = 0;
-	uint32_t offset				  = 0;
+	uint32_t length : LENGTH_BITS = {};
+	uint32_t offset				  = {};
 
 	std::string_view get_lexeme(const Source& source) const;
 	std::string		 to_message_string(const Source& source) const;

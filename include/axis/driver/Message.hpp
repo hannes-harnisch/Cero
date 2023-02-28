@@ -29,6 +29,7 @@ enum class Message : uint8_t
 	ExpectParenAfterParams,
 	ExpectParenAfterOutputs,
 	ExpectBraceBeforeFuncBody,
+	ExpectNameAfterLet,
 	ExpectNameAfterDeclType,
 	ExpectExpr,
 	ExpectSemicolon,
@@ -61,6 +62,7 @@ constexpr inline LookupTable<Message, std::string_view> MESSAGE_FORMATS = []
 	t[ExpectParenAfterParams]		  = "expected `)` after parameters, but found {}";
 	t[ExpectParenAfterOutputs]		  = "expected `)` after function outputs, but found {}";
 	t[ExpectBraceBeforeFuncBody]	  = "expected `{{` before function body, but found {}";
+	t[ExpectNameAfterLet]			  = "expected a name after `let` specifier, but found {}";
 	t[ExpectNameAfterDeclType]		  = "expected a name after type in declaration, but found {}";
 	t[ExpectExpr]					  = "expected an expression, but found {}";
 	t[ExpectSemicolon]				  = "expected a `;`, but found {}";
