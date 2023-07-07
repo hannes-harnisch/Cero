@@ -1,12 +1,10 @@
-#include "util/ExhaustiveReporter.hpp"
-#include "util/Test.hpp"
+#include "common/AstCompare.hpp"
+#include "common/ExhaustiveReporter.hpp"
+#include "common/Test.hpp"
 
-#include <cero/syntax/Parse.hpp>
+#include <syntax/Parse.hpp>
 
-using namespace cero::ast;
-
-CERO_TEST(ParseSimpleFunction)
-{
+CERO_TEST(ParseSimpleFunction) {
 	auto source = make_test_source(R"_____(
 fibonacci(var uint32 n) -> uint32
 {
@@ -25,67 +23,91 @@ fibonacci(var uint32 n) -> uint32
 )_____");
 
 	ExhaustiveReporter r;
-	cero::AstBuilder   b;
-	b.add_to_root(b.store(Function {
-		.name		= "fibonacci",
-		.parameters = {Function::Parameter {
-			.specifier = ParameterSpecifier::Var,
-			.name	   = "n",
-			.type	   = b.store(Identifier {"uint32"}),
-		}},
-		.outputs	= {FunctionOutput {
-			   .type = b.store(Identifier {"uint32"}),
-		   }},
-		.statements = {b.store(Binding {
-						   .specifier	= Binding::Specifier::Var,
-						   .name		= "result",
-						   .type		= b.store(Identifier {"uint32"}),
-						   .initializer = b.store(NumericLiteral {
-							   .kind = Literal::Decimal,
-						   }),
-					   }),
-					   b.store(Binding {
-						   .specifier	= Binding::Specifier::Var,
-						   .name		= "next",
-						   .type		= b.store(Identifier {"uint32"}),
-						   .initializer = b.store(NumericLiteral {
-							   .kind = Literal::Decimal,
-						   }),
-					   }),
-					   b.store(WhileLoop {
-						   .condition = b.store(BinaryExpression {
-							   .op	  = BinaryOperator::NotEqual,
-							   .left  = b.store(UnaryExpression {
-									.op		 = UnaryOperator::PostDecrement,
-									.operand = b.store(Identifier {"n"}),
-								}),
-							   .right = b.store(NumericLiteral {
-								   .kind = Literal::Decimal,
-							   }),
-						   }),
-						   .statement = b.store(Block {
-							   .statements = {b.store(Binding {
-												  .specifier   = Binding::Specifier::Let,
-												  .name		   = "temp",
-												  .initializer = b.store(Identifier {"next"}),
-											  }),
-											  b.store(BinaryExpression {
-												  .op	 = BinaryOperator::Assign,
-												  .left	 = b.store(Identifier {"next"}),
-												  .right = b.store(Identifier {"result"}),
-											  }),
-											  b.store(BinaryExpression {
-												  .op	 = BinaryOperator::AddAssign,
-												  .left	 = b.store(Identifier {"result"}),
-												  .right = b.store(Identifier {"temp"}),
-											  })},
-						   }),
-					   }),
-					   b.store(Return {
-						   .expression = b.store(Identifier {"result"}),
-					   })},
-	}));
 
-	auto result = cero::parse(source, r);
-	CHECK(result == cero::SyntaxTree(b));
+	auto ast = cero::parse(source, r);
+
+	AstCompare c(ast);
+	c.add_root();
+
+	c.add_function_definition(cero::AccessSpecifier::None, "fibonacci");
+	c.add_function_definition_parameter(cero::ParameterSpecifier::Var, "n");
+	{
+		auto _1 = c.mark_children();
+		c.add_identifier_expr("uint32");
+	}
+	c.add_function_definition_output("");
+	{
+		auto _1 = c.mark_children();
+		c.add_identifier_expr("uint32");
+	}
+	{
+		auto _1 = c.mark_children();
+
+		c.add_binding_statement(cero::BindingSpecifier::Var, "result");
+		{
+			auto _2 = c.mark_children();
+
+			c.add_identifier_expr("uint32");
+			c.add_numeric_literal_expr(cero::NumericLiteralKind::Decimal);
+		}
+
+		c.add_binding_statement(cero::BindingSpecifier::Var, "next");
+		{
+			auto _2 = c.mark_children();
+
+			c.add_identifier_expr("uint32");
+			c.add_numeric_literal_expr(cero::NumericLiteralKind::Decimal);
+		}
+
+		c.add_while_loop();
+		{
+			auto _2 = c.mark_children();
+
+			c.add_binary_expr(cero::BinaryOperator::NotEqual);
+			{
+				auto _3 = c.mark_children();
+
+				c.add_unary_expr(cero::UnaryOperator::PostDecrement);
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("n");
+				}
+
+				c.add_numeric_literal_expr(cero::NumericLiteralKind::Decimal);
+			}
+
+			c.add_block_statement();
+			{
+				auto _3 = c.mark_children();
+
+				c.add_binding_statement(cero::BindingSpecifier::Let, "temp");
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("next");
+				}
+
+				c.add_binary_expr(cero::BinaryOperator::Assign);
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("next");
+					c.add_identifier_expr("result");
+				}
+
+				c.add_binary_expr(cero::BinaryOperator::AddAssign);
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("result");
+					c.add_identifier_expr("temp");
+				}
+			}
+		}
+
+		c.add_return_expr();
+		{
+			auto _2 = c.mark_children();
+			c.add_identifier_expr("result");
+		}
+	}
+
+	c.compare();
 }

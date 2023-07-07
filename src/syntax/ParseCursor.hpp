@@ -1,14 +1,10 @@
 #pragma once
 
-#include "cero/syntax/TokenStream.hpp"
+#include "syntax/TokenStream.hpp"
 
-namespace cero
-{
+namespace cero {
 
-class ParseCursor
-{
-	TokenStream::Iterator cursor;
-
+class ParseCursor {
 public:
 	explicit ParseCursor(const TokenStream& token_stream);
 
@@ -22,6 +18,9 @@ public:
 	Token		 next_kind();
 	void		 advance();
 	void		 retreat();
+
+private:
+	std::span<const LexicalToken>::iterator cursor;
 };
 
 } // namespace cero

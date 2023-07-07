@@ -1,13 +1,11 @@
-#include "util/ExhaustiveReporter.hpp"
-#include "util/Test.hpp"
+#include "common/ExhaustiveReporter.hpp"
+#include "common/Test.hpp"
 
-#include <cero/syntax/Lex.hpp>
+#include <syntax/Lex.hpp>
 
-namespace
-{
+namespace {
 
-bool all_tokens_match(const cero::TokenStream& token_stream, std::initializer_list<cero::Token> kinds)
-{
+bool all_tokens_match(const cero::TokenStream& token_stream, std::initializer_list<cero::Token> kinds) {
 	auto tokens = token_stream.get_tokens();
 	CHECK(tokens.size() == kinds.size());
 
@@ -22,8 +20,7 @@ bool all_tokens_match(const cero::TokenStream& token_stream, std::initializer_li
 
 using enum cero::Token;
 
-CERO_TEST(LexEmptySource)
-{
+CERO_TEST(LexEmptySource) {
 	auto source = make_test_source("");
 
 	ExhaustiveReporter r;
@@ -32,8 +29,7 @@ CERO_TEST(LexEmptySource)
 	CHECK(all_tokens_match(tokens, {EndOfFile}));
 }
 
-CERO_TEST(LexIntegerLiterals)
-{
+CERO_TEST(LexIntegerLiterals) {
 	auto source = make_test_source(R"_____(
 0;
 123;
@@ -73,8 +69,7 @@ CERO_TEST(LexIntegerLiterals)
 	CHECK(tokens.at(24).get_lexeme(source) == "0o 124 22115 2736");
 }
 
-CERO_TEST(LexFloatLiterals)
-{
+CERO_TEST(LexFloatLiterals) {
 	auto source = make_test_source(R"_____(
 1.0;
 1.;
@@ -112,8 +107,7 @@ CERO_TEST(LexFloatLiterals)
 	CHECK(tokens.at(22).get_lexeme(source) == "a");
 }
 
-CERO_TEST(LexStringLiteralsWithEscapes)
-{
+CERO_TEST(LexStringLiteralsWithEscapes) {
 	auto source = make_test_source(R"_____(
 "123\""
 "\""
@@ -140,8 +134,7 @@ CERO_TEST(LexStringLiteralsWithEscapes)
 	CHECK(tokens.at(7).get_lexeme(source) == "\"\\\"\\\\\\\"\\\\\\\\a\\\\a\\\"\"");
 }
 
-CERO_TEST(LexLineComments)
-{
+CERO_TEST(LexLineComments) {
 	auto source = make_test_source(R"_____(
 //
 // 
@@ -159,8 +152,7 @@ CERO_TEST(LexLineComments)
 	CHECK(tokens.at(3).get_lexeme(source) == "// //");
 }
 
-CERO_TEST(LexBlockComments)
-{
+CERO_TEST(LexBlockComments) {
 	auto source = make_test_source(R"_____(
 /**/
 /* abc
@@ -195,8 +187,7 @@ CERO_TEST(LexBlockComments)
 	CHECK(tokens.at(9).get_lexeme(source) == "/*// */");
 }
 
-CERO_TEST(LexBracketCaret)
-{
+CERO_TEST(LexBracketCaret) {
 	auto source = make_test_source(R"_____(
 [^
 )_____");
@@ -207,8 +198,7 @@ CERO_TEST(LexBracketCaret)
 	CHECK(all_tokens_match(tokens, {LeftBracket, Caret, EndOfFile}));
 }
 
-CERO_TEST(LexUnicodeNames)
-{
+CERO_TEST(LexUnicodeNames) {
 	auto source = make_test_source(R"_____(
 𖭽()
 {}
@@ -221,8 +211,7 @@ CERO_TEST(LexUnicodeNames)
 	CHECK(tokens.at(0).get_lexeme(source) == "𖭽");
 }
 
-CERO_TEST(LexOperators)
-{
+CERO_TEST(LexOperators) {
 	auto source = make_test_source(R"_____(
 !
 + - * / %
@@ -263,8 +252,7 @@ CERO_TEST(LexOperators)
 									EndOfFile}));
 }
 
-CERO_TEST(LexDotDot)
-{
+CERO_TEST(LexDotDot) {
 	auto source = make_test_source(R"_____(
 ..
 )_____");

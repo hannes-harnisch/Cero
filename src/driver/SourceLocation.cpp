@@ -1,10 +1,8 @@
-#include "cero/driver/SourceLocation.hpp"
+#include "SourceLocation.hpp"
 
-namespace cero
-{
+namespace cero {
 
-std::string SourceLocation::to_string() const
-{
+std::string SourceLocation::to_string() const {
 	return std::format("{}:{}:{}", file, line, column);
 }
 

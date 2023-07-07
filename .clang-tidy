@@ -4,4 +4,6 @@ Checks: >
   -google-explicit-constructor,
   -hicpp-exception-baseclass,
   -misc-no-recursion,
-  -modernize-use-nodiscard,
+  -modernize-return-braced-init-list,
+  -modernize-use-auto,
+  -modernize-use-nodiscard

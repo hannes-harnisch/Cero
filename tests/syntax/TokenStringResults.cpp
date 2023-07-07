@@ -1,10 +1,9 @@
-#include "util/ExhaustiveReporter.hpp"
-#include "util/Test.hpp"
+#include "common/ExhaustiveReporter.hpp"
+#include "common/Test.hpp"
 
-#include <cero/syntax/Lex.hpp>
+#include <syntax/Lex.hpp>
 
-CERO_TEST(TokenStringForBracketsLiterals)
-{
+CERO_TEST(TokenStringForBracketsLiterals) {
 	ExhaustiveReporter r;
 
 	auto source = make_test_source(R"_____(
@@ -41,8 +40,7 @@ EndOfFile `` [Test_TokenStringForBracketsLiterals:8:1]
 )_____");
 }
 
-CERO_TEST(TokenStringForOperators)
-{
+CERO_TEST(TokenStringForOperators) {
 	ExhaustiveReporter r;
 
 	auto source = make_test_source(R"_____(
@@ -70,8 +68,7 @@ EndOfFile `` [Test_TokenStringForOperators:4:1]
 )_____");
 }
 
-CERO_TEST(TokenStringForKeywords)
-{
+CERO_TEST(TokenStringForKeywords) {
 	ExhaustiveReporter r;
 
 	auto source = make_test_source(R"_____(

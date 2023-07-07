@@ -1,10 +1,9 @@
-#include "util/ExhaustiveReporter.hpp"
-#include "util/Test.hpp"
+#include "common/ExhaustiveReporter.hpp"
+#include "common/Test.hpp"
 
-#include <cero/syntax/Parse.hpp>
+#include <syntax/Parse.hpp>
 
-CERO_TEST(AstStringForSimpleFunction)
-{
+CERO_TEST(AstStringForSimpleFunction) {
 	auto source = make_test_source(R"_____(
 
 main()
@@ -14,17 +13,18 @@ main()
 
 	ExhaustiveReporter r;
 
-	auto ast = cero::parse(source, r);
-	CHECK(ast.to_string(source) == R"_____(Printing AST for Test_AstStringForSimpleFunction
+	auto ast	  = cero::parse(source, r);
+	auto str	  = ast.to_string(source);
+	auto expected = R"_____(Printing AST for Test_AstStringForSimpleFunction
 └── function `main`
     ├── parameters
     ├── outputs
     └── statements
-)_____");
+)_____";
+	CHECK(str == expected);
 }
 
-CERO_TEST(AstStringForSimpleFunctionWithParametersAndReturn)
-{
+CERO_TEST(AstStringForSimpleFunctionWithParametersAndReturn) {
 	auto source = make_test_source(R"_____(
 
 a(int32 x, bool _a, bool _b = x) -> float32
@@ -34,26 +34,27 @@ a(int32 x, bool _a, bool _b = x) -> float32
 
 	ExhaustiveReporter r;
 
-	auto ast = cero::parse(source, r);
-	CHECK(ast.to_string(source) == R"_____(Printing AST for Test_AstStringForSimpleFunctionWithParametersAndReturn
+	auto ast	  = cero::parse(source, r);
+	auto str	  = ast.to_string(source);
+	auto expected = R"_____(Printing AST for Test_AstStringForSimpleFunctionWithParametersAndReturn
 └── function `a`
     ├── parameters
-    │   ├── in parameter `x`
+    │   ├── value parameter `x`
     │   │   └── identifier `int32`
-    │   ├── in parameter `_a`
+    │   ├── value parameter `_a`
     │   │   └── identifier `bool`
-    │   └── in parameter `_b`
+    │   └── value parameter `_b`
     │       ├── identifier `bool`
     │       └── identifier `x`
     ├── outputs
     │   └── output
     │       └── identifier `float32`
     └── statements
-)_____");
+)_____";
+	CHECK(str == expected);
 }
 
-CERO_TEST(AstStringForCall)
-{
+CERO_TEST(AstStringForCall) {
 	auto source = make_test_source(R"_____(
 
 a(int32 _a, float64 _f, int64 _b)
@@ -68,23 +69,24 @@ b(int32 i, float64 f)
 
 	ExhaustiveReporter r;
 
-	auto ast = cero::parse(source, r);
-	CHECK(ast.to_string(source) == R"_____(Printing AST for Test_AstStringForCall
+	auto ast	  = cero::parse(source, r);
+	auto str	  = ast.to_string(source);
+	auto expected = R"_____(Printing AST for Test_AstStringForCall
 ├── function `a`
 │   ├── parameters
-│   │   ├── in parameter `_a`
+│   │   ├── value parameter `_a`
 │   │   │   └── identifier `int32`
-│   │   ├── in parameter `_f`
+│   │   ├── value parameter `_f`
 │   │   │   └── identifier `float64`
-│   │   └── in parameter `_b`
+│   │   └── value parameter `_b`
 │   │       └── identifier `int64`
 │   ├── outputs
 │   └── statements
 └── function `b`
     ├── parameters
-    │   ├── in parameter `i`
+    │   ├── value parameter `i`
     │   │   └── identifier `int32`
-    │   └── in parameter `f`
+    │   └── value parameter `f`
     │       └── identifier `float64`
     ├── outputs
     └── statements
@@ -96,5 +98,6 @@ b(int32 i, float64 f)
                 └── `*`
                     ├── identifier `i`
                     └── identifier `i`
-)_____");
+)_____";
+	CHECK(str == expected);
 }

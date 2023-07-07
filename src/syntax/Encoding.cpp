@@ -1,43 +1,35 @@
 #include "Encoding.hpp"
 
-namespace cero
-{
+namespace cero {
 
-bool is_dec_digit(char c)
-{
+bool is_dec_digit(char c) {
 	return c >= '0' && c <= '9';
 }
 
-bool is_hex_digit(char c)
-{
+bool is_hex_digit(char c) {
 	return is_dec_digit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
 
-bool is_standard_ascii(char c)
-{
+bool is_standard_ascii(char c) {
 	return static_cast<uint8_t>(c) >> 7 == 0;
 }
 
-bool is_ascii_word_character(char c)
-{
+bool is_ascii_word_character(char c) {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_';
 }
 
-bool is_whitespace(char c)
-{
+bool is_whitespace(char c) {
 	return c == ' ' || (c >= '\t' && c <= '\r');
 }
 
-namespace
-{
-	struct CodePointRange
-	{
+namespace {
+
+	struct CodePointRange {
 		uint32_t begin = 0;
 		uint32_t end   = 0;
 	};
 
-	std::strong_ordering operator<=>(CodePointRange range, uint32_t code_point)
-	{
+	std::strong_ordering operator<=>(CodePointRange range, uint32_t code_point) {
 		if (range.begin > code_point)
 			return std::strong_ordering::greater;
 
@@ -294,8 +286,7 @@ namespace
 		{0xe0100, 0xe01ef},
 	};
 
-	bool search_range_table(std::span<const CodePointRange> table, uint32_t encoded)
-	{
+	bool search_range_table(std::span<const CodePointRange> table, uint32_t encoded) {
 		static constexpr uint8_t  LENGTHS[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 											   0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0};
 		static constexpr uint32_t MASKS[]	= {0x00, 0x7f, 0x1f, 0x0f, 0x07};
@@ -313,15 +304,14 @@ namespace
 
 		return std::binary_search(table.begin(), table.end(), code_point);
 	}
+
 } // namespace
 
-bool is_utf8_xid_start(uint32_t encoded)
-{
+bool is_utf8_xid_start(uint32_t encoded) {
 	return search_range_table(XID_START_RANGES, encoded);
 }
 
-bool is_utf8_xid_continue(uint32_t encoded)
-{
+bool is_utf8_xid_continue(uint32_t encoded) {
 	return search_range_table(XID_CONTINUE_RANGES, encoded);
 }
 

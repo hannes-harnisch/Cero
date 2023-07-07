@@ -1,12 +1,10 @@
-#include "util/ExhaustiveReporter.hpp"
-#include "util/Test.hpp"
+#include "common/AstCompare.hpp"
+#include "common/ExhaustiveReporter.hpp"
+#include "common/Test.hpp"
 
-#include <cero/syntax/Parse.hpp>
+#include <syntax/Parse.hpp>
 
-using namespace cero::ast;
-
-CERO_TEST(ParseGenericReturnType)
-{
+CERO_TEST(ParseGenericReturnType) {
 	auto source = make_test_source(R"_____(
 a() -> List<List<int32> >
 {
@@ -40,139 +38,170 @@ f() -> List<List<List<int32>>>
 )_____");
 
 	ExhaustiveReporter r;
-	cero::AstBuilder   b;
-	b.add_to_root(b.store(Function {
-		.name		= "a",
-		.parameters = {},
-		.outputs	= {FunctionOutput {
-			   .type = b.store(GenericIdentifier {
-				   .name	  = "List",
-				   .arguments = {b.store(GenericIdentifier {
-					   .name	  = "List",
-					   .arguments = {b.store(Identifier {"int32"})},
-				   })},
-			   }),
-		   }},
-		.statements = {b.store(Return {
-			.expression = b.store(Call {
-				.arguments = {},
-			}),
-		})},
-	}));
 
-	b.add_to_root(b.store(Function {
-		.name		= "b",
-		.parameters = {},
-		.outputs	= {FunctionOutput {
-			   .type = b.store(GenericIdentifier {
-				   .name	  = "List",
-				   .arguments = {b.store(GenericIdentifier {
-					   .name	  = "List",
-					   .arguments = {b.store(Identifier {"int32"})},
-				   })},
-			   }),
-		   }},
-		.statements = {b.store(Return {
-			.expression = b.store(Call {
-				.arguments = {},
-			}),
-		})},
-	}));
+	auto ast = cero::parse(source, r);
 
-	b.add_to_root(b.store(Function {
-		.name		= "c",
-		.parameters = {},
-		.outputs	= {FunctionOutput {
-			   .type = b.store(GenericIdentifier {
-				   .name	  = "List",
-				   .arguments = {b.store(GenericIdentifier {
-					   .name	  = "List",
-					   .arguments = {b.store(GenericIdentifier {
-						   .name	  = "List",
-						   .arguments = {b.store(Identifier {"int32"})},
-					   })},
-				   })},
-			   }),
-		   }},
-		.statements = {b.store(Return {
-			.expression = b.store(Call {
-				.arguments = {},
-			}),
-		})},
-	}));
+	AstCompare c(ast);
+	c.add_root();
 
-	b.add_to_root(b.store(Function {
-		.name		= "d",
-		.parameters = {},
-		.outputs	= {FunctionOutput {
-			   .type = b.store(GenericIdentifier {
-				   .name	  = "List",
-				   .arguments = {b.store(GenericIdentifier {
-					   .name	  = "List",
-					   .arguments = {b.store(GenericIdentifier {
-						   .name	  = "List",
-						   .arguments = {b.store(Identifier {"int32"})},
-					   })},
-				   })},
-			   }),
-		   }},
-		.statements = {b.store(Return {
-			.expression = b.store(Call {
-				.arguments = {},
-			}),
-		})},
-	}));
+	c.add_function_definition(cero::AccessSpecifier::None, "a");
+	c.add_function_definition_output("");
+	{
+		auto _1 = c.mark_children();
+		c.add_generic_identifier_expr("List");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_identifier_expr("int32");
+			}
+		}
+	}
+	{
+		auto _1 = c.mark_children();
+		c.add_return_expr();
+		{
+			auto _2 = c.mark_children();
+			c.add_group_expr();
+		}
+	}
 
-	b.add_to_root(b.store(Function {
-		.name		= "e",
-		.parameters = {},
-		.outputs	= {FunctionOutput {
-			   .type = b.store(GenericIdentifier {
-				   .name	  = "List",
-				   .arguments = {b.store(GenericIdentifier {
-					   .name	  = "List",
-					   .arguments = {b.store(GenericIdentifier {
-						   .name	  = "List",
-						   .arguments = {b.store(Identifier {"int32"})},
-					   })},
-				   })},
-			   }),
-		   }},
-		.statements = {b.store(Return {
-			.expression = b.store(Call {
-				.arguments = {},
-			}),
-		})},
-	}));
+	c.add_function_definition(cero::AccessSpecifier::None, "b");
+	c.add_function_definition_output("");
+	{
+		auto _1 = c.mark_children();
+		c.add_generic_identifier_expr("List");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_identifier_expr("int32");
+			}
+		}
+	}
+	{
+		auto _1 = c.mark_children();
+		c.add_return_expr();
+		{
+			auto _2 = c.mark_children();
+			c.add_group_expr();
+		}
+	}
 
-	b.add_to_root(b.store(Function {
-		.name		= "f",
-		.parameters = {},
-		.outputs	= {FunctionOutput {
-			   .type = b.store(GenericIdentifier {
-				   .name	  = "List",
-				   .arguments = {b.store(GenericIdentifier {
-					   .name	  = "List",
-					   .arguments = {b.store(GenericIdentifier {
-						   .name	  = "List",
-						   .arguments = {b.store(Identifier {"int32"})},
-					   })},
-				   })},
-			   }),
-		   }},
-		.statements = {b.store(Return {
-			.expression = b.store(Call {
-				.arguments = {},
-			}),
-		})},
-	}));
+	c.add_function_definition(cero::AccessSpecifier::None, "c");
+	c.add_function_definition_output("");
+	{
+		auto _1 = c.mark_children();
+		c.add_generic_identifier_expr("List");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_generic_identifier_expr("List");
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("int32");
+				}
+			}
+		}
+	}
+	{
+		auto _1 = c.mark_children();
+		c.add_return_expr();
+		{
+			auto _2 = c.mark_children();
+			c.add_group_expr();
+		}
+	}
 
-	auto result = cero::parse(source, r);
-	CHECK(result == cero::SyntaxTree(b));
+	c.add_function_definition(cero::AccessSpecifier::None, "d");
+	c.add_function_definition_output("");
+	{
+		auto _1 = c.mark_children();
+		c.add_generic_identifier_expr("List");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_generic_identifier_expr("List");
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("int32");
+				}
+			}
+		}
+	}
+	{
+		auto _1 = c.mark_children();
+		c.add_return_expr();
+		{
+			auto _2 = c.mark_children();
+			c.add_group_expr();
+		}
+	}
+
+	c.add_function_definition(cero::AccessSpecifier::None, "e");
+	c.add_function_definition_output("");
+	{
+		auto _1 = c.mark_children();
+		c.add_generic_identifier_expr("List");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_generic_identifier_expr("List");
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("int32");
+				}
+			}
+		}
+	}
+	{
+		auto _1 = c.mark_children();
+		c.add_return_expr();
+		{
+			auto _2 = c.mark_children();
+			c.add_group_expr();
+		}
+	}
+
+	c.add_function_definition(cero::AccessSpecifier::None, "f");
+	c.add_function_definition_output("");
+	{
+		auto _1 = c.mark_children();
+		c.add_generic_identifier_expr("List");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_generic_identifier_expr("List");
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("int32");
+				}
+			}
+		}
+	}
+	{
+		auto _1 = c.mark_children();
+		c.add_return_expr();
+		{
+			auto _2 = c.mark_children();
+			c.add_group_expr();
+		}
+	}
+
+	c.compare();
 }
 
-CERO_TEST(ParseLessAndRightShift)
-{
+CERO_TEST(ParseLessAndRightShift) {
 	auto source = make_test_source(R"_____(
 oof(int32 a, int32 b) -> bool
 {
@@ -181,51 +210,60 @@ oof(int32 a, int32 b) -> bool
 )_____");
 
 	ExhaustiveReporter r;
-	cero::AstBuilder   b;
-	b.add_to_root(b.store(Function {
-		.name		= "oof",
-		.parameters = {Function::Parameter {
-						   .specifier = ParameterSpecifier::In,
-						   .name	  = "a",
-						   .type	  = b.store(Identifier {"int32"}),
-					   },
-					   Function::Parameter {
-						   .specifier = ParameterSpecifier::In,
-						   .name	  = "b",
-						   .type	  = b.store(Identifier {"int32"}),
-					   }},
-		.outputs	= {FunctionOutput {
-			   .type = b.store(Identifier {"bool"}),
-		   }},
-		.statements = {b.store(Return {
-			.expression = b.store(BinaryExpression {
-				.op	   = BinaryOperator::Less,
-				.left  = b.store(Identifier {"a"}),
-				.right = b.store(BinaryExpression {
-					.op	   = BinaryOperator::RightShift,
-					.left  = b.store(Identifier {"b"}),
-					.right = b.store(Call {
-						.arguments = {b.store(BinaryExpression {
-							.op	   = BinaryOperator::Subtract,
-							.left  = b.store(NumericLiteral {
-								 .kind = Literal::Decimal,
-							 }),
-							.right = b.store(NumericLiteral {
-								.kind = Literal::Decimal,
-							}),
-						})},
-					}),
-				}),
-			}),
-		})},
-	}));
 
-	auto result = cero::parse(source, r);
-	CHECK(result == cero::SyntaxTree(b));
+	auto ast = cero::parse(source, r);
+
+	AstCompare c(ast);
+	c.add_root();
+
+	c.add_function_definition(cero::AccessSpecifier::None, "oof");
+	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "a");
+	{
+		auto _1 = c.mark_children();
+		c.add_identifier_expr("int32");
+	}
+	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "b");
+	{
+		auto _1 = c.mark_children();
+		c.add_identifier_expr("int32");
+	}
+	c.add_function_definition_output("");
+	{
+		auto _1 = c.mark_children();
+		c.add_identifier_expr("bool");
+	}
+	{
+		auto _1 = c.mark_children();
+		c.add_return_expr();
+		{
+			auto _2 = c.mark_children();
+			c.add_binary_expr(cero::BinaryOperator::Less);
+			{
+				auto _3 = c.mark_children();
+				c.add_identifier_expr("a");
+				c.add_binary_expr(cero::BinaryOperator::RightShift);
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("b");
+					c.add_group_expr();
+					{
+						auto _5 = c.mark_children();
+						c.add_binary_expr(cero::BinaryOperator::Subtract);
+						{
+							auto _6 = c.mark_children();
+							c.add_numeric_literal_expr(cero::NumericLiteralKind::Decimal);
+							c.add_numeric_literal_expr(cero::NumericLiteralKind::Decimal);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	c.compare();
 }
 
-CERO_TEST(ParseAmbiguousGenericCallVsComparisonArguments)
-{
+CERO_TEST(ParseAmbiguousGenericCallVsComparisonArguments) {
 	auto source = make_test_source(R"_____(
 ouch(float32 e) -> float64
 {
@@ -234,37 +272,51 @@ ouch(float32 e) -> float64
 )_____");
 
 	ExhaustiveReporter r;
-	cero::AstBuilder   b;
-	b.add_to_root(b.store(Function {
-		.name		= "ouch",
-		.parameters = {Function::Parameter {
-			.specifier = ParameterSpecifier::In,
-			.name	   = "e",
-			.type	   = b.store(Identifier {"float32"}),
-		}},
-		.outputs	= {FunctionOutput {
-			   .type = b.store(Identifier {"float64"}),
-		   }},
-		.statements = {b.store(Return {
-			.expression = b.store(Call {
-				.callee	   = b.store(Identifier {"a"}),
-				.arguments = {b.store(Call {
-					.callee	   = b.store(GenericIdentifier {
-						   .name	  = "b",
-						   .arguments = {b.store(Identifier {"c"}), b.store(Identifier {"d"})},
-					   }),
-					.arguments = {b.store(Identifier {"e"})},
-				})},
-			}),
-		})},
-	}));
 
-	auto result = cero::parse(source, r);
-	CHECK(result == cero::SyntaxTree(b));
+	auto ast = cero::parse(source, r);
+
+	AstCompare c(ast);
+	c.add_root();
+
+	c.add_function_definition(cero::AccessSpecifier::None, "ouch");
+	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "e");
+	{
+		auto _1 = c.mark_children();
+		c.add_identifier_expr("float32");
+	}
+	c.add_function_definition_output("");
+	{
+		auto _1 = c.mark_children();
+		c.add_identifier_expr("float64");
+	}
+	{
+		auto _1 = c.mark_children();
+		c.add_return_expr();
+		{
+			auto _2 = c.mark_children();
+			c.add_call_expr();
+			{
+				auto _3 = c.mark_children();
+				c.add_identifier_expr("a");
+				c.add_call_expr();
+				{
+					auto _4 = c.mark_children();
+					c.add_generic_identifier_expr("b");
+					{
+						auto _5 = c.mark_children();
+						c.add_identifier_expr("c");
+						c.add_identifier_expr("d");
+					}
+					c.add_identifier_expr("e");
+				}
+			}
+		}
+	}
+
+	c.compare();
 }
 
-CERO_TEST(ParseComparisonArgumentsVsGenericPattern)
-{
+CERO_TEST(ParseComparisonArgumentsVsGenericPattern) {
 	auto source = make_test_source(R"_____(
 ouch(float32 e) -> float64
 {
@@ -273,40 +325,52 @@ ouch(float32 e) -> float64
 )_____");
 
 	ExhaustiveReporter r;
-	cero::AstBuilder   b;
-	b.add_to_root(b.store(Function {
-		.name		= "ouch",
-		.parameters = {Function::Parameter {
-			.specifier = ParameterSpecifier::In,
-			.name	   = "e",
-			.type	   = b.store(Identifier {"float32"}),
-		}},
-		.outputs	= {FunctionOutput {
-			   .type = b.store(Identifier {"float64"}),
-		   }},
-		.statements = {b.store(Return {
-			.expression = b.store(Call {
-				.callee	   = b.store(Identifier {"a"}),
-				.arguments = {b.store(BinaryExpression {
-								  .op	 = BinaryOperator::Less,
-								  .left	 = b.store(Identifier {"b"}),
-								  .right = b.store(Identifier {"c"}),
-							  }),
-							  b.store(BinaryExpression {
-								  .op	 = BinaryOperator::Greater,
-								  .left	 = b.store(Identifier {"d"}),
-								  .right = b.store(Identifier {"e"}),
-							  })},
-			}),
-		})},
-	}));
 
-	auto result = cero::parse(source, r);
-	CHECK(result == cero::SyntaxTree(b));
+	auto ast = cero::parse(source, r);
+
+	AstCompare c(ast);
+	c.add_root();
+
+	c.add_function_definition(cero::AccessSpecifier::None, "ouch");
+	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "e");
+	{
+		auto _1 = c.mark_children();
+		c.add_identifier_expr("float32");
+	}
+	c.add_function_definition_output("");
+	{
+		auto _1 = c.mark_children();
+		c.add_identifier_expr("float64");
+	}
+	{
+		auto _1 = c.mark_children();
+		c.add_return_expr();
+		{
+			auto _2 = c.mark_children();
+			c.add_call_expr();
+			{
+				auto _3 = c.mark_children();
+				c.add_identifier_expr("a");
+				c.add_binary_expr(cero::BinaryOperator::Less);
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("b");
+					c.add_identifier_expr("c");
+				}
+				c.add_binary_expr(cero::BinaryOperator::Greater);
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("d");
+					c.add_identifier_expr("e");
+				}
+			}
+		}
+	}
+
+	c.compare();
 }
 
-CERO_TEST(ParseComparisonAndRightShiftAsGenericArgument)
-{
+CERO_TEST(ParseComparisonAndRightShiftAsGenericArgument) {
 	auto source = make_test_source(R"_____(
 woof() -> A<(B > C)>
 {
@@ -320,57 +384,72 @@ meow() -> A<(D >> E)>
 )_____");
 
 	ExhaustiveReporter r;
-	cero::AstBuilder   b;
-	b.add_to_root(b.store(Function {
-		.name		= "woof",
-		.parameters = {},
-		.outputs	= {FunctionOutput {
-			   .type = b.store(GenericIdentifier {
-				   .name	  = "A",
-				   .arguments = {b.store(Call {
-					   .arguments = {b.store(BinaryExpression {
-						   .op	  = BinaryOperator::Greater,
-						   .left  = b.store(Identifier {"B"}),
-						   .right = b.store(Identifier {"C"}),
-					   })},
-				   })},
-			   }),
-		   }},
-		.statements = {b.store(Return {
-			.expression = b.store(Call {
-				.arguments = {},
-			}),
-		})},
-	}));
 
-	b.add_to_root(b.store(Function {
-		.name		= "meow",
-		.parameters = {},
-		.outputs	= {FunctionOutput {
-			   .type = b.store(GenericIdentifier {
-				   .name	  = "A",
-				   .arguments = {b.store(Call {
-					   .arguments = {b.store(BinaryExpression {
-						   .op	  = BinaryOperator::RightShift,
-						   .left  = b.store(Identifier {"D"}),
-						   .right = b.store(Identifier {"E"}),
-					   })},
-				   })},
-			   }),
-		   }},
-		.statements = {b.store(Return {
-			.expression = b.store(Call {
-				.arguments = {},
-			}),
-		})},
-	}));
+	auto ast = cero::parse(source, r);
 
-	auto result = cero::parse(source, r);
-	CHECK(result == cero::SyntaxTree(b));
+	AstCompare c(ast);
+	c.add_root();
+
+	c.add_function_definition(cero::AccessSpecifier::None, "woof");
+	c.add_function_definition_output("");
+	{
+		auto _1 = c.mark_children();
+		c.add_generic_identifier_expr("A");
+		{
+			auto _2 = c.mark_children();
+			c.add_group_expr();
+			{
+				auto _3 = c.mark_children();
+				c.add_binary_expr(cero::BinaryOperator::Greater);
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("B");
+					c.add_identifier_expr("C");
+				}
+			}
+		}
+	}
+	{
+		auto _1 = c.mark_children();
+		c.add_return_expr();
+		{
+			auto _2 = c.mark_children();
+			c.add_group_expr();
+		}
+	}
+
+	c.add_function_definition(cero::AccessSpecifier::None, "meow");
+	c.add_function_definition_output("");
+	{
+		auto _1 = c.mark_children();
+		c.add_generic_identifier_expr("A");
+		{
+			auto _2 = c.mark_children();
+			c.add_group_expr();
+			{
+				auto _3 = c.mark_children();
+				c.add_binary_expr(cero::BinaryOperator::RightShift);
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("D");
+					c.add_identifier_expr("E");
+				}
+			}
+		}
+	}
+	{
+		auto _1 = c.mark_children();
+		c.add_return_expr();
+		{
+			auto _2 = c.mark_children();
+			c.add_group_expr();
+		}
+	}
+
+	c.compare();
 }
 
-CERO_TEST(ParseGenericParameters)
-{
+CERO_TEST(ParseGenericParameters) {
 	auto source = make_test_source(R"_____(
 moo(List<int32> _a,
 	List<List<int32>> _b,
@@ -383,105 +462,121 @@ moo(List<int32> _a,
 )_____");
 
 	ExhaustiveReporter r;
-	cero::AstBuilder   b;
-	b.add_to_root(b.store(Function {
-		.name		= "moo",
-		.parameters = {Function::Parameter {
-						   .specifier = ParameterSpecifier::In,
-						   .name	  = "_a",
-						   .type	  = b.store(GenericIdentifier {
-									.name	   = "List",
-									.arguments = {b.store(Identifier {"int32"})},
-							}),
-					   },
-					   Function::Parameter {
-						   .specifier = ParameterSpecifier::In,
-						   .name	  = "_b",
-						   .type	  = b.store(GenericIdentifier {
-									.name	   = "List",
-									.arguments = {b.store(GenericIdentifier {
-										.name	   = "List",
-										.arguments = {b.store(Identifier {"int32"})},
-								})},
-							}),
-					   },
-					   Function::Parameter {
-						   .specifier = ParameterSpecifier::In,
-						   .name	  = "_c",
-						   .type	  = b.store(GenericIdentifier {
-									.name	   = "List",
-									.arguments = {b.store(GenericIdentifier {
-										.name	   = "List",
-										.arguments = {b.store(Identifier {"int32"})},
-								})},
-							}),
-					   },
-					   Function::Parameter {
-						   .specifier = ParameterSpecifier::In,
-						   .name	  = "_d",
-						   .type	  = b.store(GenericIdentifier {
-									.name	   = "List",
-									.arguments = {b.store(GenericIdentifier {
-										.name	   = "List",
-										.arguments = {b.store(GenericIdentifier {
-											.name	   = "List",
-											.arguments = {b.store(Identifier {"int32"})},
-									})},
-								})},
-							}),
-					   },
-					   Function::Parameter {
-						   .specifier = ParameterSpecifier::In,
-						   .name	  = "_e",
-						   .type	  = b.store(GenericIdentifier {
-									.name	   = "List",
-									.arguments = {b.store(GenericIdentifier {
-										.name	   = "List",
-										.arguments = {b.store(GenericIdentifier {
-											.name	   = "List",
-											.arguments = {b.store(Identifier {"int32"})},
-									})},
-								})},
-							}),
-					   },
-					   Function::Parameter {
-						   .specifier = ParameterSpecifier::In,
-						   .name	  = "_f",
-						   .type	  = b.store(GenericIdentifier {
-									.name	   = "List",
-									.arguments = {b.store(GenericIdentifier {
-										.name	   = "List",
-										.arguments = {b.store(GenericIdentifier {
-											.name	   = "List",
-											.arguments = {b.store(Identifier {"int32"})},
-									})},
-								})},
-							}),
-					   },
-					   Function::Parameter {
-						   .specifier = ParameterSpecifier::In,
-						   .name	  = "_g",
-						   .type	  = b.store(GenericIdentifier {
-									.name	   = "List",
-									.arguments = {b.store(GenericIdentifier {
-										.name	   = "List",
-										.arguments = {b.store(GenericIdentifier {
-											.name	   = "List",
-											.arguments = {b.store(Identifier {"int32"})},
-									})},
-								})},
-							}),
-					   }},
-		.outputs	= {},
-		.statements = {},
-	}));
 
-	auto result = cero::parse(source, r);
-	CHECK(result == cero::SyntaxTree(b));
+	auto ast = cero::parse(source, r);
+
+	AstCompare c(ast);
+	c.add_root();
+
+	c.add_function_definition(cero::AccessSpecifier::None, "moo");
+	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_a");
+	{
+		auto _1 = c.mark_children();
+		c.add_generic_identifier_expr("List");
+		{
+			auto _2 = c.mark_children();
+			c.add_identifier_expr("int32");
+		}
+	}
+	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_b");
+	{
+		auto _1 = c.mark_children();
+		c.add_generic_identifier_expr("List");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_identifier_expr("int32");
+			}
+		}
+	}
+	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_c");
+	{
+		auto _1 = c.mark_children();
+		c.add_generic_identifier_expr("List");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_identifier_expr("int32");
+			}
+		}
+	}
+	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_d");
+	{
+		auto _1 = c.mark_children();
+		c.add_generic_identifier_expr("List");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_generic_identifier_expr("List");
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("int32");
+				}
+			}
+		}
+	}
+	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_e");
+	{
+		auto _1 = c.mark_children();
+		c.add_generic_identifier_expr("List");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_generic_identifier_expr("List");
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("int32");
+				}
+			}
+		}
+	}
+	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_f");
+	{
+		auto _1 = c.mark_children();
+		c.add_generic_identifier_expr("List");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_generic_identifier_expr("List");
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("int32");
+				}
+			}
+		}
+	}
+	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_g");
+	{
+		auto _1 = c.mark_children();
+		c.add_generic_identifier_expr("List");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_generic_identifier_expr("List");
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("int32");
+				}
+			}
+		}
+	}
+
+	c.compare();
 }
 
-CERO_TEST(ParseVariableWithGenericType)
-{
+CERO_TEST(ParseVariableWithGenericType) {
 	auto source = make_test_source(R"_____(
 bark()
 {
@@ -496,120 +591,133 @@ bark()
 )_____");
 
 	ExhaustiveReporter r;
-	cero::AstBuilder   b;
-	b.add_to_root(b.store(Function {
-		.name		= "bark",
-		.parameters = {},
-		.outputs	= {},
-		.statements = {b.store(Binding {
-						   .specifier	= Binding::Specifier::Let,
-						   .name		= "_a",
-						   .type		= b.store(GenericIdentifier {
-									  .name		 = "List",
-									  .arguments = {b.store(Identifier {"int32"})},
-							  }),
-						   .initializer = b.store(Call {
-							   .arguments = {},
-						   }),
-					   }),
-					   b.store(Binding {
-						   .specifier	= Binding::Specifier::Let,
-						   .name		= "_b",
-						   .type		= b.store(GenericIdentifier {
-									  .name		 = "List",
-									  .arguments = {b.store(GenericIdentifier {
-										  .name		 = "List",
-										  .arguments = {b.store(Identifier {"int32"})},
-								  })},
-							  }),
-						   .initializer = b.store(Call {
-							   .arguments = {},
-						   }),
-					   }),
-					   b.store(Binding {
-						   .specifier	= Binding::Specifier::Let,
-						   .name		= "_c",
-						   .type		= b.store(GenericIdentifier {
-									  .name		 = "List",
-									  .arguments = {b.store(GenericIdentifier {
-										  .name		 = "List",
-										  .arguments = {b.store(Identifier {"int32"})},
-								  })},
-							  }),
-						   .initializer = b.store(Call {
-							   .arguments = {},
-						   }),
-					   }),
-					   b.store(Binding {
-						   .specifier	= Binding::Specifier::Let,
-						   .name		= "_d",
-						   .type		= b.store(GenericIdentifier {
-									  .name		 = "List",
-									  .arguments = {b.store(GenericIdentifier {
-										  .name		 = "List",
-										  .arguments = {b.store(GenericIdentifier {
-											  .name		 = "List",
-											  .arguments = {b.store(Identifier {"int32"})},
-									  })},
-								  })},
-							  }),
-						   .initializer = b.store(Call {
-							   .arguments = {},
-						   }),
-					   }),
-					   b.store(Binding {
-						   .specifier	= Binding::Specifier::Let,
-						   .name		= "_e",
-						   .type		= b.store(GenericIdentifier {
-									  .name		 = "List",
-									  .arguments = {b.store(GenericIdentifier {
-										  .name		 = "List",
-										  .arguments = {b.store(GenericIdentifier {
-											  .name		 = "List",
-											  .arguments = {b.store(Identifier {"int32"})},
-									  })},
-								  })},
-							  }),
-						   .initializer = b.store(Call {
-							   .arguments = {},
-						   }),
-					   }),
-					   b.store(Binding {
-						   .specifier	= Binding::Specifier::Let,
-						   .name		= "_f",
-						   .type		= b.store(GenericIdentifier {
-									  .name		 = "List",
-									  .arguments = {b.store(GenericIdentifier {
-										  .name		 = "List",
-										  .arguments = {b.store(GenericIdentifier {
-											  .name		 = "List",
-											  .arguments = {b.store(Identifier {"int32"})},
-									  })},
-								  })},
-							  }),
-						   .initializer = b.store(Call {
-							   .arguments = {},
-						   }),
-					   }),
-					   b.store(Binding {
-						   .specifier	= Binding::Specifier::Let,
-						   .name		= "_g",
-						   .type		= b.store(GenericIdentifier {
-									  .name		 = "List",
-									  .arguments = {b.store(GenericIdentifier {
-										  .name		 = "List",
-										  .arguments = {b.store(GenericIdentifier {
-											  .name		 = "List",
-											  .arguments = {b.store(Identifier {"int32"})},
-									  })},
-								  })},
-							  }),
-						   .initializer = b.store(Call {
-							   .arguments = {},
-						   }),
-					   })},
-	}));
 
-	auto result = cero::parse(source, r);
-	CHECK(result == cero::SyntaxTree(b));
+	auto ast = cero::parse(source, r);
+
+	AstCompare c(ast);
+	c.add_root();
+
+	c.add_function_definition(cero::AccessSpecifier::None, "bark");
+	{
+		auto _1 = c.mark_children();
+
+		c.add_binding_statement(cero::BindingSpecifier::Let, "_a");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_identifier_expr("int32");
+			}
+			c.add_group_expr();
+		}
+
+		c.add_binding_statement(cero::BindingSpecifier::Let, "_b");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_generic_identifier_expr("List");
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("int32");
+				}
+			}
+			c.add_group_expr();
+		}
+
+		c.add_binding_statement(cero::BindingSpecifier::Let, "_c");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_generic_identifier_expr("List");
+				{
+					auto _4 = c.mark_children();
+					c.add_identifier_expr("int32");
+				}
+			}
+			c.add_group_expr();
+		}
+
+		c.add_binding_statement(cero::BindingSpecifier::Let, "_d");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_generic_identifier_expr("List");
+				{
+					auto _4 = c.mark_children();
+					c.add_generic_identifier_expr("List");
+					{
+						auto _5 = c.mark_children();
+						c.add_identifier_expr("int32");
+					}
+				}
+			}
+			c.add_group_expr();
+		}
+
+		c.add_binding_statement(cero::BindingSpecifier::Let, "_e");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_generic_identifier_expr("List");
+				{
+					auto _4 = c.mark_children();
+					c.add_generic_identifier_expr("List");
+					{
+						auto _5 = c.mark_children();
+						c.add_identifier_expr("int32");
+					}
+				}
+			}
+			c.add_group_expr();
+		}
+
+		c.add_binding_statement(cero::BindingSpecifier::Let, "_f");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_generic_identifier_expr("List");
+				{
+					auto _4 = c.mark_children();
+					c.add_generic_identifier_expr("List");
+					{
+						auto _5 = c.mark_children();
+						c.add_identifier_expr("int32");
+					}
+				}
+			}
+			c.add_group_expr();
+		}
+
+		c.add_binding_statement(cero::BindingSpecifier::Let, "_g");
+		{
+			auto _2 = c.mark_children();
+			c.add_generic_identifier_expr("List");
+			{
+				auto _3 = c.mark_children();
+				c.add_generic_identifier_expr("List");
+				{
+					auto _4 = c.mark_children();
+					c.add_generic_identifier_expr("List");
+					{
+						auto _5 = c.mark_children();
+						c.add_identifier_expr("int32");
+					}
+				}
+			}
+			c.add_group_expr();
+		}
+	}
+
+	c.compare();
 }

@@ -1,4 +1,4 @@
-#include "cero/syntax/TokenStream.hpp"
+#include "TokenStream.hpp"
 
 namespace cero
 {
@@ -26,16 +26,6 @@ std::string TokenStream::to_string(const Source& source) const
 void TokenStream::log(const Source& source) const
 {
 	std::cout << to_string(source);
-}
-
-TokenStream::Iterator TokenStream::begin() const
-{
-	return tokens.begin();
-}
-
-TokenStream::Iterator TokenStream::end() const
-{
-	return tokens.end();
 }
 
 } // namespace cero

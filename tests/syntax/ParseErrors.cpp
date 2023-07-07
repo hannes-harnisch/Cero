@@ -1,8 +1,7 @@
-#include "util/ExhaustiveReporter.hpp"
-#include "util/Test.hpp"
+#include "common/ExhaustiveReporter.hpp"
+#include "common/Test.hpp"
 
-CERO_TEST(ExpectFuncStructEnum)
-{
+CERO_TEST(ExpectFuncStructEnum) {
 	ExhaustiveReporter r;
 	r.expect(5, 1, cero::Message::ExpectFuncStructEnum, "`(`");
 
@@ -18,8 +17,7 @@ foo()
 )_____");
 }
 
-CERO_TEST(ExpectParenAfterFuncName)
-{
+CERO_TEST(ExpectParenAfterFuncName) {
 	ExhaustiveReporter r;
 	r.expect(2, 5, cero::Message::ExpectParenAfterFuncName, "`)`");
 
@@ -29,8 +27,7 @@ main)
 )_____");
 }
 
-CERO_TEST(MissingParameter)
-{
+CERO_TEST(MissingParameter) {
 	ExhaustiveReporter r;
 	r.expect(2, 5, cero::Message::ExpectType, "`,`");
 	r.expect(2, 5, cero::Message::ExpectParamName, "`,`");
@@ -43,8 +40,7 @@ foo(, bool x) -> bool
 )_____");
 }
 
-CERO_TEST(MissingParameterName)
-{
+CERO_TEST(MissingParameterName) {
 	ExhaustiveReporter r;
 	r.expect(2, 9, cero::Message::ExpectParamName, "`,`");
 
@@ -56,8 +52,7 @@ foo(bool, bool x) -> bool
 )_____");
 }
 
-CERO_TEST(MissingParameterWithUnexpectedToken)
-{
+CERO_TEST(MissingParameterWithUnexpectedToken) {
 	ExhaustiveReporter r;
 	r.expect(2, 5, cero::Message::ExpectType, "`}`");
 	r.expect(2, 5, cero::Message::ExpectParamName, "`}`");
@@ -77,8 +72,7 @@ private goo(bool x, %) -> bool
 )_____");
 }
 
-CERO_TEST(MissingParenAfterParameters)
-{
+CERO_TEST(MissingParenAfterParameters) {
 	ExhaustiveReporter r;
 	r.expect(2, 20, cero::Message::ExpectParenAfterParams, "`->`");
 	r.expect(7, 19, cero::Message::ExpectParenAfterParams, "`}`");
@@ -96,8 +90,7 @@ private goo(bool x} -> bool
 )_____");
 }
 
-CERO_TEST(MissingBraceBeforeFuncBody)
-{
+CERO_TEST(MissingBraceBeforeFuncBody) {
 	ExhaustiveReporter r;
 	r.expect(4, 5, cero::Message::ExpectBraceBeforeFuncBody, "`return`");
 	r.expect(8, 1, cero::Message::ExpectBraceBeforeFuncBody, "`}`");
@@ -117,8 +110,7 @@ public hoo() -< void
 )_____");
 }
 
-CERO_TEST(MissingNameAfterLet)
-{
+CERO_TEST(MissingNameAfterLet) {
 	ExhaustiveReporter r;
 	r.expect(4, 9, cero::Message::ExpectNameAfterLet, "`=`");
 
@@ -131,8 +123,7 @@ main()
 )_____");
 }
 
-CERO_TEST(MissingNameInDeclaration)
-{
+CERO_TEST(MissingNameInDeclaration) {
 	ExhaustiveReporter r;
 	r.expect(5, 19, cero::Message::ExpectNameAfterDeclType, "`=`");
 	r.expect(7, 19, cero::Message::ExpectNameAfterDeclType, "`=`");
@@ -148,8 +139,7 @@ main()
 )_____");
 }
 
-CERO_TEST(ExpectExpr)
-{
+CERO_TEST(ExpectExpr) {
 	ExhaustiveReporter r;
 	r.expect(4, 5, cero::Message::ExpectExpr, "`]`");
 	r.expect(10, 1, cero::Message::ExpectExpr, "`}`");
@@ -175,8 +165,7 @@ foo() {}
 )_____");
 }
 
-CERO_TEST(ExpectSemicolon)
-{
+CERO_TEST(ExpectSemicolon) {
 	ExhaustiveReporter r;
 	r.expect(5, 1, cero::Message::ExpectSemicolon, "`}`");
 	r.expect(14, 11, cero::Message::ExpectSemicolon, "name `c`");
@@ -199,8 +188,7 @@ c(int32 a, int32 b)
 )_____");
 }
 
-CERO_TEST(MissingNameAfterDot)
-{
+CERO_TEST(MissingNameAfterDot) {
 	ExhaustiveReporter r;
 	r.expect(4, 7, cero::Message::ExpectNameAfterDot, "`;`");
 	r.expect(7, 7, cero::Message::ExpectNameAfterDot, "`(`");
@@ -217,8 +205,7 @@ f()
 )_____");
 }
 
-CERO_TEST(MissingColonInIfExpression)
-{
+CERO_TEST(MissingColonInIfExpression) {
 	ExhaustiveReporter r;
 	r.expect(4, 18, cero::Message::ExpectColonOrBlock, "integer literal `0`");
 
@@ -237,8 +224,7 @@ g(bool b) -> int32
 )_____");
 }
 
-CERO_TEST(MissingColonAfterIfStatementCondition)
-{
+CERO_TEST(MissingColonAfterIfStatementCondition) {
 	ExhaustiveReporter r;
 	r.expect(5, 9, cero::Message::ExpectColonOrBlock, "`return`");
 
@@ -263,8 +249,7 @@ g(bool b) -> int32
 )_____");
 }
 
-CERO_TEST(UnnecessaryColonBeforeBlock)
-{
+CERO_TEST(UnnecessaryColonBeforeBlock) {
 	ExhaustiveReporter r;
 	r.expect(4, 9, cero::Message::UnnecessaryColonBeforeBlock);
 
@@ -289,8 +274,7 @@ g(bool b) -> int32
 )_____");
 }
 
-CERO_TEST(MissingParenAfterGroupExpression)
-{
+CERO_TEST(MissingParenAfterGroupExpression) {
 	ExhaustiveReporter r;
 	r.expect(5, 1, cero::Message::ExpectClosingParen, "`}`");
 
@@ -307,8 +291,7 @@ g(bool a, bool b, bool c, bool d) -> bool
 )_____");
 }
 
-CERO_TEST(MissingParenAfterFunctionCall)
-{
+CERO_TEST(MissingParenAfterFunctionCall) {
 	ExhaustiveReporter r;
 	r.expect(7, 1, cero::Message::ExpectClosingParen, "`}`");
 
@@ -327,8 +310,7 @@ g()
 )_____");
 }
 
-CERO_TEST(MissingBracketAfterIndex)
-{
+CERO_TEST(MissingBracketAfterIndex) {
 	ExhaustiveReporter r;
 	r.expect(5, 1, cero::Message::ExpectBracketAfterIndex, "`}`");
 
@@ -345,8 +327,7 @@ g([4]int32 x) -> int32
 )_____");
 }
 
-CERO_TEST(MissingBracketAfterArrayBound)
-{
+CERO_TEST(MissingBracketAfterArrayBound) {
 	ExhaustiveReporter r;
 	r.expect(2, 6, cero::Message::ExpectBracketAfterArrayBound, "name `int32`");
 
@@ -363,8 +344,7 @@ g([4]int32 x) -> int32
 )_____");
 }
 
-CERO_TEST(ExpectBraceAfterVariability)
-{
+CERO_TEST(ExpectBraceAfterVariability) {
 	ExhaustiveReporter r;
 	r.expect(2, 10, cero::Message::ExpectBraceAfterVariability, "name `MyList`");
 
@@ -383,8 +363,7 @@ g(^var{1} MyList p) -> int32
 )_____");
 }
 
-CERO_TEST(ExpectArrowAfterFuncTypeParams)
-{
+CERO_TEST(ExpectArrowAfterFuncTypeParams) {
 	ExhaustiveReporter r;
 	r.expect(2, 12, cero::Message::ExpectArrowAfterFuncTypeParams, "name `f`");
 
@@ -409,8 +388,7 @@ a(^(int32 x = 0)->int32 f) -> int32
 )_____");
 }
 
-CERO_TEST(AmbiguousOperatorChaining)
-{
+CERO_TEST(AmbiguousOperatorChaining) {
 	ExhaustiveReporter r;
 	r.expect(4, 20, cero::Message::AmbiguousOperatorChaining, "==");
 	r.expect(4, 25, cero::Message::AmbiguousOperatorChaining, "==");
@@ -435,8 +413,7 @@ f(bool a, bool b, bool c, bool d)
 )_____");
 }
 
-CERO_TEST(AmbiguousOperatorMixing)
-{
+CERO_TEST(AmbiguousOperatorMixing) {
 	ExhaustiveReporter r;
 	r.expect(4, 19, cero::Message::AmbiguousOperatorMixing, ">", "==");
 	r.expect(4, 24, cero::Message::AmbiguousOperatorMixing, "==", "<");

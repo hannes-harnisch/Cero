@@ -2,8 +2,7 @@
 
 #include <cstdint>
 
-namespace cero
-{
+namespace cero {
 
 bool is_dec_digit(char c);
 bool is_hex_digit(char c);

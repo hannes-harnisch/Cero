@@ -1,25 +1,24 @@
 #pragma once
 
-#include "cero/util/Traits.hpp"
 #include "util/Macros.hpp"
 
-namespace cero
-{
+namespace cero {
 
 template<typename D>
-class Defer : public Immovable
-{
+class Defer {
 	D deferred;
 
 public:
 	Defer(D&& deferred) :
-		deferred(std::move(deferred))
-	{}
+		deferred(std::move(deferred)) {
+	}
 
-	~Defer()
-	{
+	~Defer() {
 		deferred();
 	}
+
+	Defer(const Defer&)			   = delete;
+	Defer& operator=(const Defer&) = delete;
 };
 
 } // namespace cero

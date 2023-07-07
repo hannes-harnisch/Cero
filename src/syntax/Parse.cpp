@@ -1,21 +1,16 @@
-#include "cero/syntax/Parse.hpp"
+#include "Parse.hpp"
 
-#include "cero/syntax/AstBuilder.hpp"
-#include "cero/syntax/Lex.hpp"
-#include "cero/syntax/Literal.hpp"
-#include "cero/util/LookupTable.hpp"
-#include "syntax/AstString.hpp"
+#include "syntax/Lex.hpp"
+#include "syntax/Literal.hpp"
 #include "syntax/ParseCursor.hpp"
 #include "util/Algorithm.hpp"
 #include "util/Defer.hpp"
 #include "util/Fail.hpp"
 
-namespace cero
-{
+namespace cero {
 
-class Parser
-{
-	AstBuilder	  ast;
+class Parser {
+	Ast			  ast;
 	const Source& source;
 	Reporter&	  reporter;
 	ParseCursor	  cursor;
@@ -27,28 +22,25 @@ public:
 	Parser(const TokenStream& token_stream, const Source& source, Reporter& reporter) :
 		source(source),
 		reporter(reporter),
-		cursor(token_stream)
-	{}
+		cursor(token_stream) {
+	}
 
-	SyntaxTree parse()
-	{
-		while (!cursor.match(Token::EndOfFile))
-		{
-			try
-			{
-				ast.add_to_root(parse_definition());
-			}
-			catch (ParseError)
-			{
-				synchronize_definition();
+	Ast parse() {
+		std::vector<AstNode> definitions;
+		while (!cursor.match(Token::EndOfFile)) {
+			try {
+				definitions.emplace_back(parse_definition());
+			} catch (ParseError) {
+				synchronize_at_definition_scope();
 			}
 		}
-		return SyntaxTree(std::move(ast));
+		auto defs = ast.store_multiple(definitions);
+		ast.store(AstRoot {defs});
+		return std::move(ast);
 	}
 
 private:
-	enum class Precedence : uint8_t
-	{
+	enum class Precedence : uint8_t {
 		Statement,
 		Assignment,
 		Logical,
@@ -60,25 +52,22 @@ private:
 		Postfix
 	};
 
-	using PrefixParse	 = Expression (Parser::*)();
-	using NonPrefixParse = Expression (Parser::*)(ExpressionId);
+	using PrefixParse	 = AstNode (Parser::*)();
+	using NonPrefixParse = AstNode (Parser::*)(AstId);
 
-	struct NonPrefixParseRule
-	{
+	struct NonPrefixParseRule {
 		Precedence	   precedence = Precedence::Statement;
-		NonPrefixParse parse_func = nullptr;
+		NonPrefixParse func		  = nullptr;
 	};
 
-	struct ParseError
-	{};
+	struct ParseError {};
 
-	DefinitionId parse_definition()
-	{
-		auto access_specifier = ast::AccessSpecifier::None;
+	AstNode parse_definition() {
+		auto access_specifier = AccessSpecifier::None;
 		if (cursor.match(Token::Private))
-			access_specifier = ast::AccessSpecifier::Private;
+			access_specifier = AccessSpecifier::Private;
 		else if (cursor.match(Token::Public))
-			access_specifier = ast::AccessSpecifier::Public;
+			access_specifier = AccessSpecifier::Public;
 
 		if (cursor.match(Token::Name))
 			return parse_function(access_specifier);
@@ -93,53 +82,45 @@ private:
 		throw ParseError();
 	}
 
-	void synchronize_definition()
-	{
+	void synchronize_at_definition_scope() {
 		static constexpr Token sync_points[] {Token::Public, Token::Private, Token::Struct, Token::Enum, Token::EndOfFile};
 
 		Token kind;
-		do
-		{
+		do {
 			cursor.advance();
 			kind = cursor.peek_kind();
-		}
-		while (!contains(sync_points, kind));
+		} while (!contains(sync_points, kind));
 	}
 
-	DefinitionId parse_struct(ast::AccessSpecifier)
-	{
+	AstNode parse_struct(AccessSpecifier) {
 		to_do();
 	}
 
-	DefinitionId parse_enum(ast::AccessSpecifier)
-	{
+	AstNode parse_enum(AccessSpecifier) {
 		to_do();
 	}
 
-	DefinitionId parse_function(ast::AccessSpecifier access_specifier)
-	{
+	AstNode parse_function(AccessSpecifier access_specifier) {
 		auto name = cursor.previous().get_lexeme(source);
 		expect(Token::LeftParen, Message::ExpectParenAfterFuncName);
 
 		auto parameters = parse_function_definition_parameters();
-		auto outputs	= parse_function_outputs();
+		auto outputs	= parse_function_definition_outputs();
 		expect(Token::LeftBrace, Message::ExpectBraceBeforeFuncBody);
 
 		auto statements = parse_block();
-		return ast.store(ast::Function {
+		return {AstFunctionDefinition {
 			access_specifier,
 			name,
 			std::move(parameters),
 			std::move(outputs),
-			std::move(statements),
-		});
+			statements,
+		}};
 	}
 
-	std::vector<ast::Function::Parameter> parse_function_definition_parameters()
-	{
-		std::vector<ast::Function::Parameter> parameters;
-		if (!cursor.match(Token::RightParen))
-		{
+	std::vector<AstFunctionDefinition::Parameter> parse_function_definition_parameters() {
+		std::vector<AstFunctionDefinition::Parameter> parameters;
+		if (!cursor.match(Token::RightParen)) {
 			do
 				parameters.emplace_back(parse_function_definition_parameter());
 			while (cursor.match(Token::Comma));
@@ -148,41 +129,37 @@ private:
 		return parameters;
 	}
 
-	ast::Function::Parameter parse_function_definition_parameter()
-	{
-		auto specifier = ast::ParameterSpecifier::In;
-		if (cursor.match(Token::Let))
-			specifier = ast::ParameterSpecifier::Let;
+	AstFunctionDefinition::Parameter parse_function_definition_parameter() {
+		auto specifier = ParameterSpecifier::None;
+		if (cursor.match(Token::In))
+			specifier = ParameterSpecifier::In;
 		else if (cursor.match(Token::Var))
-			specifier = ast::ParameterSpecifier::Var;
+			specifier = ParameterSpecifier::Var;
 
-		auto type = parse_type();
+		auto type = ast.store(parse_type());
 		auto name = expect_name(Message::ExpectParamName);
 		if (name.empty())
 			throw ParseError();
 
-		OptionalExpressionId default_argument;
+		OptionalAstId default_argument;
 		if (cursor.match(Token::Equals))
-			default_argument = parse_expression();
+			default_argument = ast.store(parse_expression());
 
-		return {specifier, name, type, default_argument};
+		return {specifier, type, name, default_argument};
 	}
 
-	std::vector<ast::FunctionOutput> parse_function_outputs()
-	{
-		std::vector<ast::FunctionOutput> outputs;
-		if (cursor.match(Token::ThinArrow))
-		{
+	std::vector<AstFunctionDefinition::Output> parse_function_definition_outputs() {
+		std::vector<AstFunctionDefinition::Output> outputs;
+		if (cursor.match(Token::ThinArrow)) {
 			do
-				outputs.emplace_back(parse_function_output());
+				outputs.emplace_back(parse_function_definition_output());
 			while (cursor.match(Token::Comma));
 		}
 		return outputs;
 	}
 
-	ast::FunctionOutput parse_function_output()
-	{
-		auto type = parse_type();
+	AstFunctionDefinition::Output parse_function_definition_output() {
+		auto type = ast.store(parse_type());
 
 		std::string_view name;
 		if (auto token = cursor.match(Token::Name))
@@ -191,24 +168,19 @@ private:
 		return {type, name};
 	}
 
-	std::vector<ExpressionId> parse_block()
-	{
+	AstIdSet parse_block() {
 		uint32_t saved_expr_depth = expr_depth;
 		uint32_t saved_angles	  = open_angles;
 
 		expr_depth	= 0;
 		open_angles = 0;
 
-		std::vector<ExpressionId> statements;
-		while (!cursor.match(Token::RightBrace))
-		{
-			try
-			{
+		std::vector<AstNode> statements;
+		while (!cursor.match(Token::RightBrace)) {
+			try {
 				statements.emplace_back(parse_statement());
-			}
-			catch (ParseError)
-			{
-				bool at_end = synchronize_statement();
+			} catch (ParseError) {
+				bool at_end = synchronize_at_statement_scope();
 				if (at_end)
 					break;
 			}
@@ -216,16 +188,13 @@ private:
 
 		expr_depth	= saved_expr_depth;
 		open_angles = saved_angles;
-		return statements;
+		return ast.store_multiple(statements);
 	}
 
-	bool synchronize_statement()
-	{
+	bool synchronize_at_statement_scope() {
 		Token kind = cursor.peek_kind();
-		while (kind != Token::EndOfFile)
-		{
-			if (kind == Token::Semicolon)
-			{
+		while (kind != Token::EndOfFile) {
+			if (kind == Token::Semicolon) {
 				cursor.advance();
 				return false;
 			}
@@ -238,72 +207,70 @@ private:
 		return true;
 	}
 
-	ExpressionId parse_statement()
-	{
+	AstNode parse_statement() {
 		auto expression = parse_expression();
 
 		auto kind = cursor.previous().kind;
-		if (kind != Token::RightBrace && kind != Token::Semicolon)
-			if (auto name = cursor.match(Token::Name))
-				expression = ast.store(on_trailing_name(expression, *name));
+		if (kind != Token::RightBrace && kind != Token::Semicolon) {
+			if (auto name = cursor.match(Token::Name)) {
+				expression = on_trailing_name(std::move(expression), *name);
+			}
+		}
 
 		terminate_statement();
 		return expression;
 	}
 
-	void terminate_statement()
-	{
+	void terminate_statement() {
 		auto kind = cursor.previous().kind;
 		if (kind != Token::RightBrace && kind != Token::Semicolon)
 			expect(Token::Semicolon, Message::ExpectSemicolon);
 	}
 
-	Expression on_trailing_name(ExpressionId left, LexicalToken name_token)
-	{
-		auto& node = ast.get(left);
-		if (!holds_any_of<ast::Identifier, ast::GenericIdentifier, ast::MemberAccess, ast::ArrayType, ast::PointerType,
-						  ast::FunctionType>(node))
-		{
+	AstNode on_trailing_name(AstNode left_expr, LexicalToken name_token) {
+		auto type = left_expr.get_type();
+
+		using enum AstNodeKind;
+		if (type != IdentifierExpr && type != GenericIdentifierExpr && type != MemberExpr && type != ArrayTypeExpr
+			&& type != PointerTypeExpr && type != FunctionTypeExpr) {
 			report_expectation(Message::ExpectSemicolon, name_token);
 			throw ParseError();
 		}
 
 		auto name = name_token.get_lexeme(source);
+		auto left = ast.store(std::move(left_expr));
 
-		OptionalExpressionId initializer;
+		OptionalAstId initializer;
 		if (cursor.match(Token::Equals))
-			initializer = parse_expression();
+			initializer = ast.store(parse_expression());
 
-		return ast::Binding {ast::Binding::Specifier::Let, name, left, initializer};
+		return {AstBindingStatement {BindingSpecifier::Let, left, name, initializer}};
 	}
 
-	ExpressionId parse_expression(Precedence precedence = Precedence::Statement)
-	{
+	AstNode parse_expression(Precedence precedence = Precedence::Statement) {
 		auto next = cursor.next();
 
-		auto parse_prefix = PREFIX_PARSES[next.kind];
-		if (parse_prefix == nullptr)
-		{
+		auto parse_prefix = lookup_prefix_parse(next.kind);
+		if (parse_prefix == nullptr) {
 			report_expectation(Message::ExpectExpr, next);
 			throw ParseError();
 		}
 
 		++expr_depth;
-		defer
-		{
+		defer {
 			--expr_depth;
 		};
 
 		cursor.advance();
-		auto expression = ast.store((this->*parse_prefix)());
-		while (auto parse = get_next_non_prefix_parse(precedence))
-			expression = ast.store((this->*parse)(expression));
+		auto expression = (this->*parse_prefix)();
+		while (auto parse = get_next_non_prefix_parse(precedence)) {
+			expression = (this->*parse)(ast.store(std::move(expression)));
+		}
 
 		return expression;
 	}
 
-	NonPrefixParse get_next_non_prefix_parse(Precedence current_precedence)
-	{
+	NonPrefixParse get_next_non_prefix_parse(Precedence current_precedence) {
 		auto token = cursor.next();
 
 		if (token.kind == Token::RightAngle && open_angles != 0)
@@ -317,162 +284,145 @@ private:
 		return parse;
 	}
 
-	NonPrefixParseRule find_non_prefix_parse(LexicalToken token)
-	{
+	NonPrefixParseRule find_non_prefix_parse(LexicalToken token) {
 		if (token.kind != Token::RightAngle)
-			return NON_PREFIX_PARSES[token.kind];
+			return lookup_non_prefix_parse(token.kind);
 
 		auto saved = cursor;
 		cursor.advance();
 		auto next = cursor.next();
 		if (next.kind == Token::RightAngle && next.offset == token.offset + 1)
-			return {Precedence::Bitwise, &Parser::on_infix_operator<ast::BinaryOperator::RightShift, Precedence::Bitwise>};
+			return {Precedence::Bitwise, &Parser::on_infix_operator<BinaryOperator::RightShift, Precedence::Bitwise>};
 
 		cursor = saved;
-		return {Precedence::Comparison, &Parser::on_infix_operator<ast::BinaryOperator::Greater, Precedence::Comparison>};
+		return {Precedence::Comparison, &Parser::on_infix_operator<BinaryOperator::Greater, Precedence::Comparison>};
 	}
 
-	Expression on_if()
-	{
-		auto condition = parse_expression();
+	AstNode on_if() {
+		auto condition = ast.store(parse_expression());
 		expect_colon_or_block();
 
-		auto then_expr = parse_expression();
+		auto then_expr = ast.store(parse_expression());
 		if (expr_depth == 1)
 			terminate_statement();
 
-		OptionalExpressionId else_expr;
+		OptionalAstId else_expr;
 		if (cursor.match(Token::Else))
-			else_expr = parse_expression();
+			else_expr = ast.store(parse_expression());
 
-		return ast::If {condition, then_expr, else_expr};
+		return {AstIfStatement {condition, then_expr, else_expr}};
 	}
 
-	Expression on_while()
-	{
-		auto condition = parse_expression();
+	AstNode on_while() {
+		auto condition = ast.store(parse_expression());
 		expect_colon_or_block();
-		auto statement = parse_expression();
-		return ast::WhileLoop {condition, statement};
+		auto statement = ast.store(parse_expression());
+		return {AstWhileLoop {condition, statement}};
 	}
 
-	Expression on_for()
-	{
+	AstNode on_for() {
 		to_do();
 	}
 
-	Expression on_left_brace()
-	{
-		return ast::Block {parse_block()};
+	AstNode on_left_brace() {
+		return {AstBlockStatement {parse_block()}};
 	}
 
-	void expect_colon_or_block()
-	{
-		if (auto colon = cursor.match(Token::Colon))
-		{
+	void expect_colon_or_block() {
+		if (auto colon = cursor.match(Token::Colon)) {
 			auto next = cursor.next();
 			if (next.kind == Token::LeftBrace)
 				report(Message::UnnecessaryColonBeforeBlock, colon->locate_in(source));
-		}
-		else
-		{
+		} else {
 			auto next = cursor.next();
 			if (next.kind != Token::LeftBrace)
 				report_expectation(Message::ExpectColonOrBlock, next);
 		}
 	}
 
-	Expression on_let()
-	{
+	AstNode on_let() {
 		auto name = expect_name(Message::ExpectNameAfterLet);
 
-		OptionalExpressionId initializer;
+		OptionalAstId initializer;
 		if (cursor.match(Token::Equals))
-			initializer = parse_expression();
+			initializer = ast.store(parse_expression());
 
-		return ast::Binding {ast::Binding::Specifier::Let, name, {}, initializer};
+		return {AstBindingStatement {BindingSpecifier::Let, {}, name, initializer}};
 	}
 
-	Expression on_var()
-	{
+	AstNode on_var() {
 		if (cursor.next_kind() == Token::LeftBrace)
-			return parse_variability();
+			return {parse_variability()};
 
-		return parse_binding(ast::Binding::Specifier::Var);
+		return {parse_binding(BindingSpecifier::Var)};
 	}
 
-	Expression on_const()
-	{
-		return parse_binding(ast::Binding::Specifier::Const);
+	AstNode on_const() {
+		return {parse_binding(BindingSpecifier::Const)};
 	}
 
-	Expression on_static()
-	{
-		auto specifier = ast::Binding::Specifier::Static;
+	AstNode on_static() {
+		auto specifier = BindingSpecifier::Static;
 		if (cursor.match(Token::Var))
-			specifier = ast::Binding::Specifier::StaticVar;
+			specifier = BindingSpecifier::StaticVar;
 
-		return parse_binding(specifier);
+		return {parse_binding(specifier)};
 	}
 
-	ast::Binding parse_binding(ast::Binding::Specifier specifier)
-	{
+	AstBindingStatement parse_binding(BindingSpecifier specifier) {
 		auto saved = cursor;
-		if (auto name_token = cursor.match(Token::Name))
-		{
-			if (cursor.match(Token::Equals))
-			{
+		if (auto name_token = cursor.match(Token::Name)) {
+			if (cursor.match(Token::Equals)) {
 				auto name		 = name_token->get_lexeme(source);
-				auto initializer = parse_expression();
-				return {specifier, name, {}, initializer};
+				auto initializer = ast.store(parse_expression());
+				return {specifier, {}, name, initializer};
 			}
 			cursor = saved;
 		}
 
-		auto type = parse_type();
+		auto type = ast.store(parse_type());
 		auto name = expect_name(Message::ExpectNameAfterDeclType);
 
-		OptionalExpressionId initializer;
+		OptionalAstId initializer;
 		if (cursor.match(Token::Equals))
-			initializer = parse_expression();
+			initializer = ast.store(parse_expression());
 
-		return {specifier, name, type, initializer};
+		return {specifier, type, name, initializer};
 	}
 
-	Expression on_name()
-	{
+	AstNode on_name() {
 		auto name = cursor.previous().get_lexeme(source);
 		return parse_identifier(name);
 	}
 
-	Expression parse_identifier(std::string_view name)
-	{
+	AstNode parse_identifier(std::string_view name) {
 		if (cursor.match(Token::LeftAngle))
 			return parse_generic_identifier(name);
 
-		return ast::Identifier {name};
+		return {AstIdentifierExpr {name}};
 	}
 
-	Expression parse_generic_identifier(std::string_view name)
-	{
+	AstNode parse_generic_identifier(std::string_view name) {
 		++open_angles;
 		--expr_depth;
-		defer
-		{
+		defer {
 			++expr_depth;
 			--open_angles;
 		};
 
-		std::vector<ExpressionId> generic_args;
-		if (!cursor.match(Token::RightAngle))
-		{
-			auto saved_cursor = cursor;
-			bool fall_back	  = should_fall_back_to_identifier();
-			cursor			  = saved_cursor;
-			if (fall_back)
-			{
+		std::vector<AstNode> generic_args;
+		if (!cursor.match(Token::RightAngle)) {
+			auto   saved_cursor		= cursor;
+			size_t saved_node_count = ast.ast_nodes.size();
+
+			bool fall_back = should_fall_back_to_identifier();
+
+			cursor = saved_cursor;
+			rescind_lookahead(saved_node_count);
+
+			if (fall_back) {
 				cursor.retreat();
-				return ast::Identifier {name};
+				return {AstIdentifierExpr {name}};
 			}
 
 			do
@@ -480,15 +430,13 @@ private:
 			while (cursor.match(Token::Comma));
 			cursor.advance();
 		}
-		return ast::GenericIdentifier {name, std::move(generic_args)};
+		return {AstGenericIdentifierExpr {name, ast.store_multiple(generic_args)}};
 	}
 
-	bool should_fall_back_to_identifier()
-	{
+	bool should_fall_back_to_identifier() {
 		bool saved	  = should_report;
 		should_report = false;
-		defer
-		{
+		defer {
 			should_report = saved;
 		};
 
@@ -501,310 +449,271 @@ private:
 											Token::CharLiteral,	  Token::StringLiteral, Token::Minus,
 											Token::Tilde,		  Token::Ampersand,		Token::Bang,
 											Token::PlusPlus,	  Token::MinusMinus};
-		if (cursor.match(Token::RightAngle))
-		{
+		if (cursor.match(Token::RightAngle)) {
 			auto kind = cursor.next_kind();
 			return (contains(fallbacks, kind) && expr_depth != 0) || (open_angles == 1 && kind == Token::RightAngle);
 		}
 		return true;
 	}
 
-	template<ast::NumericLiteral (*EVALUATE)(std::string_view)>
-	Expression on_numeric_literal()
-	{
+	template<AstNumericLiteralExpr (*EVALUATE)(std::string_view)>
+	AstNode on_numeric_literal() {
 		auto lexeme = cursor.previous().get_lexeme(source);
-		return EVALUATE(lexeme);
+		return {EVALUATE(lexeme)};
 	}
 
-	Expression on_string_literal()
-	{
+	AstNode on_string_literal() {
 		auto lexeme = cursor.previous().get_lexeme(source);
-		return evaluate_string_literal(lexeme);
+		return {evaluate_string_literal(lexeme)};
 	}
 
-	Expression on_prefix_left_paren()
-	{
-		return parse_call({}); // TODO: function type
-	}
-
-	Expression on_prefix_left_bracket()
-	{
-		return parse_array_type(); // TODO: array literal
-	}
-
-	std::vector<ExpressionId> parse_bracketed_arguments()
-	{
+	AstNode on_prefix_left_paren() { // TODO: function type
 		uint32_t saved = open_angles;
 		open_angles	   = 0;
-		defer
-		{
+		defer {
 			open_angles = saved;
 		};
 
-		std::vector<ExpressionId> arguments;
-		if (!cursor.match(Token::RightBracket))
-		{
-			do
-				arguments.emplace_back(parse_expression());
-			while (cursor.match(Token::Comma));
-			expect(Token::RightBracket, Message::ExpectBracketAfterIndex);
-		}
-		return arguments;
-	}
-
-	Expression on_break()
-	{
-		return ast::Break {parse_optional_expression()};
-	}
-
-	Expression on_continue()
-	{
-		return ast::Continue {parse_optional_expression()};
-	}
-
-	Expression on_return()
-	{
-		return ast::Return {parse_optional_expression()};
-	}
-
-	Expression on_throw()
-	{
-		return ast::Throw {parse_optional_expression()};
-	}
-
-	OptionalExpressionId parse_optional_expression()
-	{
-		auto next = cursor.next_kind();
-		if (PREFIX_PARSES[next] == nullptr)
-			return {};
-
-		return parse_expression();
-	}
-
-	template<ast::UnaryOperator O>
-	Expression on_prefix_operator()
-	{
-		auto right = parse_expression(Precedence::Prefix);
-		return ast::UnaryExpression {O, right};
-	}
-
-	template<ast::BinaryOperator O, Precedence P>
-	Expression on_infix_operator(ExpressionId left)
-	{
-		auto target = cursor.previous();
-		auto right	= parse_expression(P);
-		validate_associativity(O, left, right, target);
-		return ast::BinaryExpression {O, left, right};
-	}
-
-	template<ast::UnaryOperator O>
-	Expression on_postfix_operator(ExpressionId left)
-	{
-		return ast::UnaryExpression {O, left};
-	}
-
-	void validate_associativity(ast::BinaryOperator current, ExpressionId left_id, ExpressionId right_id, LexicalToken target)
-	{
-		auto& left_node	 = ast.get(left_id);
-		auto& right_node = ast.get(right_id);
-
-		if (auto right = std::get_if<ast::BinaryExpression>(&right_node))
-			validate_binary_associativity(current, right->op, target);
-
-		if (auto left = std::get_if<ast::BinaryExpression>(&left_node))
-			validate_binary_associativity(left->op, current, target);
-		else if (auto unary = std::get_if<ast::UnaryExpression>(&left_node))
-			validate_unary_binary_associativity(unary->op, current, target);
-	}
-
-	void validate_binary_associativity(ast::BinaryOperator left, ast::BinaryOperator right, LexicalToken target)
-	{
-		bool chains = false;
-		if (associates_arithmetic_and_bitwise(left, right) || associates_different_logical_operators(left, right)
-			|| associates_comparison_operators(left, right, chains))
-		{
-			auto location = target.locate_in(source);
-			if (chains)
-				report(Message::AmbiguousOperatorChaining, location, BINARY_OPERATOR_STRINGS[left]);
-			else
-				report(Message::AmbiguousOperatorMixing, location, BINARY_OPERATOR_STRINGS[left],
-					   BINARY_OPERATOR_STRINGS[right]);
-		}
-	}
-
-	static bool associates_arithmetic_and_bitwise(ast::BinaryOperator left, ast::BinaryOperator right)
-	{
-		static constexpr ast::BinaryOperator bitwise_operators[] {ast::BinaryOperator::BitAnd, ast::BinaryOperator::BitOr,
-																  ast::BinaryOperator::Xor, ast::BinaryOperator::LeftShift,
-																  ast::BinaryOperator::RightShift};
-
-		static constexpr ast::BinaryOperator arithmetic_operators[] {ast::BinaryOperator::Add,
-																	 ast::BinaryOperator::Subtract,
-																	 ast::BinaryOperator::Multiply,
-																	 ast::BinaryOperator::Divide,
-																	 ast::BinaryOperator::Remainder,
-																	 ast::BinaryOperator::Power};
-
-		return contains(bitwise_operators, left) ? contains(arithmetic_operators, right)
-												 : contains(arithmetic_operators, left) && contains(bitwise_operators, right);
-	}
-
-	static bool associates_different_logical_operators(ast::BinaryOperator left, ast::BinaryOperator right)
-	{
-		return left == ast::BinaryOperator::LogicalAnd
-				   ? right == ast::BinaryOperator::LogicalOr
-				   : left == ast::BinaryOperator::LogicalOr && right == ast::BinaryOperator::LogicalAnd;
-	}
-
-	static bool associates_comparison_operators(ast::BinaryOperator left, ast::BinaryOperator right, bool& chains)
-	{
-		static constexpr ast::BinaryOperator comparison_operators[] {ast::BinaryOperator::Equal,
-																	 ast::BinaryOperator::NotEqual,
-																	 ast::BinaryOperator::Less,
-																	 ast::BinaryOperator::Greater,
-																	 ast::BinaryOperator::LessEqual,
-																	 ast::BinaryOperator::GreaterEqual};
-
-		chains = left == right;
-		return contains(comparison_operators, left) && contains(comparison_operators, right);
-	}
-
-	void validate_unary_binary_associativity(ast::UnaryOperator left, ast::BinaryOperator right, LexicalToken target)
-	{
-		if (left == ast::UnaryOperator::Negate && right == ast::BinaryOperator::Power)
-		{
-			auto location = target.locate_in(source);
-			report(Message::AmbiguousOperatorMixing, location, "-", "**");
-		}
-	}
-
-	Expression on_dot(ExpressionId left)
-	{
-		auto member = expect_name(Message::ExpectNameAfterDot);
-		return ast::MemberAccess {left, member};
-	}
-
-	Expression on_infix_left_paren(ExpressionId left)
-	{
-		return parse_call(left);
-	}
-
-	Expression parse_call(OptionalExpressionId callee)
-	{
-		uint32_t saved = open_angles;
-		open_angles	   = 0;
-		defer
-		{
-			open_angles = saved;
-		};
-
-		std::vector<ExpressionId> arguments;
-		if (!cursor.match(Token::RightParen))
-		{
+		std::vector<AstNode> arguments;
+		if (!cursor.match(Token::RightParen)) {
 			do
 				arguments.emplace_back(parse_expression());
 			while (cursor.match(Token::Comma));
 			expect(Token::RightParen, Message::ExpectClosingParen);
 		}
-		return ast::Call {callee, std::move(arguments)};
+		return {AstGroupExpr {ast.store_multiple(arguments)}};
 	}
 
-	Expression on_infix_left_bracket(ExpressionId left)
-	{
-		return ast::Index {left, parse_bracketed_arguments()};
+	AstNode on_prefix_left_bracket() {
+		return parse_array_type(); // TODO: array literal
 	}
 
-	Expression on_caret()
-	{
+	AstIdSet parse_bracketed_arguments() {
+		uint32_t saved = open_angles;
+		open_angles	   = 0;
+		defer {
+			open_angles = saved;
+		};
+
+		std::vector<AstNode> arguments;
+		if (!cursor.match(Token::RightBracket)) {
+			do
+				arguments.emplace_back(parse_expression());
+			while (cursor.match(Token::Comma));
+			expect(Token::RightBracket, Message::ExpectBracketAfterIndex);
+		}
+		return ast.store_multiple(arguments);
+	}
+
+	AstNode on_break() {
+		return {AstBreakExpr {parse_optional_expression()}};
+	}
+
+	AstNode on_continue() {
+		return {AstContinueExpr {parse_optional_expression()}};
+	}
+
+	AstNode on_return() {
+		return {AstReturnExpr {parse_optional_expression()}};
+	}
+
+	AstNode on_throw() {
+		return {AstThrowExpr {parse_optional_expression()}};
+	}
+
+	OptionalAstId parse_optional_expression() {
+		auto next = cursor.next_kind();
+		if (lookup_prefix_parse(next) == nullptr)
+			return {};
+
+		return ast.store(parse_expression());
+	}
+
+	template<UnaryOperator O>
+	AstNode on_prefix_operator() {
+		auto right = ast.store(parse_expression(Precedence::Prefix));
+		return {AstUnaryExpr {O, right}};
+	}
+
+	template<BinaryOperator O, Precedence P>
+	AstNode on_infix_operator(AstId left) {
+		auto target = cursor.previous();
+		auto right	= ast.store(parse_expression(P));
+		validate_associativity(O, left, right, target);
+		return {AstBinaryExpr {O, left, right}};
+	}
+
+	template<UnaryOperator O>
+	AstNode on_postfix_operator(AstId left) {
+		return {AstUnaryExpr {O, left}};
+	}
+
+	void validate_associativity(BinaryOperator current, AstId left_id, AstId right_id, LexicalToken target) {
+		auto& left_node	 = ast.get(left_id);
+		auto& right_node = ast.get(right_id);
+
+		if (auto right = right_node.get<AstBinaryExpr>())
+			validate_binary_associativity(current, right->op, target);
+
+		if (auto left = left_node.get<AstBinaryExpr>())
+			validate_binary_associativity(left->op, current, target);
+		else if (auto unary = left_node.get<AstUnaryExpr>())
+			validate_unary_binary_associativity(unary->op, current, target);
+	}
+
+	void validate_binary_associativity(BinaryOperator left, BinaryOperator right, LexicalToken target) {
+		bool chains = false;
+		if (associates_arithmetic_and_bitwise(left, right) || associates_different_logical_operators(left, right)
+			|| associates_comparison_operators(left, right, chains)) {
+			auto location = target.locate_in(source);
+			if (chains)
+				report(Message::AmbiguousOperatorChaining, location, to_string(left));
+			else
+				report(Message::AmbiguousOperatorMixing, location, to_string(left), to_string(right));
+		}
+	}
+
+	static bool associates_arithmetic_and_bitwise(BinaryOperator left, BinaryOperator right) {
+		static constexpr BinaryOperator bitwise_operators[] {BinaryOperator::BitAnd, BinaryOperator::BitOr, BinaryOperator::Xor,
+															 BinaryOperator::LeftShift, BinaryOperator::RightShift};
+
+		static constexpr BinaryOperator arithmetic_operators[] {BinaryOperator::Add,	   BinaryOperator::Subtract,
+																BinaryOperator::Multiply,  BinaryOperator::Divide,
+																BinaryOperator::Remainder, BinaryOperator::Power};
+
+		if (contains(bitwise_operators, left))
+			return contains(arithmetic_operators, right);
+		else
+			return contains(arithmetic_operators, left) && contains(bitwise_operators, right);
+	}
+
+	static bool associates_different_logical_operators(BinaryOperator left, BinaryOperator right) {
+		if (left == BinaryOperator::LogicalAnd)
+			return right == BinaryOperator::LogicalOr;
+		else
+			return left == BinaryOperator::LogicalOr && right == BinaryOperator::LogicalAnd;
+	}
+
+	static bool associates_comparison_operators(BinaryOperator left, BinaryOperator right, bool& chains) {
+		static constexpr BinaryOperator comparison_operators[] {BinaryOperator::Equal,	   BinaryOperator::NotEqual,
+																BinaryOperator::Less,	   BinaryOperator::Greater,
+																BinaryOperator::LessEqual, BinaryOperator::GreaterEqual};
+
+		chains = left == right;
+		return contains(comparison_operators, left) && contains(comparison_operators, right);
+	}
+
+	void validate_unary_binary_associativity(UnaryOperator left, BinaryOperator right, LexicalToken target) {
+		if (left == UnaryOperator::Negate && right == BinaryOperator::Power) {
+			auto location = target.locate_in(source);
+			report(Message::AmbiguousOperatorMixing, location, "-", "**");
+		}
+	}
+
+	AstNode on_dot(AstId left) {
+		auto member = expect_name(Message::ExpectNameAfterDot);
+		return {AstMemberExpr {left, member}};
+	}
+
+	AstNode on_infix_left_paren(AstId left) {
+		uint32_t saved = open_angles;
+		open_angles	   = 0;
+		defer {
+			open_angles = saved;
+		};
+
+		std::vector<AstNode> arguments;
+		if (!cursor.match(Token::RightParen)) {
+			do
+				arguments.emplace_back(parse_expression());
+			while (cursor.match(Token::Comma));
+			expect(Token::RightParen, Message::ExpectClosingParen);
+		}
+		return {AstCallExpr {left, ast.store_multiple(arguments)}};
+	}
+
+	AstNode on_infix_left_bracket(AstId left) {
+		return {AstIndexExpr {left, parse_bracketed_arguments()}};
+	}
+
+	AstNode on_caret() {
 		return parse_pointer_type();
 	}
 
-	ast::Variability parse_variability()
-	{
-		auto specifier = ast::Variability::Specifier::Var;
+	AstVariabilityExpr parse_variability() {
+		auto specifier = VariabilitySpecifier::Var;
 
-		std::vector<ExpressionId> arguments;
-		if (cursor.match(Token::LeftBrace))
-		{
+		std::vector<AstNode> arguments;
+		if (cursor.match(Token::LeftBrace)) {
 			uint32_t saved = open_angles;
 			open_angles	   = 0;
-			defer
-			{
+			defer {
 				open_angles = saved;
 			};
 
-			specifier = ast::Variability::Specifier::VarBounded;
-			if (!cursor.match(Token::RightBrace))
-			{
+			specifier = VariabilitySpecifier::VarBounded;
+			if (!cursor.match(Token::RightBrace)) {
 				do
 					arguments.emplace_back(parse_expression());
 				while (cursor.match(Token::Comma));
 
 				if (cursor.match(Token::Ellipsis))
-					specifier = ast::Variability::Specifier::VarUnbounded;
+					specifier = VariabilitySpecifier::VarUnbounded;
 
 				expect(Token::RightBrace, Message::ExpectBraceAfterVariability);
 			}
 		}
-		return {specifier, std::move(arguments)};
+		return {specifier, ast.store_multiple(arguments)};
 	}
 
-	ExpressionId parse_type()
-	{
+	AstNode parse_type() {
 		const auto saved = expr_depth;
 		expr_depth		 = 1;
-		defer
-		{
+		defer {
 			expr_depth = saved;
 		};
 
 		if (cursor.match(Token::Caret))
-			return ast.store(parse_pointer_type());
+			return parse_pointer_type();
 		if (cursor.match(Token::LeftBracket))
-			return ast.store(parse_array_type());
+			return parse_array_type();
 		if (cursor.match(Token::LeftParen))
-			return ast.store(parse_function_type());
+			return parse_function_type();
 
 		auto name = expect_name(Message::ExpectType);
-		return ast.store(parse_identifier(name));
+		return parse_identifier(name);
 	}
 
-	Expression parse_array_type()
-	{
-		OptionalExpressionId bound;
-		if (!cursor.match(Token::RightBracket))
-		{
-			bound = parse_expression();
+	AstNode parse_array_type() {
+		OptionalAstId bound;
+		if (!cursor.match(Token::RightBracket)) {
+			bound = ast.store(parse_expression());
 			expect(Token::RightBracket, Message::ExpectBracketAfterArrayBound);
 		}
 
-		auto type = parse_type();
-		return ast::ArrayType {bound, type};
+		auto type = ast.store(parse_type());
+		return {AstArrayTypeExpr {bound, type}};
 	}
 
-	Expression parse_pointer_type()
-	{
-		ast::Variability variability;
+	AstNode parse_pointer_type() {
+		AstVariabilityExpr variability;
 		if (cursor.match(Token::Var))
 			variability = parse_variability();
 
-		auto type = parse_type();
-		return ast::PointerType {variability, type};
+		auto type = ast.store(parse_type());
+		return {AstPointerTypeExpr {variability, type}};
 	}
 
-	Expression parse_function_type()
-	{
+	AstNode parse_function_type() {
 		auto parameters = parse_function_type_parameters();
 		expect(Token::ThinArrow, Message::ExpectArrowAfterFuncTypeParams);
 		auto outputs = parse_function_type_outputs();
-		return ast::FunctionType {std::move(parameters), std::move(outputs)};
+		return {AstFunctionTypeExpr {std::move(parameters), std::move(outputs)}};
 	}
 
-	std::vector<ast::FunctionType::Parameter> parse_function_type_parameters()
-	{
-		std::vector<ast::FunctionType::Parameter> parameters;
-		if (!cursor.match(Token::RightParen))
-		{
+	std::vector<AstFunctionTypeExpr::Parameter> parse_function_type_parameters() {
+		std::vector<AstFunctionTypeExpr::Parameter> parameters;
+		if (!cursor.match(Token::RightParen)) {
 			do
 				parameters.emplace_back(parse_function_type_parameter());
 			while (cursor.match(Token::Comma));
@@ -813,65 +722,65 @@ private:
 		return parameters;
 	}
 
-	ast::FunctionType::Parameter parse_function_type_parameter()
-	{
-		auto specifier = ast::ParameterSpecifier::In;
-		if (cursor.match(Token::Let))
-			specifier = ast::ParameterSpecifier::Let;
+	AstFunctionTypeExpr::Parameter parse_function_type_parameter() {
+		auto specifier = ParameterSpecifier::None;
+		if (cursor.match(Token::In))
+			specifier = ParameterSpecifier::In;
 		else if (cursor.match(Token::Var))
-			specifier = ast::ParameterSpecifier::Var;
+			specifier = ParameterSpecifier::Var;
 
-		auto type = parse_type();
+		auto type = ast.store(parse_type());
 
 		std::string_view name;
 		if (auto name_token = cursor.match(Token::Name))
 			name = name_token->get_lexeme(source);
 
-		if (auto equal = cursor.match(Token::Equals))
-		{
+		if (auto equal = cursor.match(Token::Equals)) {
 			auto location = equal->locate_in(source);
 			report(Message::FuncTypeDefaultArgument, location);
 			throw ParseError();
 		}
-		return {specifier, name, type};
+		return {specifier, type, name};
 	}
 
-	std::vector<ast::FunctionOutput> parse_function_type_outputs()
-	{
-		std::vector<ast::FunctionOutput> outputs;
-		if (cursor.match(Token::LeftParen))
-		{
+	std::vector<AstFunctionTypeExpr::Output> parse_function_type_outputs() {
+		std::vector<AstFunctionTypeExpr::Output> outputs;
+		if (cursor.match(Token::LeftParen)) {
 			do
-				outputs.emplace_back(parse_function_output());
+				outputs.emplace_back(parse_function_type_output());
 			while (cursor.match(Token::Comma));
 			expect(Token::RightParen, Message::ExpectParenAfterOutputs);
-		}
-		else
-		{
-			auto type = parse_type();
-			outputs.emplace_back(ast::FunctionOutput {type, std::string_view()});
+		} else {
+			auto type = ast.store(parse_type());
+			outputs.emplace_back(AstFunctionTypeExpr::Output {type, std::string_view()});
 		}
 
 		return outputs;
 	}
 
-	void expect(Token kind, CheckedMessage<std::string> message)
-	{
+	AstFunctionTypeExpr::Output parse_function_type_output() {
+		auto type = ast.store(parse_type());
+
+		std::string_view name;
+		if (auto token = cursor.match(Token::Name))
+			name = token->get_lexeme(source);
+
+		return {type, name};
+	}
+
+	void expect(Token kind, Message message) {
 		auto token = cursor.next();
 		if (token.kind == kind)
 			cursor.advance();
-		else
-		{
+		else {
 			report_expectation(message, token);
 			throw ParseError();
 		}
 	}
 
-	std::string_view expect_name(CheckedMessage<std::string> message)
-	{
+	std::string_view expect_name(Message message) {
 		auto token = cursor.next();
-		if (token.kind == Token::Name)
-		{
+		if (token.kind == Token::Name) {
 			cursor.advance();
 			return token.get_lexeme(source);
 		}
@@ -880,112 +789,113 @@ private:
 		return {};
 	}
 
-	void report_expectation(CheckedMessage<std::string> message, LexicalToken unexpected)
-	{
+	void rescind_lookahead(size_t saved_node_count) {
+		auto first = ast.ast_nodes.begin() + static_cast<ptrdiff_t>(saved_node_count);
+		ast.ast_nodes.erase(first, ast.ast_nodes.end());
+	}
+
+	void report_expectation(Message message, LexicalToken unexpected) {
 		auto location = unexpected.locate_in(source);
 		report(message, location, unexpected.to_message_string(source));
 	}
 
 	template<typename... Args>
-	void report(CheckedMessage<Args...> message, SourceLocation location, Args&&... args)
-	{
+	void report(Message message, SourceLocation location, Args&&... args) {
 		if (should_report)
 			reporter.report(message, location, std::forward<Args>(args)...);
 	}
 
-	static constexpr LookupTable<Token, PrefixParse> PREFIX_PARSES = []
-	{
+	static PrefixParse lookup_prefix_parse(Token kind) {
 		using enum Token;
-		using enum ast::UnaryOperator;
+		using enum UnaryOperator;
 
-		LookupTable<Token, PrefixParse> t;
-		t[Name]			 = &Parser::on_name;
-		t[If]			 = &Parser::on_if;
-		t[While]		 = &Parser::on_while;
-		t[For]			 = &Parser::on_for;
-		t[LeftBrace]	 = &Parser::on_left_brace;
-		t[Let]			 = &Parser::on_let;
-		t[Var]			 = &Parser::on_var;
-		t[Static]		 = &Parser::on_static;
-		t[Const]		 = &Parser::on_const;
-		t[DecIntLiteral] = &Parser::on_numeric_literal<evaluate_dec_int_literal>;
-		t[HexIntLiteral] = &Parser::on_numeric_literal<evaluate_hex_int_literal>;
-		t[BinIntLiteral] = &Parser::on_numeric_literal<evaluate_bin_int_literal>;
-		t[OctIntLiteral] = &Parser::on_numeric_literal<evaluate_oct_int_literal>;
-		t[FloatLiteral]	 = &Parser::on_numeric_literal<evaluate_float_literal>;
-		t[CharLiteral]	 = &Parser::on_numeric_literal<evaluate_char_literal>;
-		t[StringLiteral] = &Parser::on_string_literal;
-		t[LeftParen]	 = &Parser::on_prefix_left_paren;
-		t[LeftBracket]	 = &Parser::on_prefix_left_bracket;
-		t[Break]		 = &Parser::on_break;
-		t[Continue]		 = &Parser::on_continue;
-		t[Return]		 = &Parser::on_return;
-		t[Throw]		 = &Parser::on_throw;
-		t[Ampersand]	 = &Parser::on_prefix_operator<AddressOf>;
-		t[Minus]		 = &Parser::on_prefix_operator<Negate>;
-		t[Bang]			 = &Parser::on_prefix_operator<LogicalNot>;
-		t[Tilde]		 = &Parser::on_prefix_operator<BitwiseNot>;
-		t[PlusPlus]		 = &Parser::on_prefix_operator<PreIncrement>;
-		t[MinusMinus]	 = &Parser::on_prefix_operator<PreDecrement>;
-		t[Caret]		 = &Parser::on_caret;
-		return t;
-	}();
+		switch (kind) {
+			case Name: return &Parser::on_name;
+			case If: return &Parser::on_if;
+			case While: return &Parser::on_while;
+			case For: return &Parser::on_for;
+			case LeftBrace: return &Parser::on_left_brace;
+			case Let: return &Parser::on_let;
+			case Var: return &Parser::on_var;
+			case Static: return &Parser::on_static;
+			case Const: return &Parser::on_const;
+			case DecIntLiteral: return &Parser::on_numeric_literal<evaluate_dec_int_literal>;
+			case HexIntLiteral: return &Parser::on_numeric_literal<evaluate_hex_int_literal>;
+			case BinIntLiteral: return &Parser::on_numeric_literal<evaluate_bin_int_literal>;
+			case OctIntLiteral: return &Parser::on_numeric_literal<evaluate_oct_int_literal>;
+			case FloatLiteral: return &Parser::on_numeric_literal<evaluate_float_literal>;
+			case CharLiteral: return &Parser::on_numeric_literal<evaluate_char_literal>;
+			case StringLiteral: return &Parser::on_string_literal;
+			case LeftParen: return &Parser::on_prefix_left_paren;
+			case LeftBracket: return &Parser::on_prefix_left_bracket;
+			case Break: return &Parser::on_break;
+			case Continue: return &Parser::on_continue;
+			case Return: return &Parser::on_return;
+			case Throw: return &Parser::on_throw;
+			case Ampersand: return &Parser::on_prefix_operator<AddressOf>;
+			case Minus: return &Parser::on_prefix_operator<Negate>;
+			case Bang: return &Parser::on_prefix_operator<LogicalNot>;
+			case Tilde: return &Parser::on_prefix_operator<BitwiseNot>;
+			case PlusPlus: return &Parser::on_prefix_operator<PreIncrement>;
+			case MinusMinus: return &Parser::on_prefix_operator<PreDecrement>;
+			case Caret: return &Parser::on_caret;
+			default: return nullptr;
+		}
+	}
 
-	static constexpr LookupTable<Token, NonPrefixParseRule> NON_PREFIX_PARSES = []
-	{
+	static NonPrefixParseRule lookup_non_prefix_parse(Token kind) {
 		using enum Token;
 		using enum Precedence;
-		using enum ast::UnaryOperator;
-		using enum ast::BinaryOperator;
+		using enum UnaryOperator;
+		using enum BinaryOperator;
 
-		LookupTable<Token, NonPrefixParseRule> t;
-		t[Equals]				 = {Assignment, &Parser::on_infix_operator<Assign, Assignment>};
-		t[PlusEquals]			 = {Assignment, &Parser::on_infix_operator<AddAssign, Assignment>};
-		t[MinusEquals]			 = {Assignment, &Parser::on_infix_operator<SubtractAssign, Assignment>};
-		t[StarEquals]			 = {Assignment, &Parser::on_infix_operator<MultiplyAssign, Assignment>};
-		t[SlashEquals]			 = {Assignment, &Parser::on_infix_operator<DivideAssign, Assignment>};
-		t[PercentEquals]		 = {Assignment, &Parser::on_infix_operator<RemainderAssign, Assignment>};
-		t[StarStarEquals]		 = {Assignment, &Parser::on_infix_operator<PowerAssign, Assignment>};
-		t[AmpersandEquals]		 = {Assignment, &Parser::on_infix_operator<AndAssign, Assignment>};
-		t[PipeEquals]			 = {Assignment, &Parser::on_infix_operator<OrAssign, Assignment>};
-		t[TildeEquals]			 = {Assignment, &Parser::on_infix_operator<XorAssign, Assignment>};
-		t[LeftAngleAngleEquals]	 = {Assignment, &Parser::on_infix_operator<LeftShiftAssign, Assignment>};
-		t[RightAngleAngleEquals] = {Assignment, &Parser::on_infix_operator<RightShiftAssign, Assignment>};
-		t[AmpersandAmpersand]	 = {Logical, &Parser::on_infix_operator<LogicalAnd, Logical>};
-		t[PipePipe]				 = {Logical, &Parser::on_infix_operator<LogicalOr, Logical>};
-		t[EqualsEquals]			 = {Comparison, &Parser::on_infix_operator<Equal, Comparison>};
-		t[BangEquals]			 = {Comparison, &Parser::on_infix_operator<NotEqual, Comparison>};
-		t[LeftAngle]			 = {Comparison, &Parser::on_infix_operator<Less, Comparison>};
-		t[LeftAngleEquals]		 = {Comparison, &Parser::on_infix_operator<LessEqual, Comparison>};
-		t[RightAngleEquals]		 = {Comparison, &Parser::on_infix_operator<GreaterEqual, Comparison>};
-		t[Plus]					 = {Additive, &Parser::on_infix_operator<Add, Additive>};
-		t[Minus]				 = {Additive, &Parser::on_infix_operator<Subtract, Additive>};
-		t[Ampersand]			 = {Bitwise, &Parser::on_infix_operator<BitAnd, Bitwise>};
-		t[Pipe]					 = {Bitwise, &Parser::on_infix_operator<BitOr, Bitwise>};
-		t[Tilde]				 = {Bitwise, &Parser::on_infix_operator<Xor, Bitwise>};
-		t[LeftAngleAngle]		 = {Bitwise, &Parser::on_infix_operator<LeftShift, Bitwise>};
-		t[Star]					 = {Multiplicative, &Parser::on_infix_operator<Multiply, Multiplicative>};
-		t[Slash]				 = {Multiplicative, &Parser::on_infix_operator<Divide, Multiplicative>};
-		t[Percent]				 = {Multiplicative, &Parser::on_infix_operator<Remainder, Multiplicative>};
-		t[StarStar]				 = {Prefix, &Parser::on_infix_operator<Power, Multiplicative>}; // lower for right-associativity
-		t[Caret]				 = {Postfix, &Parser::on_postfix_operator<Dereference>};
-		t[PlusPlus]				 = {Postfix, &Parser::on_postfix_operator<PostIncrement>};
-		t[MinusMinus]			 = {Postfix, &Parser::on_postfix_operator<PostDecrement>};
-		t[Dot]					 = {Postfix, &Parser::on_dot};
-		t[LeftParen]			 = {Postfix, &Parser::on_infix_left_paren};
-		t[LeftBracket]			 = {Postfix, &Parser::on_infix_left_bracket};
-		return t;
-	}();
+		switch (kind) {
+			case Equals: return {Assignment, &Parser::on_infix_operator<Assign, Assignment>};
+			case PlusEquals: return {Assignment, &Parser::on_infix_operator<AddAssign, Assignment>};
+			case MinusEquals: return {Assignment, &Parser::on_infix_operator<SubtractAssign, Assignment>};
+			case StarEquals: return {Assignment, &Parser::on_infix_operator<MultiplyAssign, Assignment>};
+			case SlashEquals: return {Assignment, &Parser::on_infix_operator<DivideAssign, Assignment>};
+			case PercentEquals: return {Assignment, &Parser::on_infix_operator<RemainderAssign, Assignment>};
+			case StarStarEquals: return {Assignment, &Parser::on_infix_operator<PowerAssign, Assignment>};
+			case AmpersandEquals: return {Assignment, &Parser::on_infix_operator<AndAssign, Assignment>};
+			case PipeEquals: return {Assignment, &Parser::on_infix_operator<OrAssign, Assignment>};
+			case TildeEquals: return {Assignment, &Parser::on_infix_operator<XorAssign, Assignment>};
+			case LeftAngleAngleEquals: return {Assignment, &Parser::on_infix_operator<LeftShiftAssign, Assignment>};
+			case RightAngleAngleEquals: return {Assignment, &Parser::on_infix_operator<RightShiftAssign, Assignment>};
+			case AmpersandAmpersand: return {Logical, &Parser::on_infix_operator<LogicalAnd, Logical>};
+			case PipePipe: return {Logical, &Parser::on_infix_operator<LogicalOr, Logical>};
+			case EqualsEquals: return {Comparison, &Parser::on_infix_operator<Equal, Comparison>};
+			case BangEquals: return {Comparison, &Parser::on_infix_operator<NotEqual, Comparison>};
+			case LeftAngle: return {Comparison, &Parser::on_infix_operator<Less, Comparison>};
+			case LeftAngleEquals: return {Comparison, &Parser::on_infix_operator<LessEqual, Comparison>};
+			case RightAngleEquals: return {Comparison, &Parser::on_infix_operator<GreaterEqual, Comparison>};
+			case Plus: return {Additive, &Parser::on_infix_operator<Add, Additive>};
+			case Minus: return {Additive, &Parser::on_infix_operator<Subtract, Additive>};
+			case Ampersand: return {Bitwise, &Parser::on_infix_operator<BitAnd, Bitwise>};
+			case Pipe: return {Bitwise, &Parser::on_infix_operator<BitOr, Bitwise>};
+			case Tilde: return {Bitwise, &Parser::on_infix_operator<Xor, Bitwise>};
+			case LeftAngleAngle: return {Bitwise, &Parser::on_infix_operator<LeftShift, Bitwise>};
+			case Star: return {Multiplicative, &Parser::on_infix_operator<Multiply, Multiplicative>};
+			case Slash: return {Multiplicative, &Parser::on_infix_operator<Divide, Multiplicative>};
+			case Percent: return {Multiplicative, &Parser::on_infix_operator<Remainder, Multiplicative>};
+			case StarStar: return {Prefix, &Parser::on_infix_operator<Power, Multiplicative>}; // lower for right-associativity
+			case Caret: return {Postfix, &Parser::on_postfix_operator<Dereference>};
+			case PlusPlus: return {Postfix, &Parser::on_postfix_operator<PostIncrement>};
+			case MinusMinus: return {Postfix, &Parser::on_postfix_operator<PostDecrement>};
+			case Dot: return {Postfix, &Parser::on_dot};
+			case LeftParen: return {Postfix, &Parser::on_infix_left_paren};
+			case LeftBracket: return {Postfix, &Parser::on_infix_left_bracket};
+			default: return {};
+		}
+	}
 };
 
-SyntaxTree parse(const Source& source, Reporter& reporter)
-{
-	auto tokens = lex(source, reporter);
-	return parse(tokens, source, reporter);
+Ast parse(const Source& source, Reporter& reporter) {
+	auto token_stream = lex(source, reporter);
+	return parse(token_stream, source, reporter);
 }
 
-SyntaxTree parse(const TokenStream& token_stream, const Source& source, Reporter& reporter)
-{
+Ast parse(const TokenStream& token_stream, const Source& source, Reporter& reporter) {
 	Parser parser(token_stream, source, reporter);
 	return parser.parse();
 }

@@ -3,6 +3,8 @@
 /.vs/
 /build/
 /CMakeFiles/
+/cmake-build-debug/
+/out/
 
 CMakeCache.txt
 CMakeUserPresets.json

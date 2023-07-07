@@ -1,10 +1,8 @@
-#include "cero/util/Traits.hpp"
+#include "Traits.hpp"
 
-namespace cero
-{
+namespace cero {
 
-std::string_view normalize_function_name(std::source_location location)
-{
+std::string_view normalize_function_name(std::source_location location) {
 	std::string_view path = location.function_name();
 
 	constexpr std::string_view expected_call_conv = "__cdecl ";

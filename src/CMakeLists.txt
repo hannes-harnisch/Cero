@@ -2,21 +2,22 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-file(GLOB_RECURSE CERO_SRC CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/*")
-file(GLOB_RECURSE CERO_INCLUDE CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/include/*")
-file(GLOB_RECURSE PCH_FILES "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/cmake_pch.*")
-
-add_library(Cero ${CERO_SRC} ${CERO_INCLUDE})
-
-target_include_directories(Cero PUBLIC ${CMAKE_SOURCE_DIR}/external/magic_enum/include)
-target_include_directories(Cero PUBLIC ${CMAKE_SOURCE_DIR}/external/pfr/include)
-target_include_directories(Cero PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_include_directories(Cero PUBLIC ${CMAKE_SOURCE_DIR}/src)
-
-source_group(TREE "${CMAKE_SOURCE_DIR}/src" PREFIX "src" FILES ${CERO_SRC})
-source_group(TREE "${CMAKE_SOURCE_DIR}/include" PREFIX "include" FILES ${CERO_INCLUDE})
-source_group("generated" FILES ${PCH_FILES})
+file(GLOB_RECURSE CERO_SRC CONFIGURE_DEPENDS "*.cpp")
+list(FILTER CERO_SRC EXCLUDE REGEX ".+\\..+\\.cpp")
 
 if (WIN32)
     add_compile_definitions(CERO_WINDOWS)
+    file(GLOB_RECURSE CERO_WINDOWS_SRC CONFIGURE_DEPENDS "*.win.cpp")
+    list(APPEND CERO_SRC ${CERO_WINDOWS_SRC})
+elseif (UNIX)
+    add_compile_definitions(CERO_UNIX)
+    file(GLOB_RECURSE CERO_UNIX_SRC CONFIGURE_DEPENDS "*.unix.cpp")
+    list(APPEND CERO_SRC ${CERO_UNIX_SRC})
 endif ()
+
+add_library(Cero ${CERO_SRC})
+
+target_include_directories(Cero PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+set_target_properties(Cero PROPERTIES
+        PRECOMPILE_HEADERS PrecompiledHeader.hpp)

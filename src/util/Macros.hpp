@@ -22,3 +22,15 @@
 
 #define CERO_STRINGIFY_IMPL(A) #A
 #define CERO_STRINGIFY(A)	   CERO_STRINGIFY_IMPL(A)
+
+#include "util/Fail.hpp"
+
+#ifndef NDEBUG
+	#define CERO_ASSERT_DEBUG(condition, info)                                                                                 \
+		do {                                                                                                                   \
+			if (!(condition))                                                                                                  \
+				fail_assert(info);                                                                                             \
+		} while (false)
+#else
+	#define CERO_ASSERT_DEBUG(condition, ...)
+#endif

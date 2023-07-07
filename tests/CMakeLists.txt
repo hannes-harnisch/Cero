@@ -2,15 +2,15 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-file(GLOB_RECURSE TEST_SRC CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/tests/*")
-file(GLOB_RECURSE PCH_FILES "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/cmake_pch.*")
+file(GLOB_RECURSE TESTS_SRC CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/tests/*")
 
-add_executable(Tests ${TEST_SRC})
+add_executable(Tests ${TESTS_SRC})
+
+target_link_libraries(Tests PRIVATE Cero)
 
 target_include_directories(Tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(Tests PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(Tests PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_include_directories(Tests PRIVATE ${CMAKE_SOURCE_DIR}/external/doctest)
-target_link_libraries(Tests Cero)
 
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${TEST_SRC})
-source_group("generated" FILES ${PCH_FILES})
+set_target_properties(Tests PROPERTIES
+        PRECOMPILE_HEADERS ${CMAKE_SOURCE_DIR}/src/PrecompiledHeader.hpp)

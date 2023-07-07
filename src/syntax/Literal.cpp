@@ -1,40 +1,32 @@
-#include "cero/syntax/Literal.hpp"
+#include "Literal.hpp"
 
-namespace cero
-{
+namespace cero {
 
-ast::NumericLiteral evaluate_dec_int_literal(std::string_view)
-{
-	return {ast::Literal::Decimal};
+AstNumericLiteralExpr evaluate_dec_int_literal(std::string_view) {
+	return {NumericLiteralKind::Decimal};
 }
 
-ast::NumericLiteral evaluate_hex_int_literal(std::string_view)
-{
-	return {ast::Literal::Hexadecimal};
+AstNumericLiteralExpr evaluate_hex_int_literal(std::string_view) {
+	return {NumericLiteralKind::Hexadecimal};
 }
 
-ast::NumericLiteral evaluate_bin_int_literal(std::string_view)
-{
-	return {ast::Literal::Binary};
+AstNumericLiteralExpr evaluate_bin_int_literal(std::string_view) {
+	return {NumericLiteralKind::Binary};
 }
 
-ast::NumericLiteral evaluate_oct_int_literal(std::string_view)
-{
-	return {ast::Literal::Octal};
+AstNumericLiteralExpr evaluate_oct_int_literal(std::string_view) {
+	return {NumericLiteralKind::Octal};
 }
 
-ast::NumericLiteral evaluate_float_literal(std::string_view)
-{
-	return {ast::Literal::Float};
+AstNumericLiteralExpr evaluate_float_literal(std::string_view) {
+	return {NumericLiteralKind::Float};
 }
 
-ast::NumericLiteral evaluate_char_literal(std::string_view)
-{
-	return {ast::Literal::Character};
+AstNumericLiteralExpr evaluate_char_literal(std::string_view) {
+	return {NumericLiteralKind::Character};
 }
 
-ast::StringLiteral evaluate_string_literal(std::string_view lexeme)
-{
+AstStringLiteralExpr evaluate_string_literal(std::string_view lexeme) {
 	return {std::string(lexeme)}; // TODO: escape sequences
 }
 
