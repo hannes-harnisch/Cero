@@ -155,8 +155,8 @@ void AstCompare::visit(const cero::AstBindingStatement& binding_stmt) {
 		visit_child(init.get());
 }
 
-void AstCompare::visit(const cero::AstIfStatement& if_stmt) {
-	expect(cero::AstNodeKind::IfStatement);
+void AstCompare::visit(const cero::AstIfExpr& if_stmt) {
+	expect(cero::AstNodeKind::IfExpr);
 
 	visit_child(if_stmt.condition);
 	visit_child(if_stmt.then_expression);
@@ -184,30 +184,30 @@ void AstCompare::visit(const cero::AstForLoop& for_loop) {
 	visit_child(for_loop.statement);
 }
 
-void AstCompare::add_identifier_expr(std::string_view name) {
-	record(cero::AstNodeKind::IdentifierExpr);
+void AstCompare::add_name_expr(std::string_view name) {
+	record(cero::AstNodeKind::NameExpr);
 	data.emplace(name);
 }
 
-void AstCompare::visit(const cero::AstIdentifierExpr& identifier) {
-	expect(cero::AstNodeKind::IdentifierExpr);
+void AstCompare::visit(const cero::AstNameExpr& name_expr) {
+	expect(cero::AstNodeKind::NameExpr);
 
 	auto name = pop<std::string_view>();
-	CHECK(name == identifier.name);
+	CHECK(name == name_expr.name);
 }
 
-void AstCompare::add_generic_identifier_expr(std::string_view name) {
-	record(cero::AstNodeKind::GenericIdentifierExpr);
+void AstCompare::add_generic_name_expr(std::string_view name) {
+	record(cero::AstNodeKind::GenericNameExpr);
 	data.emplace(name);
 }
 
-void AstCompare::visit(const cero::AstGenericIdentifierExpr& generic_identifier) {
-	expect(cero::AstNodeKind::GenericIdentifierExpr);
+void AstCompare::visit(const cero::AstGenericNameExpr& generic_name) {
+	expect(cero::AstNodeKind::GenericNameExpr);
 
 	auto name = pop<std::string_view>();
-	CHECK(name == generic_identifier.name);
+	CHECK(name == generic_name.name);
 
-	visit_children(generic_identifier.arguments);
+	visit_children(generic_name.arguments);
 }
 
 void AstCompare::add_member_expr(std::string_view name) {
@@ -222,6 +222,15 @@ void AstCompare::visit(const cero::AstMemberExpr& member_expr) {
 	CHECK(name == member_expr.member);
 
 	visit_child(member_expr.target);
+}
+
+void AstCompare::visit(const cero::AstGenericMemberExpr& generic_member) {
+	expect(cero::AstNodeKind::GenericMemberExpr);
+
+	auto name = pop<std::string_view>();
+	CHECK(name == generic_member.member);
+
+	visit_child(generic_member.target);
 }
 
 void AstCompare::add_group_expr() {
@@ -294,8 +303,7 @@ void AstCompare::add_return_expr() {
 void AstCompare::visit(const cero::AstReturnExpr& return_expr) {
 	expect(cero::AstNodeKind::ReturnExpr);
 
-	if (auto expr = return_expr.expression)
-		visit_child(expr.get());
+	visit_children(return_expr.return_values);
 }
 
 void AstCompare::visit(const cero::AstThrowExpr& throw_expr) {

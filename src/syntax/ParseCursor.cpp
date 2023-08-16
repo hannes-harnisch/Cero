@@ -6,6 +6,33 @@ ParseCursor::ParseCursor(const TokenStream& token_stream) :
 	cursor(token_stream.get_tokens().begin()) {
 }
 
+bool ParseCursor::match(Token kind) {
+	auto token = next();
+	if (token.kind == kind) {
+		advance();
+		return true;
+	}
+	return false;
+}
+
+std::optional<LexicalToken> ParseCursor::match_token(Token kind) {
+	auto token = next();
+	if (token.kind == kind) {
+		advance();
+		return token;
+	}
+	return std::nullopt;
+}
+
+std::optional<LexicalToken> ParseCursor::match_name() {
+	auto token = next();
+	if (token.kind == Token::Name) {
+		advance();
+		return token;
+	}
+	return std::nullopt;
+}
+
 Token ParseCursor::peek_kind() const {
 	return cursor->kind;
 }
@@ -16,15 +43,6 @@ LexicalToken ParseCursor::peek() const {
 
 LexicalToken ParseCursor::previous() const {
 	return cursor[-1];
-}
-
-std::optional<LexicalToken> ParseCursor::match(Token kind) {
-	auto token = next();
-	if (token.kind == kind) {
-		advance();
-		return token;
-	}
-	return {};
 }
 
 LexicalToken ParseCursor::next() {
@@ -46,15 +64,8 @@ Token ParseCursor::next_kind() {
 }
 
 void ParseCursor::advance() {
-	++cursor;
-}
-
-void ParseCursor::retreat() {
-	Token kind;
-	do {
-		--cursor;
-		kind = cursor->kind;
-	} while (kind == Token::LineComment || kind == Token::BlockComment);
+	if (cursor->kind != Token::EndOfFile)
+		++cursor;
 }
 
 } // namespace cero

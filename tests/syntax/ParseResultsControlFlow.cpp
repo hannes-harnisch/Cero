@@ -33,12 +33,12 @@ fibonacci(var uint32 n) -> uint32
 	c.add_function_definition_parameter(cero::ParameterSpecifier::Var, "n");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("uint32");
+		c.add_name_expr("uint32");
 	}
 	c.add_function_definition_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("uint32");
+		c.add_name_expr("uint32");
 	}
 	{
 		auto _1 = c.mark_children();
@@ -47,7 +47,7 @@ fibonacci(var uint32 n) -> uint32
 		{
 			auto _2 = c.mark_children();
 
-			c.add_identifier_expr("uint32");
+			c.add_name_expr("uint32");
 			c.add_numeric_literal_expr(cero::NumericLiteralKind::Decimal);
 		}
 
@@ -55,7 +55,7 @@ fibonacci(var uint32 n) -> uint32
 		{
 			auto _2 = c.mark_children();
 
-			c.add_identifier_expr("uint32");
+			c.add_name_expr("uint32");
 			c.add_numeric_literal_expr(cero::NumericLiteralKind::Decimal);
 		}
 
@@ -70,7 +70,7 @@ fibonacci(var uint32 n) -> uint32
 				c.add_unary_expr(cero::UnaryOperator::PostDecrement);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("n");
+					c.add_name_expr("n");
 				}
 
 				c.add_numeric_literal_expr(cero::NumericLiteralKind::Decimal);
@@ -83,21 +83,21 @@ fibonacci(var uint32 n) -> uint32
 				c.add_binding_statement(cero::BindingSpecifier::Let, "temp");
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("next");
+					c.add_name_expr("next");
 				}
 
 				c.add_binary_expr(cero::BinaryOperator::Assign);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("next");
-					c.add_identifier_expr("result");
+					c.add_name_expr("next");
+					c.add_name_expr("result");
 				}
 
 				c.add_binary_expr(cero::BinaryOperator::AddAssign);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("result");
-					c.add_identifier_expr("temp");
+					c.add_name_expr("result");
+					c.add_name_expr("temp");
 				}
 			}
 		}
@@ -105,7 +105,7 @@ fibonacci(var uint32 n) -> uint32
 		c.add_return_expr();
 		{
 			auto _2 = c.mark_children();
-			c.add_identifier_expr("result");
+			c.add_name_expr("result");
 		}
 	}
 

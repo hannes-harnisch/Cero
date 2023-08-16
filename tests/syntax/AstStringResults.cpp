@@ -40,15 +40,15 @@ a(int32 x, bool _a, bool _b = x) -> float32
 └── function `a`
     ├── parameters
     │   ├── value parameter `x`
-    │   │   └── identifier `int32`
+    │   │   └── name `int32`
     │   ├── value parameter `_a`
-    │   │   └── identifier `bool`
+    │   │   └── name `bool`
     │   └── value parameter `_b`
-    │       ├── identifier `bool`
-    │       └── identifier `x`
+    │       ├── name `bool`
+    │       └── name `x`
     ├── outputs
     │   └── output
-    │       └── identifier `float32`
+    │       └── name `float32`
     └── statements
 )_____";
 	CHECK(str == expected);
@@ -75,29 +75,29 @@ b(int32 i, float64 f)
 ├── function `a`
 │   ├── parameters
 │   │   ├── value parameter `_a`
-│   │   │   └── identifier `int32`
+│   │   │   └── name `int32`
 │   │   ├── value parameter `_f`
-│   │   │   └── identifier `float64`
+│   │   │   └── name `float64`
 │   │   └── value parameter `_b`
-│   │       └── identifier `int64`
+│   │       └── name `int64`
 │   ├── outputs
 │   └── statements
 └── function `b`
     ├── parameters
     │   ├── value parameter `i`
-    │   │   └── identifier `int32`
+    │   │   └── name `int32`
     │   └── value parameter `f`
-    │       └── identifier `float64`
+    │       └── name `float64`
     ├── outputs
     └── statements
         └── call expression
-            ├── identifier `a`
+            ├── name `a`
             └── arguments
-                ├── identifier `i`
-                ├── identifier `f`
+                ├── name `i`
+                ├── name `f`
                 └── `*`
-                    ├── identifier `i`
-                    └── identifier `i`
+                    ├── name `i`
+                    └── name `i`
 )_____";
 	CHECK(str == expected);
 }

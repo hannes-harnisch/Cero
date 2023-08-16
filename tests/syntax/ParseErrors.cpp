@@ -207,7 +207,7 @@ f()
 
 CERO_TEST(MissingColonInIfExpression) {
 	ExhaustiveReporter r;
-	r.expect(4, 18, cero::Message::ExpectColonOrBlock, "integer literal `0`");
+	r.expect(4, 18, cero::Message::ExpectColonInIfExpr, "integer literal `0`");
 
 	build_test_source(r, R"_____(
 f(bool b) -> int32
@@ -388,31 +388,6 @@ a(^(int32 x = 0)->int32 f) -> int32
 )_____");
 }
 
-CERO_TEST(AmbiguousOperatorChaining) {
-	ExhaustiveReporter r;
-	r.expect(4, 20, cero::Message::AmbiguousOperatorChaining, "==");
-	r.expect(4, 25, cero::Message::AmbiguousOperatorChaining, "==");
-	r.expect(5, 20, cero::Message::AmbiguousOperatorChaining, "!=");
-	r.expect(6, 19, cero::Message::AmbiguousOperatorChaining, "<");
-	r.expect(6, 23, cero::Message::AmbiguousOperatorChaining, "<");
-	r.expect(7, 19, cero::Message::AmbiguousOperatorChaining, ">");
-	r.expect(8, 20, cero::Message::AmbiguousOperatorChaining, "<=");
-	r.expect(9, 20, cero::Message::AmbiguousOperatorChaining, ">=");
-	r.expect(9, 25, cero::Message::AmbiguousOperatorChaining, ">=");
-
-	build_test_source(r, R"_____(
-f(bool a, bool b, bool c, bool d)
-{
-	let e = a == b == c == d;
-	let f = a != b != c;
-	let g = a < b < c < d;
-	let h = a > b > c;
-	let i = a <= b <= c;
-	let j = a >= b >= c >= d;
-}
-)_____");
-}
-
 CERO_TEST(AmbiguousOperatorMixing) {
 	ExhaustiveReporter r;
 	r.expect(4, 19, cero::Message::AmbiguousOperatorMixing, ">", "==");
@@ -443,6 +418,34 @@ f(float32 a, float32 b, int32 c, int32 d)
 	let k = a == b && c == d || a != d && b > c;
 	let l = a == b || c == d && a != d || b > c;
 	let m = -a**b;
+}
+)_____");
+}
+
+CERO_TEST(IntransitiveOperatorMixing) {
+	ExhaustiveReporter r;
+	r.expect(5, 20, cero::Message::AmbiguousOperatorMixing, "!=", "!=");
+	r.expect(6, 20, cero::Message::AmbiguousOperatorMixing, "==", "!=");
+	r.expect(7, 20, cero::Message::AmbiguousOperatorMixing, "!=", "==");
+	r.expect(9, 19, cero::Message::AmbiguousOperatorMixing, "<", ">");
+	r.expect(9, 23, cero::Message::AmbiguousOperatorMixing, ">", "<");
+	r.expect(13, 20, cero::Message::AmbiguousOperatorMixing, ">=", "!=");
+	r.expect(14, 19, cero::Message::AmbiguousOperatorMixing, "<", "==");
+
+	build_test_source(r, R"_____(
+f(int32 a, int32 b, int32 c, int32 d)
+{
+	let e = a == b == c == d;
+	let f = a != b != c;
+	let g = a == b != c;
+	let h = a != b == c;
+	let i = a < b < c < d;
+	let j = a < b > c < d;
+	let k = a > b > c;
+	let l = a <= b <= c;
+	let m = a >= b >= c >= d;
+	let n = a >= b != c;
+	let o = a < b == c;
 }
 )_____");
 }

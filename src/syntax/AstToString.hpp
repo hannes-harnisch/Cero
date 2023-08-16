@@ -49,12 +49,13 @@ private:
 	void visit(const AstFunctionDefinition::Output& output);
 	void visit(const AstBlockStatement&) override;
 	void visit(const AstBindingStatement&) override;
-	void visit(const AstIfStatement&) override;
+	void visit(const AstIfExpr&) override;
 	void visit(const AstWhileLoop&) override;
 	void visit(const AstForLoop&) override;
-	void visit(const AstIdentifierExpr&) override;
-	void visit(const AstGenericIdentifierExpr&) override;
+	void visit(const AstNameExpr&) override;
+	void visit(const AstGenericNameExpr&) override;
 	void visit(const AstMemberExpr&) override;
+	void visit(const AstGenericMemberExpr&) override;
 	void visit(const AstGroupExpr&) override;
 	void visit(const AstCallExpr&) override;
 	void visit(const AstIndexExpr&) override;

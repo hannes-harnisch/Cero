@@ -26,17 +26,17 @@ foo(int32 a, int32 b) -> int32
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "a");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("int32");
+		c.add_name_expr("int32");
 	}
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "b");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("int32");
+		c.add_name_expr("int32");
 	}
 	c.add_function_definition_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("int32");
+		c.add_name_expr("int32");
 	}
 	{
 		auto _1 = c.mark_children();
@@ -47,8 +47,8 @@ foo(int32 a, int32 b) -> int32
 			c.add_binary_expr(cero::BinaryOperator::Add);
 			{
 				auto _3 = c.mark_children();
-				c.add_identifier_expr("a");
-				c.add_identifier_expr("b");
+				c.add_name_expr("a");
+				c.add_name_expr("b");
 			}
 		}
 
@@ -58,12 +58,12 @@ foo(int32 a, int32 b) -> int32
 			c.add_binary_expr(cero::BinaryOperator::Add);
 			{
 				auto _3 = c.mark_children();
-				c.add_identifier_expr("a");
+				c.add_name_expr("a");
 				c.add_binary_expr(cero::BinaryOperator::Multiply);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("b");
-					c.add_identifier_expr("c");
+					c.add_name_expr("b");
+					c.add_name_expr("c");
 				}
 			}
 		}
@@ -80,11 +80,11 @@ foo(int32 a, int32 b) -> int32
 					c.add_binary_expr(cero::BinaryOperator::Subtract);
 					{
 						auto _5 = c.mark_children();
-						c.add_identifier_expr("d");
-						c.add_identifier_expr("a");
+						c.add_name_expr("d");
+						c.add_name_expr("a");
 					}
 				}
-				c.add_identifier_expr("c");
+				c.add_name_expr("c");
 			}
 		}
 
@@ -97,10 +97,10 @@ foo(int32 a, int32 b) -> int32
 				c.add_binary_expr(cero::BinaryOperator::Power);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("e");
+					c.add_name_expr("e");
 					c.add_numeric_literal_expr(cero::NumericLiteralKind::Decimal);
 				}
-				c.add_identifier_expr("b");
+				c.add_name_expr("b");
 			}
 		}
 	}
@@ -133,22 +133,22 @@ bar(int32 a, int32 b, int32 c) -> bool
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "a");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("int32");
+		c.add_name_expr("int32");
 	}
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "b");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("int32");
+		c.add_name_expr("int32");
 	}
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "c");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("int32");
+		c.add_name_expr("int32");
 	}
 	c.add_function_definition_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("bool");
+		c.add_name_expr("bool");
 	}
 	{
 		auto _1 = c.mark_children();
@@ -162,14 +162,14 @@ bar(int32 a, int32 b, int32 c) -> bool
 				c.add_binary_expr(cero::BinaryOperator::Subtract);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("a");
-					c.add_identifier_expr("b");
+					c.add_name_expr("a");
+					c.add_name_expr("b");
 				}
 				c.add_binary_expr(cero::BinaryOperator::Add);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("b");
-					c.add_identifier_expr("c");
+					c.add_name_expr("b");
+					c.add_name_expr("c");
 				}
 			}
 		}
@@ -183,14 +183,14 @@ bar(int32 a, int32 b, int32 c) -> bool
 				c.add_binary_expr(cero::BinaryOperator::Multiply);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("b");
-					c.add_identifier_expr("a");
+					c.add_name_expr("b");
+					c.add_name_expr("a");
 				}
 				c.add_binary_expr(cero::BinaryOperator::Divide);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("c");
-					c.add_identifier_expr("a");
+					c.add_name_expr("c");
+					c.add_name_expr("a");
 				}
 			}
 		}
@@ -204,14 +204,14 @@ bar(int32 a, int32 b, int32 c) -> bool
 				c.add_binary_expr(cero::BinaryOperator::Add);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("c");
-					c.add_identifier_expr("b");
+					c.add_name_expr("c");
+					c.add_name_expr("b");
 				}
 				c.add_binary_expr(cero::BinaryOperator::Multiply);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("b");
-					c.add_identifier_expr("a");
+					c.add_name_expr("b");
+					c.add_name_expr("a");
 				}
 			}
 		}
@@ -225,14 +225,14 @@ bar(int32 a, int32 b, int32 c) -> bool
 				c.add_binary_expr(cero::BinaryOperator::Divide);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("b");
-					c.add_identifier_expr("a");
+					c.add_name_expr("b");
+					c.add_name_expr("a");
 				}
 				c.add_binary_expr(cero::BinaryOperator::Subtract);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("c");
-					c.add_identifier_expr("b");
+					c.add_name_expr("c");
+					c.add_name_expr("b");
 				}
 			}
 		}
@@ -246,14 +246,14 @@ bar(int32 a, int32 b, int32 c) -> bool
 				c.add_binary_expr(cero::BinaryOperator::Multiply);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("a");
-					c.add_identifier_expr("c");
+					c.add_name_expr("a");
+					c.add_name_expr("c");
 				}
 				c.add_binary_expr(cero::BinaryOperator::Subtract);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("b");
-					c.add_identifier_expr("a");
+					c.add_name_expr("b");
+					c.add_name_expr("a");
 				}
 			}
 		}
@@ -267,14 +267,14 @@ bar(int32 a, int32 b, int32 c) -> bool
 				c.add_binary_expr(cero::BinaryOperator::Add);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("b");
-					c.add_identifier_expr("c");
+					c.add_name_expr("b");
+					c.add_name_expr("c");
 				}
 				c.add_binary_expr(cero::BinaryOperator::Divide);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("a");
-					c.add_identifier_expr("c");
+					c.add_name_expr("a");
+					c.add_name_expr("c");
 				}
 			}
 		}
@@ -297,16 +297,16 @@ bar(int32 a, int32 b, int32 c) -> bool
 							c.add_binary_expr(cero::BinaryOperator::LogicalOr);
 							{
 								auto _7 = c.mark_children();
-								c.add_identifier_expr("u");
-								c.add_identifier_expr("v");
+								c.add_name_expr("u");
+								c.add_name_expr("v");
 							}
-							c.add_identifier_expr("w");
+							c.add_name_expr("w");
 						}
-						c.add_identifier_expr("x");
+						c.add_name_expr("x");
 					}
-					c.add_identifier_expr("y");
+					c.add_name_expr("y");
 				}
-				c.add_identifier_expr("z");
+				c.add_name_expr("z");
 			}
 		}
 	}
@@ -333,27 +333,27 @@ baz(int32 a, int32 b, int32 c, int32 d) -> bool
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "a");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("int32");
+		c.add_name_expr("int32");
 	}
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "b");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("int32");
+		c.add_name_expr("int32");
 	}
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "c");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("int32");
+		c.add_name_expr("int32");
 	}
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "d");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("int32");
+		c.add_name_expr("int32");
 	}
 	c.add_function_definition_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("bool");
+		c.add_name_expr("bool");
 	}
 	{
 		auto _1 = c.mark_children();
@@ -375,14 +375,14 @@ baz(int32 a, int32 b, int32 c, int32 d) -> bool
 							c.add_binary_expr(cero::BinaryOperator::Add);
 							{
 								auto _7 = c.mark_children();
-								c.add_identifier_expr("a");
-								c.add_identifier_expr("b");
+								c.add_name_expr("a");
+								c.add_name_expr("b");
 							}
 							c.add_binary_expr(cero::BinaryOperator::Add);
 							{
 								auto _7 = c.mark_children();
-								c.add_identifier_expr("b");
-								c.add_identifier_expr("c");
+								c.add_name_expr("b");
+								c.add_name_expr("c");
 							}
 						}
 						c.add_binary_expr(cero::BinaryOperator::NotEqual);
@@ -391,29 +391,29 @@ baz(int32 a, int32 b, int32 c, int32 d) -> bool
 							c.add_binary_expr(cero::BinaryOperator::Add);
 							{
 								auto _7 = c.mark_children();
-								c.add_identifier_expr("b");
-								c.add_identifier_expr("c");
+								c.add_name_expr("b");
+								c.add_name_expr("c");
 							}
 							c.add_binary_expr(cero::BinaryOperator::Add);
 							{
 								auto _7 = c.mark_children();
-								c.add_identifier_expr("c");
-								c.add_identifier_expr("d");
+								c.add_name_expr("c");
+								c.add_name_expr("d");
 							}
 						}
 					}
 					c.add_binary_expr(cero::BinaryOperator::Less);
 					{
 						auto _5 = c.mark_children();
-						c.add_identifier_expr("a");
-						c.add_identifier_expr("c");
+						c.add_name_expr("a");
+						c.add_name_expr("c");
 					}
 				}
 				c.add_binary_expr(cero::BinaryOperator::Greater);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("a");
-					c.add_identifier_expr("d");
+					c.add_name_expr("a");
+					c.add_name_expr("d");
 				}
 			}
 		}

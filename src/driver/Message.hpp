@@ -30,16 +30,20 @@ enum class Message : uint8_t {
 	ExpectExpr,
 	ExpectSemicolon,
 	ExpectNameAfterDot,
+	ExpectColonInIfExpr,
 	ExpectColonOrBlock,
 	UnnecessaryColonBeforeBlock,
+	UnnecessarySemicolon,
+	ExpectElse,
 	ExpectClosingParen,
 	ExpectBracketAfterIndex,
 	ExpectBracketAfterArrayBound,
 	ExpectBraceAfterVariability,
 	ExpectArrowAfterFuncTypeParams,
 	FuncTypeDefaultArgument,
-	AmbiguousOperatorChaining,
 	AmbiguousOperatorMixing,
+	ExpectNameForStruct,
+	ExpectNameForEnum,
 };
 
 std::string_view get_message_format(Message message);

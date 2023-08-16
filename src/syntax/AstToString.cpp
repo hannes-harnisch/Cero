@@ -223,7 +223,7 @@ void AstToString::visit(const AstBindingStatement& binding) {
 	pop_level();
 }
 
-void AstToString::visit(const AstIfStatement& if_stmt) {
+void AstToString::visit(const AstIfExpr& if_stmt) {
 	add_line("if");
 	push_level();
 
@@ -271,23 +271,36 @@ void AstToString::visit(const AstForLoop& for_loop) {
 	pop_level();
 }
 
-void AstToString::visit(const AstIdentifierExpr& identifier) {
-	add_line(std::format("identifier `{}`", identifier.name));
+void AstToString::visit(const AstNameExpr& name) {
+	add_line(std::format("name `{}`", name.name));
 }
 
-void AstToString::visit(const AstGenericIdentifierExpr& generic_identifier) {
-	add_line(std::format("generic identifier `{}`", generic_identifier.name));
+void AstToString::visit(const AstGenericNameExpr& generic_name) {
+	add_line(std::format("generic name `{}`", generic_name.name));
 	push_level();
-	visit_each_in(generic_identifier.arguments);
+	visit_each_in(generic_name.arguments);
 	pop_level();
 }
 
 void AstToString::visit(const AstMemberExpr& member_expr) {
-	add_line("member expression");
+	add_line(std::format("member `{}`", member_expr.member));
 	push_level();
 
 	visit_body(member_expr.target);
-	add_tail_line(member_expr.member);
+
+	pop_level();
+}
+
+void AstToString::visit(const AstGenericMemberExpr& generic_member) {
+	add_line(std::format("generic member `{}`", generic_member.member));
+	push_level();
+
+	visit_body(generic_member.target);
+
+	add_tail_line("arguments");
+	push_level();
+	visit_each_in(generic_member.arguments);
+	pop_level();
 
 	pop_level();
 }
@@ -361,7 +374,10 @@ void AstToString::visit(const AstBinaryExpr& binary_expression) {
 
 void AstToString::visit(const AstReturnExpr& return_expression) {
 	add_line("return");
-	visit_optional(return_expression.expression);
+
+	push_level();
+	visit_each_in(return_expression.return_values);
+	pop_level();
 }
 
 void AstToString::visit(const AstThrowExpr& throw_expression) {

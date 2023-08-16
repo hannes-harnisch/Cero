@@ -26,7 +26,7 @@ namespace {
 } // namespace
 
 std::expected<MappedFile, std::error_code> MappedFile::from(std::string_view path) {
-	auto w_path = windows::widen_string(path);
+	auto w_path = windows::utf8_to_utf16(path);
 	auto file	= ::CreateFileW(w_path.data(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
 								nullptr);
 	if (file == INVALID_HANDLE_VALUE)

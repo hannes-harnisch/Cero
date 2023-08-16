@@ -34,8 +34,8 @@ public:
 	void add_block_statement();
 	void add_binding_statement(cero::BindingSpecifier specifier, std::string_view name);
 	void add_while_loop();
-	void add_identifier_expr(std::string_view name);
-	void add_generic_identifier_expr(std::string_view name);
+	void add_name_expr(std::string_view name);
+	void add_generic_name_expr(std::string_view name);
 	void add_member_expr(std::string_view name);
 	void add_group_expr();
 	void add_call_expr();
@@ -58,12 +58,13 @@ private:
 	void visit(const cero::AstFunctionDefinition& function_def) override;
 	void visit(const cero::AstBlockStatement& block_stmt) override;
 	void visit(const cero::AstBindingStatement& binding_stmt) override;
-	void visit(const cero::AstIfStatement& if_stmt) override;
+	void visit(const cero::AstIfExpr& if_stmt) override;
 	void visit(const cero::AstWhileLoop& while_loop) override;
 	void visit(const cero::AstForLoop& for_loop) override;
-	void visit(const cero::AstIdentifierExpr& identifier) override;
-	void visit(const cero::AstGenericIdentifierExpr& generic_identifier) override;
-	void visit(const cero::AstMemberExpr& member) override;
+	void visit(const cero::AstNameExpr& name_expr) override;
+	void visit(const cero::AstGenericNameExpr& generic_name) override;
+	void visit(const cero::AstMemberExpr& member_expr) override;
+	void visit(const cero::AstGenericMemberExpr& generic_member) override;
 	void visit(const cero::AstGroupExpr& group) override;
 	void visit(const cero::AstCallExpr& call_expr) override;
 	void visit(const cero::AstIndexExpr& index_expr) override;

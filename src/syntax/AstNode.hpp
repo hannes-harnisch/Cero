@@ -126,7 +126,7 @@ struct AstBlockStatement {
 	AstIdSet statements;
 };
 
-enum class BindingSpecifier {
+enum class BindingSpecifier : uint8_t {
 	Let,
 	Var,
 	Const,
@@ -141,7 +141,7 @@ struct AstBindingStatement {
 	OptionalAstId	 initializer;
 };
 
-struct AstIfStatement {
+struct AstIfExpr {
 	AstId		  condition;
 	AstId		  then_expression;
 	OptionalAstId else_expression;
@@ -158,11 +158,11 @@ struct AstForLoop {
 	AstId statement;
 };
 
-struct AstIdentifierExpr {
+struct AstNameExpr {
 	StringId name;
 };
 
-struct AstGenericIdentifierExpr {
+struct AstGenericNameExpr {
 	StringId name;
 	AstIdSet arguments;
 };
@@ -170,6 +170,12 @@ struct AstGenericIdentifierExpr {
 struct AstMemberExpr {
 	AstId	 target;
 	StringId member;
+};
+
+struct AstGenericMemberExpr {
+	AstId	 target;
+	StringId member;
+	AstIdSet arguments;
 };
 
 struct AstGroupExpr {
@@ -190,7 +196,7 @@ struct AstArrayLiteralExpr {
 	AstIdSet elements;
 };
 
-enum class UnaryOperator {
+enum class UnaryOperator : uint8_t {
 	PreIncrement,
 	PreDecrement,
 	PostIncrement,
@@ -209,7 +215,7 @@ struct AstUnaryExpr {
 	AstId		  operand;
 };
 
-enum class BinaryOperator {
+enum class BinaryOperator : uint8_t {
 	Add,
 	Subtract,
 	Multiply,
@@ -252,7 +258,7 @@ struct AstBinaryExpr {
 };
 
 struct AstReturnExpr {
-	OptionalAstId expression;
+	AstIdSet return_values;
 };
 
 struct AstThrowExpr {
@@ -292,7 +298,7 @@ enum class VariabilitySpecifier : uint8_t {
 };
 
 struct AstVariabilityExpr {
-	VariabilitySpecifier specifier = VariabilitySpecifier::In;
+	VariabilitySpecifier specifier = {};
 	AstIdSet			 arguments;
 };
 
@@ -329,12 +335,13 @@ struct AstFunctionTypeExpr {
 	CERO_AST_NODE_TYPE(FunctionDefinition)                                                                                     \
 	CERO_AST_NODE_TYPE(BlockStatement)                                                                                         \
 	CERO_AST_NODE_TYPE(BindingStatement)                                                                                       \
-	CERO_AST_NODE_TYPE(IfStatement)                                                                                            \
+	CERO_AST_NODE_TYPE(IfExpr)                                                                                                 \
 	CERO_AST_NODE_TYPE(WhileLoop)                                                                                              \
 	CERO_AST_NODE_TYPE(ForLoop)                                                                                                \
-	CERO_AST_NODE_TYPE(IdentifierExpr)                                                                                         \
-	CERO_AST_NODE_TYPE(GenericIdentifierExpr)                                                                                  \
+	CERO_AST_NODE_TYPE(NameExpr)                                                                                               \
+	CERO_AST_NODE_TYPE(GenericNameExpr)                                                                                        \
 	CERO_AST_NODE_TYPE(MemberExpr)                                                                                             \
+	CERO_AST_NODE_TYPE(GenericMemberExpr)                                                                                      \
 	CERO_AST_NODE_TYPE(GroupExpr)                                                                                              \
 	CERO_AST_NODE_TYPE(CallExpr)                                                                                               \
 	CERO_AST_NODE_TYPE(IndexExpr)                                                                                              \

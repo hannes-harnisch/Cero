@@ -48,13 +48,13 @@ f() -> List<List<List<int32>>>
 	c.add_function_definition_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_identifier_expr("List");
+		c.add_generic_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_identifier_expr("int32");
+				c.add_name_expr("int32");
 			}
 		}
 	}
@@ -71,13 +71,13 @@ f() -> List<List<List<int32>>>
 	c.add_function_definition_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_identifier_expr("List");
+		c.add_generic_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_identifier_expr("int32");
+				c.add_name_expr("int32");
 			}
 		}
 	}
@@ -94,16 +94,16 @@ f() -> List<List<List<int32>>>
 	c.add_function_definition_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_identifier_expr("List");
+		c.add_generic_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_identifier_expr("List");
+				c.add_generic_name_expr("List");
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("int32");
+					c.add_name_expr("int32");
 				}
 			}
 		}
@@ -121,16 +121,16 @@ f() -> List<List<List<int32>>>
 	c.add_function_definition_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_identifier_expr("List");
+		c.add_generic_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_identifier_expr("List");
+				c.add_generic_name_expr("List");
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("int32");
+					c.add_name_expr("int32");
 				}
 			}
 		}
@@ -148,16 +148,16 @@ f() -> List<List<List<int32>>>
 	c.add_function_definition_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_identifier_expr("List");
+		c.add_generic_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_identifier_expr("List");
+				c.add_generic_name_expr("List");
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("int32");
+					c.add_name_expr("int32");
 				}
 			}
 		}
@@ -175,16 +175,16 @@ f() -> List<List<List<int32>>>
 	c.add_function_definition_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_identifier_expr("List");
+		c.add_generic_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_identifier_expr("List");
+				c.add_generic_name_expr("List");
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("int32");
+					c.add_name_expr("int32");
 				}
 			}
 		}
@@ -220,17 +220,17 @@ oof(int32 a, int32 b) -> bool
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "a");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("int32");
+		c.add_name_expr("int32");
 	}
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "b");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("int32");
+		c.add_name_expr("int32");
 	}
 	c.add_function_definition_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("bool");
+		c.add_name_expr("bool");
 	}
 	{
 		auto _1 = c.mark_children();
@@ -240,11 +240,11 @@ oof(int32 a, int32 b) -> bool
 			c.add_binary_expr(cero::BinaryOperator::Less);
 			{
 				auto _3 = c.mark_children();
-				c.add_identifier_expr("a");
+				c.add_name_expr("a");
 				c.add_binary_expr(cero::BinaryOperator::RightShift);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("b");
+					c.add_name_expr("b");
 					c.add_group_expr();
 					{
 						auto _5 = c.mark_children();
@@ -282,12 +282,12 @@ ouch(float32 e) -> float64
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "e");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("float32");
+		c.add_name_expr("float32");
 	}
 	c.add_function_definition_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("float64");
+		c.add_name_expr("float64");
 	}
 	{
 		auto _1 = c.mark_children();
@@ -297,17 +297,17 @@ ouch(float32 e) -> float64
 			c.add_call_expr();
 			{
 				auto _3 = c.mark_children();
-				c.add_identifier_expr("a");
+				c.add_name_expr("a");
 				c.add_call_expr();
 				{
 					auto _4 = c.mark_children();
-					c.add_generic_identifier_expr("b");
+					c.add_generic_name_expr("b");
 					{
 						auto _5 = c.mark_children();
-						c.add_identifier_expr("c");
-						c.add_identifier_expr("d");
+						c.add_name_expr("c");
+						c.add_name_expr("d");
 					}
-					c.add_identifier_expr("e");
+					c.add_name_expr("e");
 				}
 			}
 		}
@@ -335,12 +335,12 @@ ouch(float32 e) -> float64
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "e");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("float32");
+		c.add_name_expr("float32");
 	}
 	c.add_function_definition_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_identifier_expr("float64");
+		c.add_name_expr("float64");
 	}
 	{
 		auto _1 = c.mark_children();
@@ -350,18 +350,18 @@ ouch(float32 e) -> float64
 			c.add_call_expr();
 			{
 				auto _3 = c.mark_children();
-				c.add_identifier_expr("a");
+				c.add_name_expr("a");
 				c.add_binary_expr(cero::BinaryOperator::Less);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("b");
-					c.add_identifier_expr("c");
+					c.add_name_expr("b");
+					c.add_name_expr("c");
 				}
 				c.add_binary_expr(cero::BinaryOperator::Greater);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("d");
-					c.add_identifier_expr("e");
+					c.add_name_expr("d");
+					c.add_name_expr("e");
 				}
 			}
 		}
@@ -394,7 +394,7 @@ meow() -> A<(D >> E)>
 	c.add_function_definition_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_identifier_expr("A");
+		c.add_generic_name_expr("A");
 		{
 			auto _2 = c.mark_children();
 			c.add_group_expr();
@@ -403,8 +403,8 @@ meow() -> A<(D >> E)>
 				c.add_binary_expr(cero::BinaryOperator::Greater);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("B");
-					c.add_identifier_expr("C");
+					c.add_name_expr("B");
+					c.add_name_expr("C");
 				}
 			}
 		}
@@ -422,7 +422,7 @@ meow() -> A<(D >> E)>
 	c.add_function_definition_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_identifier_expr("A");
+		c.add_generic_name_expr("A");
 		{
 			auto _2 = c.mark_children();
 			c.add_group_expr();
@@ -431,8 +431,8 @@ meow() -> A<(D >> E)>
 				c.add_binary_expr(cero::BinaryOperator::RightShift);
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("D");
-					c.add_identifier_expr("E");
+					c.add_name_expr("D");
+					c.add_name_expr("E");
 				}
 			}
 		}
@@ -472,51 +472,51 @@ moo(List<int32> _a,
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_a");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_identifier_expr("List");
+		c.add_generic_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_identifier_expr("int32");
+			c.add_name_expr("int32");
 		}
 	}
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_b");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_identifier_expr("List");
+		c.add_generic_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_identifier_expr("int32");
+				c.add_name_expr("int32");
 			}
 		}
 	}
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_c");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_identifier_expr("List");
+		c.add_generic_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_identifier_expr("int32");
+				c.add_name_expr("int32");
 			}
 		}
 	}
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_d");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_identifier_expr("List");
+		c.add_generic_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_identifier_expr("List");
+				c.add_generic_name_expr("List");
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("int32");
+					c.add_name_expr("int32");
 				}
 			}
 		}
@@ -524,16 +524,16 @@ moo(List<int32> _a,
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_e");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_identifier_expr("List");
+		c.add_generic_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_identifier_expr("List");
+				c.add_generic_name_expr("List");
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("int32");
+					c.add_name_expr("int32");
 				}
 			}
 		}
@@ -541,16 +541,16 @@ moo(List<int32> _a,
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_f");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_identifier_expr("List");
+		c.add_generic_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_identifier_expr("List");
+				c.add_generic_name_expr("List");
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("int32");
+					c.add_name_expr("int32");
 				}
 			}
 		}
@@ -558,16 +558,16 @@ moo(List<int32> _a,
 	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_g");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_identifier_expr("List");
+		c.add_generic_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_identifier_expr("List");
+				c.add_generic_name_expr("List");
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("int32");
+					c.add_name_expr("int32");
 				}
 			}
 		}
@@ -604,10 +604,10 @@ bark()
 		c.add_binding_statement(cero::BindingSpecifier::Let, "_a");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_identifier_expr("int32");
+				c.add_name_expr("int32");
 			}
 			c.add_group_expr();
 		}
@@ -615,13 +615,13 @@ bark()
 		c.add_binding_statement(cero::BindingSpecifier::Let, "_b");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_identifier_expr("List");
+				c.add_generic_name_expr("List");
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("int32");
+					c.add_name_expr("int32");
 				}
 			}
 			c.add_group_expr();
@@ -630,13 +630,13 @@ bark()
 		c.add_binding_statement(cero::BindingSpecifier::Let, "_c");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_identifier_expr("List");
+				c.add_generic_name_expr("List");
 				{
 					auto _4 = c.mark_children();
-					c.add_identifier_expr("int32");
+					c.add_name_expr("int32");
 				}
 			}
 			c.add_group_expr();
@@ -645,16 +645,16 @@ bark()
 		c.add_binding_statement(cero::BindingSpecifier::Let, "_d");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_identifier_expr("List");
+				c.add_generic_name_expr("List");
 				{
 					auto _4 = c.mark_children();
-					c.add_generic_identifier_expr("List");
+					c.add_generic_name_expr("List");
 					{
 						auto _5 = c.mark_children();
-						c.add_identifier_expr("int32");
+						c.add_name_expr("int32");
 					}
 				}
 			}
@@ -664,16 +664,16 @@ bark()
 		c.add_binding_statement(cero::BindingSpecifier::Let, "_e");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_identifier_expr("List");
+				c.add_generic_name_expr("List");
 				{
 					auto _4 = c.mark_children();
-					c.add_generic_identifier_expr("List");
+					c.add_generic_name_expr("List");
 					{
 						auto _5 = c.mark_children();
-						c.add_identifier_expr("int32");
+						c.add_name_expr("int32");
 					}
 				}
 			}
@@ -683,16 +683,16 @@ bark()
 		c.add_binding_statement(cero::BindingSpecifier::Let, "_f");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_identifier_expr("List");
+				c.add_generic_name_expr("List");
 				{
 					auto _4 = c.mark_children();
-					c.add_generic_identifier_expr("List");
+					c.add_generic_name_expr("List");
 					{
 						auto _5 = c.mark_children();
-						c.add_identifier_expr("int32");
+						c.add_name_expr("int32");
 					}
 				}
 			}
@@ -702,16 +702,16 @@ bark()
 		c.add_binding_statement(cero::BindingSpecifier::Let, "_g");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_identifier_expr("List");
+			c.add_generic_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_identifier_expr("List");
+				c.add_generic_name_expr("List");
 				{
 					auto _4 = c.mark_children();
-					c.add_generic_identifier_expr("List");
+					c.add_generic_name_expr("List");
 					{
 						auto _5 = c.mark_children();
-						c.add_identifier_expr("int32");
+						c.add_name_expr("int32");
 					}
 				}
 			}

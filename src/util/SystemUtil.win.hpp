@@ -5,6 +5,7 @@
 
 namespace cero::windows {
 
-std::wstring widen_string(std::string_view str);
+std::wstring utf8_to_utf16(std::string_view input);
+std::string	 utf16_to_utf8(std::wstring_view input);
 
-}
+} // namespace cero::windows
