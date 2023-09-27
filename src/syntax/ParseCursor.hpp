@@ -13,13 +13,13 @@ public:
 	std::optional<LexicalToken> match_token(Token kind);
 	std::optional<LexicalToken> match_name();
 
-	Token		 peek_kind() const;
+	Token peek_kind() const;
 	LexicalToken peek() const;
 	LexicalToken previous() const;
 
 	LexicalToken next();
-	Token		 next_kind();
-	void		 advance();
+	Token next_kind();
+	void advance();
 
 private:
 	std::span<const LexicalToken>::iterator cursor;

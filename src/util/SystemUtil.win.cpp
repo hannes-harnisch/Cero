@@ -10,7 +10,7 @@ std::wstring utf8_to_utf16(std::string_view input) {
 
 	// MultiByteToWideChar does not accept length zero
 	if (in_len != 0) {
-		const int len	  = static_cast<int>(in_len);
+		const int len = static_cast<int>(in_len);
 		const int out_len = ::MultiByteToWideChar(CP_UTF8, 0, input.data(), len, output.data(), len);
 
 		// cut down to actual number of code units
@@ -24,7 +24,7 @@ std::string utf16_to_utf8(std::wstring_view input) {
 
 	// maximum number of UTF-8 code units that a UTF-16 sequence could convert to
 	const size_t cap = 3 * in_len;
-	std::string	 output(cap, '\0');
+	std::string output(cap, '\0');
 
 	// WideCharToMultiByte does not accept length zero
 	if (in_len != 0) {

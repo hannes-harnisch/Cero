@@ -24,8 +24,8 @@ CERO_TEST(LexEmptySource) {
 	auto source = make_test_source("");
 
 	ExhaustiveReporter r;
-
 	auto tokens = cero::lex(source, r);
+
 	CHECK(all_tokens_match(tokens, {EndOfFile}));
 }
 
@@ -46,13 +46,14 @@ CERO_TEST(LexIntegerLiterals) {
 )_____");
 
 	ExhaustiveReporter r;
-
 	auto tokens = cero::lex(source, r);
+
 	CHECK(all_tokens_match(tokens, {DecIntLiteral, Semicolon, DecIntLiteral, Semicolon,		DecIntLiteral, Semicolon,
 									DecIntLiteral, Semicolon, HexIntLiteral, Semicolon,		HexIntLiteral, Semicolon,
 									HexIntLiteral, Name,	  Semicolon,	 HexIntLiteral, Name,		   Semicolon,
 									BinIntLiteral, Semicolon, BinIntLiteral, Semicolon,		OctIntLiteral, Semicolon,
 									OctIntLiteral, Semicolon, EndOfFile}));
+
 	CHECK(tokens.at(0).get_lexeme(source) == "0");
 	CHECK(tokens.at(2).get_lexeme(source) == "123");
 	CHECK(tokens.at(4).get_lexeme(source) == "123 456");
@@ -83,13 +84,14 @@ CERO_TEST(LexFloatLiterals) {
 )_____");
 
 	ExhaustiveReporter r;
-
 	auto tokens = cero::lex(source, r);
+
 	CHECK(all_tokens_match(tokens,
 						   {FloatLiteral, Semicolon,	 DecIntLiteral, Dot,	   Semicolon,	 FloatLiteral, Semicolon,
 							FloatLiteral, Semicolon,	 FloatLiteral,	Semicolon, FloatLiteral, Semicolon,	   FloatLiteral,
 							Semicolon,	  DecIntLiteral, Dot,			Dot,	   Name,		 Semicolon,	   FloatLiteral,
 							Dot,		  Name,			 Semicolon,		EndOfFile}));
+
 	CHECK(tokens.at(0).get_lexeme(source) == "1.0");
 	CHECK(tokens.at(2).get_lexeme(source) == "1");
 	CHECK(tokens.at(3).get_lexeme(source) == ".");
@@ -120,10 +122,11 @@ CERO_TEST(LexStringLiteralsWithEscapes) {
 )_____");
 
 	ExhaustiveReporter r;
-
 	auto tokens = cero::lex(source, r);
+
 	CHECK(all_tokens_match(tokens, {StringLiteral, StringLiteral, StringLiteral, StringLiteral, StringLiteral, StringLiteral,
 									StringLiteral, StringLiteral, EndOfFile}));
+
 	CHECK(tokens.at(0).get_lexeme(source) == "\"123\\\"\"");
 	CHECK(tokens.at(1).get_lexeme(source) == "\"\\\"\"");
 	CHECK(tokens.at(2).get_lexeme(source) == "\"\"");
@@ -143,9 +146,10 @@ CERO_TEST(LexLineComments) {
 )_____");
 
 	ExhaustiveReporter r;
-
 	auto tokens = cero::lex(source, r);
+
 	CHECK(all_tokens_match(tokens, {LineComment, LineComment, LineComment, LineComment, EndOfFile}));
+
 	CHECK(tokens.at(0).get_lexeme(source) == "//");
 	CHECK(tokens.at(1).get_lexeme(source) == "// ");
 	CHECK(tokens.at(2).get_lexeme(source) == "// abc");
@@ -171,10 +175,11 @@ CERO_TEST(LexBlockComments) {
 )_____");
 
 	ExhaustiveReporter r;
-
 	auto tokens = cero::lex(source, r);
+
 	CHECK(all_tokens_match(tokens, {BlockComment, BlockComment, BlockComment, BlockComment, BlockComment, BlockComment,
 									BlockComment, BlockComment, BlockComment, BlockComment, EndOfFile}));
+
 	CHECK(tokens.at(0).get_lexeme(source) == "/**/");
 	CHECK(tokens.at(1).get_lexeme(source) == "/* abc\n*/");
 	CHECK(tokens.at(2).get_lexeme(source) == "/*\n\n\n*/");
@@ -193,8 +198,8 @@ CERO_TEST(LexBracketCaret) {
 )_____");
 
 	ExhaustiveReporter r;
-
 	auto tokens = cero::lex(source, r);
+
 	CHECK(all_tokens_match(tokens, {LeftBracket, Caret, EndOfFile}));
 }
 
@@ -205,9 +210,10 @@ CERO_TEST(LexUnicodeNames) {
 )_____");
 
 	ExhaustiveReporter r;
-
 	auto tokens = cero::lex(source, r);
+
 	CHECK(all_tokens_match(tokens, {Name, LeftParen, RightParen, LeftBrace, RightBrace, EndOfFile}));
+
 	CHECK(tokens.at(0).get_lexeme(source) == "𖭽");
 }
 
@@ -224,8 +230,8 @@ CERO_TEST(LexOperators) {
 )_____");
 
 	ExhaustiveReporter r;
-
 	auto tokens = cero::lex(source, r);
+
 	CHECK(all_tokens_match(tokens, {Bang,
 									Plus,
 									Minus,
@@ -258,7 +264,7 @@ CERO_TEST(LexDotDot) {
 )_____");
 
 	ExhaustiveReporter r;
-
 	auto tokens = cero::lex(source, r);
+
 	CHECK(all_tokens_match(tokens, {Dot, Dot, EndOfFile}));
 }

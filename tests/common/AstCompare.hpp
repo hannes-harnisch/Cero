@@ -44,13 +44,13 @@ public:
 	void add_return_expr();
 	void add_numeric_literal_expr(cero::NumericLiteralKind kind);
 
-	AstCompare(const AstCompare&)			 = delete;
+	AstCompare(const AstCompare&) = delete;
 	AstCompare& operator=(const AstCompare&) = delete;
 
 private:
-	const cero::Ast&	 ast;
+	const cero::Ast& ast;
 	std::queue<std::any> data;
-	uint32_t			 current_level;
+	uint32_t current_level;
 
 	void visit(const cero::AstRoot& root) override;
 	void visit(const cero::AstStructDefinition& struct_def) override;

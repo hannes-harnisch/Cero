@@ -27,8 +27,8 @@ namespace {
 
 std::expected<MappedFile, std::error_code> MappedFile::from(std::string_view path) {
 	auto w_path = windows::utf8_to_utf16(path);
-	auto file	= ::CreateFileW(w_path.data(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
-								nullptr);
+	auto file = ::CreateFileW(w_path.data(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
+							  nullptr);
 	if (file == INVALID_HANDLE_VALUE)
 		return unexpected_error();
 
@@ -39,8 +39,8 @@ std::expected<MappedFile, std::error_code> MappedFile::from(std::string_view pat
 	}
 
 	HANDLE mapping = INVALID_HANDLE_VALUE;
-	LPVOID addr	   = nullptr;
-	size_t size	   = static_cast<size_t>(file_size.QuadPart);
+	LPVOID addr = nullptr;
+	size_t size = static_cast<size_t>(file_size.QuadPart);
 	if (size != 0) {
 		mapping = ::CreateFileMappingW(file, nullptr, PAGE_READONLY, 0, 0, nullptr);
 		if (mapping == nullptr) {
@@ -74,9 +74,9 @@ MappedFile::MappedFile(MappedFile&& other) noexcept :
 	mapping(other.mapping),
 	addr(other.addr),
 	size(other.size) {
-	other.file	  = INVALID_HANDLE_VALUE;
+	other.file = INVALID_HANDLE_VALUE;
 	other.mapping = INVALID_HANDLE_VALUE;
-	other.addr	  = nullptr;
+	other.addr = nullptr;
 }
 
 } // namespace cero

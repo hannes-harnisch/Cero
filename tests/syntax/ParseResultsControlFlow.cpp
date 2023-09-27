@@ -23,7 +23,6 @@ fibonacci(var uint32 n) -> uint32
 )_____");
 
 	ExhaustiveReporter r;
-
 	auto ast = cero::parse(source, r);
 
 	AstCompare c(ast);

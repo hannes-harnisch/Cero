@@ -26,7 +26,7 @@ std::string_view Source::get_path() const {
 SourceLocation Source::locate(uint32_t offset) const {
 	std::string_view range = text.substr(0, offset);
 
-	uint32_t line	= 1;
+	uint32_t line = 1;
 	uint32_t column = 1;
 	for (char c : range) {
 		if (c == '\t') {

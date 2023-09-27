@@ -47,8 +47,8 @@ enum class Message : uint8_t {
 };
 
 std::string_view get_message_format(Message message);
-Severity		 get_message_severity(Message message);
-const char*		 to_string(Severity severity);
-void			 verify_message_arg_count(Message message, size_t arg_count);
+Severity get_message_severity(Message message);
+const char* to_string(Severity severity);
+void verify_message_arg_count(Message message, size_t arg_count);
 
 } // namespace cero

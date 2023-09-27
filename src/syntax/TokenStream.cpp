@@ -1,20 +1,16 @@
 #include "TokenStream.hpp"
 
-namespace cero
-{
+namespace cero {
 
-std::span<const LexicalToken> TokenStream::get_tokens() const
-{
+std::span<const LexicalToken> TokenStream::get_tokens() const {
 	return tokens;
 }
 
-LexicalToken TokenStream::at(size_t index) const
-{
+LexicalToken TokenStream::at(size_t index) const {
 	return tokens.at(index);
 }
 
-std::string TokenStream::to_string(const Source& source) const
-{
+std::string TokenStream::to_string(const Source& source) const {
 	std::stringstream str;
 
 	for (auto token : tokens)
@@ -23,8 +19,7 @@ std::string TokenStream::to_string(const Source& source) const
 	return std::move(str).str();
 }
 
-void TokenStream::log(const Source& source) const
-{
+void TokenStream::log(const Source& source) const {
 	std::cout << to_string(source);
 }
 

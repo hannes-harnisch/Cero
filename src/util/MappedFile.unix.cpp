@@ -33,7 +33,7 @@ std::expected<MappedFile, std::error_code> MappedFile::from(std::string_view pat
 		return unexpected_error();
 	}
 
-	void*  addr = nullptr;
+	void* addr = nullptr;
 	size_t size = static_cast<size_t>(file_stats.st_size);
 	if (size != 0) {
 		addr = ::mmap(nullptr, size, PROT_READ, MAP_PRIVATE, file_descriptor, 0);
@@ -62,9 +62,9 @@ MappedFile::MappedFile(MappedFile&& other) noexcept :
 	mapping(other.mapping),
 	addr(other.addr),
 	size(other.size) {
-	other.file	  = reinterpret_cast<void*>(uintptr_t(-1));
+	other.file = reinterpret_cast<void*>(uintptr_t(-1));
 	other.mapping = nullptr;
-	other.addr	  = nullptr;
+	other.addr = nullptr;
 }
 
 } // namespace cero

@@ -12,9 +12,9 @@ main()
 )_____");
 
 	ExhaustiveReporter r;
+	auto ast = cero::parse(source, r);
 
-	auto ast	  = cero::parse(source, r);
-	auto str	  = ast.to_string(source);
+	auto str = ast.to_string(source);
 	auto expected = R"_____(Printing AST for Test_AstStringForSimpleFunction
 └── function `main`
     ├── parameters
@@ -33,9 +33,9 @@ a(int32 x, bool _a, bool _b = x) -> float32
 )_____");
 
 	ExhaustiveReporter r;
+	auto ast = cero::parse(source, r);
 
-	auto ast	  = cero::parse(source, r);
-	auto str	  = ast.to_string(source);
+	auto str = ast.to_string(source);
 	auto expected = R"_____(Printing AST for Test_AstStringForSimpleFunctionWithParametersAndReturn
 └── function `a`
     ├── parameters
@@ -68,9 +68,9 @@ b(int32 i, float64 f)
 )_____");
 
 	ExhaustiveReporter r;
+	auto ast = cero::parse(source, r);
 
-	auto ast	  = cero::parse(source, r);
-	auto str	  = ast.to_string(source);
+	auto str = ast.to_string(source);
 	auto expected = R"_____(Printing AST for Test_AstStringForCall
 ├── function `a`
 │   ├── parameters

@@ -88,12 +88,12 @@ enum class AccessSpecifier : uint8_t {
 
 struct AstStructDefinition {
 	AccessSpecifier access;
-	StringId		name;
+	StringId name;
 };
 
 struct AstEnumDefinition {
 	AccessSpecifier access;
-	StringId		name;
+	StringId name;
 };
 
 enum class ParameterSpecifier : uint8_t {
@@ -105,21 +105,21 @@ enum class ParameterSpecifier : uint8_t {
 struct AstFunctionDefinition {
 	struct Parameter {
 		ParameterSpecifier specifier = {};
-		AstId			   type;
-		StringId		   name;
-		OptionalAstId	   default_argument;
+		AstId type;
+		StringId name;
+		OptionalAstId default_argument;
 	};
 
 	struct Output {
-		AstId	 type;
+		AstId type;
 		StringId name;
 	};
 
-	AccessSpecifier		   access = {};
-	StringId			   name;
+	AccessSpecifier access = {};
+	StringId name;
 	std::vector<Parameter> parameters;
-	std::vector<Output>	   outputs;
-	AstIdSet			   statements;
+	std::vector<Output> outputs;
+	AstIdSet statements;
 };
 
 struct AstBlockStatement {
@@ -136,14 +136,14 @@ enum class BindingSpecifier : uint8_t {
 
 struct AstBindingStatement {
 	BindingSpecifier specifier = {};
-	OptionalAstId	 type;
-	StringId		 name;
-	OptionalAstId	 initializer;
+	OptionalAstId type;
+	StringId name;
+	OptionalAstId initializer;
 };
 
 struct AstIfExpr {
-	AstId		  condition;
-	AstId		  then_expression;
+	AstId condition;
+	AstId then_expression;
 	OptionalAstId else_expression;
 };
 
@@ -168,12 +168,12 @@ struct AstGenericNameExpr {
 };
 
 struct AstMemberExpr {
-	AstId	 target;
+	AstId target;
 	StringId member;
 };
 
 struct AstGenericMemberExpr {
-	AstId	 target;
+	AstId target;
 	StringId member;
 	AstIdSet arguments;
 };
@@ -183,12 +183,12 @@ struct AstGroupExpr {
 };
 
 struct AstCallExpr {
-	AstId	 callee;
+	AstId callee;
 	AstIdSet arguments;
 };
 
 struct AstIndexExpr {
-	AstId	 target;
+	AstId target;
 	AstIdSet arguments;
 };
 
@@ -212,7 +212,7 @@ std::string_view to_string(UnaryOperator op);
 
 struct AstUnaryExpr {
 	UnaryOperator op;
-	AstId		  operand;
+	AstId operand;
 };
 
 enum class BinaryOperator : uint8_t {
@@ -253,8 +253,8 @@ std::string_view to_string(BinaryOperator op);
 
 struct AstBinaryExpr {
 	BinaryOperator op;
-	AstId		   left;
-	AstId		   right;
+	AstId left;
+	AstId right;
 };
 
 struct AstReturnExpr {
@@ -299,33 +299,33 @@ enum class VariabilitySpecifier : uint8_t {
 
 struct AstVariabilityExpr {
 	VariabilitySpecifier specifier = {};
-	AstIdSet			 arguments;
+	AstIdSet arguments;
 };
 
 struct AstPointerTypeExpr {
 	AstVariabilityExpr variability;
-	AstId			   type;
+	AstId type;
 };
 
 struct AstArrayTypeExpr {
 	OptionalAstId bound;
-	AstId		  element_type;
+	AstId element_type;
 };
 
 struct AstFunctionTypeExpr {
 	struct Parameter {
 		ParameterSpecifier specifier = {};
-		AstId			   type;
-		StringId		   name;
+		AstId type;
+		StringId name;
 	};
 
 	struct Output {
-		AstId	 type;
+		AstId type;
 		StringId name;
 	};
 
 	std::vector<Parameter> parameters;
-	std::vector<Output>	   outputs;
+	std::vector<Output> outputs;
 };
 
 #define CERO_AST_NODE_TYPES                                                                                                    \

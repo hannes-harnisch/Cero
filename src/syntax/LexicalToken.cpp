@@ -133,8 +133,8 @@ std::string LexicalToken::to_message_string(const Source& source) const {
 
 std::string LexicalToken::to_log_string(const Source& source) const {
 	auto token_kind = to_string(kind);
-	auto lexeme		= get_lexeme(source);
-	auto location	= locate_in(source);
+	auto lexeme = get_lexeme(source);
+	auto location = locate_in(source);
 	return std::format("{} `{}` [{}]", token_kind, lexeme, location.to_string());
 }
 

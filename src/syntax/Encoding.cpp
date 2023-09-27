@@ -26,7 +26,7 @@ namespace {
 
 	struct CodePointRange {
 		uint32_t begin = 0;
-		uint32_t end   = 0;
+		uint32_t end = 0;
 	};
 
 	std::strong_ordering operator<=>(CodePointRange range, uint32_t code_point) {
@@ -287,10 +287,10 @@ namespace {
 	};
 
 	bool search_range_table(std::span<const CodePointRange> table, uint32_t encoded) {
-		static constexpr uint8_t  LENGTHS[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-											   0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0};
-		static constexpr uint32_t MASKS[]	= {0x00, 0x7f, 0x1f, 0x0f, 0x07};
-		static constexpr uint32_t SHIFTS[]	= {0, 18, 12, 6, 0};
+		static constexpr uint8_t LENGTHS[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+											  0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0};
+		static constexpr uint32_t MASKS[] = {0x00, 0x7f, 0x1f, 0x0f, 0x07};
+		static constexpr uint32_t SHIFTS[] = {0, 18, 12, 6, 0};
 
 		uint8_t* byte_ptr = reinterpret_cast<uint8_t*>(&encoded);
 

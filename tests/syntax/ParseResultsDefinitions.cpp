@@ -11,7 +11,6 @@ main()
 )_____");
 
 	ExhaustiveReporter r;
-
 	auto ast = cero::parse(source, r);
 
 	AstCompare c(ast);

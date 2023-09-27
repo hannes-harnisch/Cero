@@ -16,7 +16,6 @@ foo(int32 a, int32 b) -> int32
 )_____");
 
 	ExhaustiveReporter r;
-
 	auto ast = cero::parse(source, r);
 
 	AstCompare c(ast);
@@ -123,7 +122,6 @@ bar(int32 a, int32 b, int32 c) -> bool
 )_____");
 
 	ExhaustiveReporter r;
-
 	auto ast = cero::parse(source, r);
 
 	AstCompare c(ast);
@@ -323,7 +321,6 @@ baz(int32 a, int32 b, int32 c, int32 d) -> bool
 )_____");
 
 	ExhaustiveReporter r;
-
 	auto ast = cero::parse(source, r);
 
 	AstCompare c(ast);

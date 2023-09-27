@@ -15,11 +15,11 @@ class AstToString : public AstVisitor {
 	static constexpr Edge Body {"├── ", "│   "};
 	static constexpr Edge Tail {"└── ", "    "};
 
-	std::string				string;
-	const Ast&				ast;
-	const Source&			source;
+	std::string string;
+	const Ast& ast;
+	const Source& source;
 	std::stack<std::string> prefixes;
-	const Edge*				edge = &Body;
+	const Edge* edge = &Body;
 
 public:
 	AstToString(const Ast& ast, const Source& source);

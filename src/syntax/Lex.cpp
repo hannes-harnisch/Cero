@@ -81,10 +81,10 @@ public:
 	}
 
 private:
-	const Source&	 source;
-	Reporter&		 reporter;
+	const Source& source;
+	Reporter& reporter;
 	std::string_view text;
-	LexCursor		 cursor;
+	LexCursor cursor;
 
 	void next_token(char next, TokenStream& stream) {
 		const auto token_begin = cursor;
@@ -208,7 +208,7 @@ private:
 				break;
 		}
 
-		const uint32_t rest	  = token_begin.count_rest();
+		const uint32_t rest = token_begin.count_rest();
 		const uint32_t offset = static_cast<uint32_t>(text.length()) - rest;
 		const uint32_t length = rest - cursor.count_rest();
 		stream.tokens.emplace_back(kind, offset, length);
@@ -313,7 +313,7 @@ private:
 	}
 
 	bool eat_decimal_number() {
-		bool matched   = false;
+		bool matched = false;
 		auto lookahead = cursor;
 
 		while (char next = lookahead.peek()) {
@@ -542,7 +542,7 @@ private:
 
 	template<typename... Args>
 	void report(Message message, LexCursor report_cursor, Args&&... args) const {
-		auto offset	  = static_cast<uint32_t>(text.length()) - report_cursor.count_rest();
+		auto offset = static_cast<uint32_t>(text.length()) - report_cursor.count_rest();
 		auto location = source.locate(offset);
 		reporter.report(message, location, std::forward<Args>(args)...);
 	}

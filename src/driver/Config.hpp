@@ -20,12 +20,12 @@ enum class Command {
 constexpr inline uint32_t DefaultTabSize = 4;
 
 struct Config {
-	Command			 command = Command::None;
+	Command command = Command::None;
 	std::string_view path;
-	uint32_t		 tab_size			= DefaultTabSize;
-	bool			 warnings_as_errors = false;
-	bool			 log_tokens			= false;
-	bool			 log_ast			= false;
+	uint32_t tab_size = DefaultTabSize;
+	bool warnings_as_errors = false;
+	bool log_tokens = false;
+	bool log_ast = false;
 
 	Config() = default;
 	explicit Config(std::span<std::string_view> args);

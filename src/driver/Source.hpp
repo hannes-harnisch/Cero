@@ -19,13 +19,13 @@ public:
 
 	std::string_view get_text() const;
 	std::string_view get_path() const;
-	SourceLocation	 locate(uint32_t offset) const;
+	SourceLocation locate(uint32_t offset) const;
 
 private:
 	std::optional<MappedFile> file;
-	std::string_view		  text;
-	std::string_view		  path;
-	uint32_t				  tab_size;
+	std::string_view text;
+	std::string_view path;
+	uint32_t tab_size;
 
 	Source(std::optional<MappedFile> file, std::string_view text, std::string_view path, uint32_t tab_size);
 };
