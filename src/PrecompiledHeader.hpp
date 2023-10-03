@@ -16,6 +16,7 @@
 #include <memory>
 #include <optional>
 #include <queue>
+#include <ranges>
 #include <source_location>
 #include <span>
 #include <stack>

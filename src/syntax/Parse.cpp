@@ -404,6 +404,52 @@ private:
 		return {Precedence::Comparison, &Parser::on_infix_operator<BinaryOperator::Greater>};
 	}
 
+	static NonPrefixParseRule lookup_non_prefix_parse(Token kind) {
+		using enum Token;
+		using enum Precedence;
+		using enum UnaryOperator;
+		using enum BinaryOperator;
+
+		switch (kind) {
+			case Equals: return {Assignment, &Parser::on_infix_operator<Assign>};
+			case PlusEquals: return {Assignment, &Parser::on_infix_operator<AddAssign>};
+			case MinusEquals: return {Assignment, &Parser::on_infix_operator<SubtractAssign>};
+			case StarEquals: return {Assignment, &Parser::on_infix_operator<MultiplyAssign>};
+			case SlashEquals: return {Assignment, &Parser::on_infix_operator<DivideAssign>};
+			case PercentEquals: return {Assignment, &Parser::on_infix_operator<RemainderAssign>};
+			case StarStarEquals: return {Assignment, &Parser::on_infix_operator<PowerAssign>};
+			case AmpersandEquals: return {Assignment, &Parser::on_infix_operator<AndAssign>};
+			case PipeEquals: return {Assignment, &Parser::on_infix_operator<OrAssign>};
+			case TildeEquals: return {Assignment, &Parser::on_infix_operator<XorAssign>};
+			case LeftAngleAngleEquals: return {Assignment, &Parser::on_infix_operator<LeftShiftAssign>};
+			case RightAngleAngleEquals: return {Assignment, &Parser::on_infix_operator<RightShiftAssign>};
+			case AmpersandAmpersand: return {Logical, &Parser::on_infix_operator<LogicalAnd>};
+			case PipePipe: return {Logical, &Parser::on_infix_operator<LogicalOr>};
+			case EqualsEquals: return {Comparison, &Parser::on_infix_operator<Equal>};
+			case BangEquals: return {Comparison, &Parser::on_infix_operator<NotEqual>};
+			case LeftAngle: return {Comparison, &Parser::on_infix_operator<Less>};
+			case LeftAngleEquals: return {Comparison, &Parser::on_infix_operator<LessEqual>};
+			case RightAngleEquals: return {Comparison, &Parser::on_infix_operator<GreaterEqual>};
+			case Plus: return {Bitwise, &Parser::on_infix_operator<Add>};
+			case Minus: return {Bitwise, &Parser::on_infix_operator<Subtract>};
+			case Ampersand: return {Bitwise, &Parser::on_infix_operator<BitAnd>};
+			case Pipe: return {Bitwise, &Parser::on_infix_operator<BitOr>};
+			case Tilde: return {Bitwise, &Parser::on_infix_operator<Xor>};
+			case LeftAngleAngle: return {Bitwise, &Parser::on_infix_operator<LeftShift>};
+			case Star: return {Multiplicative, &Parser::on_infix_operator<Multiply>};
+			case Slash: return {Multiplicative, &Parser::on_infix_operator<Divide>};
+			case Percent: return {Multiplicative, &Parser::on_infix_operator<Remainder>};
+			case StarStar: return {Prefix, &Parser::on_infix_operator<Power>};
+			case Caret: return {Postfix, &Parser::on_postfix_operator<Dereference>};
+			case PlusPlus: return {Postfix, &Parser::on_postfix_operator<PostIncrement>};
+			case MinusMinus: return {Postfix, &Parser::on_postfix_operator<PostDecrement>};
+			case Dot: return {Postfix, &Parser::on_dot};
+			case LeftParen: return {Postfix, &Parser::on_infix_left_paren};
+			case LeftBracket: return {Postfix, &Parser::on_infix_left_bracket};
+			default: return {};
+		}
+	}
+
 	AstNode on_if_stmt() {
 		auto condition = ast.store(parse_expression_or_binding());
 		expect_colon_or_block();
@@ -693,57 +739,50 @@ private:
 	}
 
 	void validate_binary_associativity(BinaryOperator left, BinaryOperator right, LexicalToken target) {
-		if (associates_arithmetic_and_bitwise(left, right) || associates_different_logical_operators(left, right)
-			|| associates_intransitive_comparison_operators(left, right)) {
+		if (associates_ambiguous_operators(left, right)) {
 			auto location = target.locate_in(source);
 			report(Message::AmbiguousOperatorMixing, location, to_string(left), to_string(right));
 		}
 	}
 
-	static bool associates_arithmetic_and_bitwise(BinaryOperator left, BinaryOperator right) {
-		static constexpr BinaryOperator bitwise_operators[] {BinaryOperator::BitAnd, BinaryOperator::BitOr, BinaryOperator::Xor,
-															 BinaryOperator::LeftShift, BinaryOperator::RightShift};
-
-		static constexpr BinaryOperator arithmetic_operators[] {BinaryOperator::Add,	   BinaryOperator::Subtract,
-																BinaryOperator::Multiply,  BinaryOperator::Divide,
-																BinaryOperator::Remainder, BinaryOperator::Power};
-
-		if (contains(bitwise_operators, left))
-			return contains(arithmetic_operators, right);
-		else
-			return contains(arithmetic_operators, left) && contains(bitwise_operators, right);
-	}
-
-	static bool associates_different_logical_operators(BinaryOperator left, BinaryOperator right) {
-		if (left == BinaryOperator::LogicalAnd)
-			return right == BinaryOperator::LogicalOr;
-		else
-			return left == BinaryOperator::LogicalOr && right == BinaryOperator::LogicalAnd;
-	}
-
-	static bool associates_intransitive_comparison_operators(BinaryOperator left, BinaryOperator right) {
-		static constexpr BinaryOperator comparison_operators[] {BinaryOperator::Equal,	   BinaryOperator::NotEqual,
-																BinaryOperator::Less,	   BinaryOperator::Greater,
-																BinaryOperator::LessEqual, BinaryOperator::GreaterEqual};
+	static bool associates_ambiguous_operators(BinaryOperator left, BinaryOperator right) {
+		using enum BinaryOperator;
+		static constexpr BinaryOperator bitwise_operators[] {BitAnd, BitOr, Xor, LeftShift, RightShift};
+		static constexpr BinaryOperator arithmetic_operators[] {Add, Subtract, Multiply, Divide, Remainder, Power};
+		static constexpr BinaryOperator comparison_operators[] {Equal, NotEqual, Less, Greater, LessEqual, GreaterEqual};
 
 		struct OperatorPair {
 			BinaryOperator left, right;
-
 			bool operator==(const OperatorPair&) const = default;
 		};
 
-		static constexpr OperatorPair allowed[] {{BinaryOperator::Equal, BinaryOperator::Equal},
-												 {BinaryOperator::Less, BinaryOperator::Less},
-												 {BinaryOperator::Less, BinaryOperator::LessEqual},
-												 {BinaryOperator::LessEqual, BinaryOperator::LessEqual},
-												 {BinaryOperator::LessEqual, BinaryOperator::Less},
-												 {BinaryOperator::Greater, BinaryOperator::Greater},
-												 {BinaryOperator::Greater, BinaryOperator::GreaterEqual},
-												 {BinaryOperator::GreaterEqual, BinaryOperator::GreaterEqual},
-												 {BinaryOperator::GreaterEqual, BinaryOperator::Greater}};
-
-		return contains(comparison_operators, left) && contains(comparison_operators, right)
-			   && !contains(allowed, OperatorPair {left, right});
+		static constexpr OperatorPair transitive_comparisons[] {{Equal, Equal},			 {Less, Less},
+																{Less, LessEqual},		 {LessEqual, LessEqual},
+																{LessEqual, Less},		 {Greater, Greater},
+																{Greater, GreaterEqual}, {GreaterEqual, GreaterEqual},
+																{GreaterEqual, Greater}};
+		switch (left) {
+			case Add:
+			case Subtract:
+			case Multiply:
+			case Divide:
+			case Remainder:
+			case Power: return contains(bitwise_operators, right);
+			case BitAnd:
+			case BitOr:
+			case Xor:
+			case LeftShift:
+			case RightShift: return contains(arithmetic_operators, right);
+			case LogicalAnd: return right == LogicalOr;
+			case LogicalOr: return right == LogicalAnd;
+			case Equal:
+			case NotEqual:
+			case Less:
+			case Greater:
+			case LessEqual:
+			case GreaterEqual: return contains(comparison_operators, right) && !contains(transitive_comparisons, {left, right});
+			default: return false;
+		}
 	}
 
 	void validate_unary_binary_associativity(UnaryOperator left, BinaryOperator right, LexicalToken target) {
@@ -944,52 +983,6 @@ private:
 	void report(Message message, SourceLocation location, Args&&... args) {
 		if (!is_looking_ahead)
 			reporter.report(message, location, std::forward<Args>(args)...);
-	}
-
-	static NonPrefixParseRule lookup_non_prefix_parse(Token kind) {
-		using enum Token;
-		using enum Precedence;
-		using enum UnaryOperator;
-		using enum BinaryOperator;
-
-		switch (kind) {
-			case Equals: return {Assignment, &Parser::on_infix_operator<Assign>};
-			case PlusEquals: return {Assignment, &Parser::on_infix_operator<AddAssign>};
-			case MinusEquals: return {Assignment, &Parser::on_infix_operator<SubtractAssign>};
-			case StarEquals: return {Assignment, &Parser::on_infix_operator<MultiplyAssign>};
-			case SlashEquals: return {Assignment, &Parser::on_infix_operator<DivideAssign>};
-			case PercentEquals: return {Assignment, &Parser::on_infix_operator<RemainderAssign>};
-			case StarStarEquals: return {Assignment, &Parser::on_infix_operator<PowerAssign>};
-			case AmpersandEquals: return {Assignment, &Parser::on_infix_operator<AndAssign>};
-			case PipeEquals: return {Assignment, &Parser::on_infix_operator<OrAssign>};
-			case TildeEquals: return {Assignment, &Parser::on_infix_operator<XorAssign>};
-			case LeftAngleAngleEquals: return {Assignment, &Parser::on_infix_operator<LeftShiftAssign>};
-			case RightAngleAngleEquals: return {Assignment, &Parser::on_infix_operator<RightShiftAssign>};
-			case AmpersandAmpersand: return {Logical, &Parser::on_infix_operator<LogicalAnd>};
-			case PipePipe: return {Logical, &Parser::on_infix_operator<LogicalOr>};
-			case EqualsEquals: return {Comparison, &Parser::on_infix_operator<Equal>};
-			case BangEquals: return {Comparison, &Parser::on_infix_operator<NotEqual>};
-			case LeftAngle: return {Comparison, &Parser::on_infix_operator<Less>};
-			case LeftAngleEquals: return {Comparison, &Parser::on_infix_operator<LessEqual>};
-			case RightAngleEquals: return {Comparison, &Parser::on_infix_operator<GreaterEqual>};
-			case Plus: return {Bitwise, &Parser::on_infix_operator<Add>};
-			case Minus: return {Bitwise, &Parser::on_infix_operator<Subtract>};
-			case Ampersand: return {Bitwise, &Parser::on_infix_operator<BitAnd>};
-			case Pipe: return {Bitwise, &Parser::on_infix_operator<BitOr>};
-			case Tilde: return {Bitwise, &Parser::on_infix_operator<Xor>};
-			case LeftAngleAngle: return {Bitwise, &Parser::on_infix_operator<LeftShift>};
-			case Star: return {Multiplicative, &Parser::on_infix_operator<Multiply>};
-			case Slash: return {Multiplicative, &Parser::on_infix_operator<Divide>};
-			case Percent: return {Multiplicative, &Parser::on_infix_operator<Remainder>};
-			case StarStar: return {Prefix, &Parser::on_infix_operator<Power>};
-			case Caret: return {Postfix, &Parser::on_postfix_operator<Dereference>};
-			case PlusPlus: return {Postfix, &Parser::on_postfix_operator<PostIncrement>};
-			case MinusMinus: return {Postfix, &Parser::on_postfix_operator<PostDecrement>};
-			case Dot: return {Postfix, &Parser::on_dot};
-			case LeftParen: return {Postfix, &Parser::on_infix_left_paren};
-			case LeftBracket: return {Postfix, &Parser::on_infix_left_bracket};
-			default: return {};
-		}
 	}
 
 	static Precedence lookup_precedence_for_associativity(BinaryOperator op) {
