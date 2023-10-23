@@ -2,11 +2,11 @@
 
 namespace cero {
 
-std::span<const LexicalToken> TokenStream::get_tokens() const {
+std::span<const Token> TokenStream::get_tokens() const {
 	return tokens;
 }
 
-LexicalToken TokenStream::at(size_t index) const {
+Token TokenStream::at(size_t index) const {
 	return tokens.at(index);
 }
 

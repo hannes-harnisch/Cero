@@ -1,6 +1,6 @@
 #pragma once
 
-#include "syntax/LexicalToken.hpp"
+#include "syntax/Token.hpp"
 
 #include <span>
 #include <string>
@@ -10,14 +10,14 @@ namespace cero {
 
 class TokenStream {
 public:
-	std::span<const LexicalToken> get_tokens() const;
-	LexicalToken at(size_t index) const;
+	std::span<const Token> get_tokens() const;
+	Token at(size_t index) const;
 
 	std::string to_string(const Source& source) const;
 	void log(const Source& source) const;
 
 private:
-	std::vector<LexicalToken> tokens;
+	std::vector<Token> tokens;
 
 	friend class Lexer;
 };

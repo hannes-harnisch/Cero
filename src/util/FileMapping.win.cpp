@@ -1,4 +1,4 @@
-#include "MappedFile.hpp"
+#include "FileMapping.hpp"
 
 #include "util/Fail.hpp"
 #include "util/System.win.hpp"
@@ -14,23 +14,26 @@ namespace {
 	}
 
 	void close_file(HANDLE file) {
-		if (!::CloseHandle(file))
+		if (!::CloseHandle(file)) {
 			fail_result(std::format("Could not close file (system error {}).", ::GetLastError()));
+		}
 	}
 
-	void close_mapping(HANDLE mapping) {
-		if (!::CloseHandle(mapping))
+	void close_mapping(HANDLE map_handle) {
+		if (!::CloseHandle(map_handle)) {
 			fail_result(std::format("Could not close file mapping (system error {}).", ::GetLastError()));
+		}
 	}
 
 } // namespace
 
-std::expected<MappedFile, std::error_code> MappedFile::from(std::string_view path) {
+std::expected<FileMapping, std::error_code> FileMapping::from(std::string_view path) {
 	auto w_path = windows::utf8_to_utf16(path);
 	auto file = ::CreateFileW(w_path.data(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
 							  nullptr);
-	if (file == INVALID_HANDLE_VALUE)
+	if (file == INVALID_HANDLE_VALUE) {
 		return unexpected_error();
+	}
 
 	LARGE_INTEGER file_size;
 	if (!::GetFileSizeEx(file, &file_size)) {
@@ -38,45 +41,51 @@ std::expected<MappedFile, std::error_code> MappedFile::from(std::string_view pat
 		return unexpected_error();
 	}
 
-	HANDLE mapping = INVALID_HANDLE_VALUE;
+	HANDLE map_handle = INVALID_HANDLE_VALUE;
 	LPVOID addr = nullptr;
 	size_t size = static_cast<size_t>(file_size.QuadPart);
 	if (size != 0) {
-		mapping = ::CreateFileMappingW(file, nullptr, PAGE_READONLY, 0, 0, nullptr);
-		if (mapping == nullptr) {
+		map_handle = ::CreateFileMappingW(file, nullptr, PAGE_READONLY, 0, 0, nullptr);
+		if (map_handle == nullptr) {
 			close_file(file);
 			return unexpected_error();
 		}
 
-		addr = ::MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
+		addr = ::MapViewOfFile(map_handle, FILE_MAP_READ, 0, 0, 0);
 		if (addr == nullptr) {
-			close_mapping(mapping);
+			close_mapping(map_handle);
 			close_file(file);
 			return unexpected_error();
 		}
 	}
 
-	return MappedFile(file, mapping, addr, size);
+	FileMapping f_map;
+	f_map.size = size;
+	f_map.file = file;
+	f_map.map_handle = map_handle;
+	f_map.map_addr = addr;
+	return f_map;
 }
 
-MappedFile::~MappedFile() {
-	if (addr != nullptr) {
-		if (!::UnmapViewOfFile(addr))
+FileMapping::~FileMapping() {
+	if (map_addr != nullptr) {
+		if (!::UnmapViewOfFile(map_addr)) {
 			fail_result(std::format("Could not unmap file (system error {}).", ::GetLastError()));
+		}
 	}
 
-	close_mapping(mapping);
+	close_mapping(map_handle);
 	close_file(file);
 }
 
-MappedFile::MappedFile(MappedFile&& other) noexcept :
+FileMapping::FileMapping(FileMapping&& other) noexcept :
+	size(other.size),
 	file(other.file),
-	mapping(other.mapping),
-	addr(other.addr),
-	size(other.size) {
+	map_handle(other.map_handle),
+	map_addr(other.map_addr) {
 	other.file = INVALID_HANDLE_VALUE;
-	other.mapping = INVALID_HANDLE_VALUE;
-	other.addr = nullptr;
+	other.map_handle = INVALID_HANDLE_VALUE;
+	other.map_addr = nullptr;
 }
 
 } // namespace cero

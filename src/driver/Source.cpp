@@ -3,7 +3,7 @@
 namespace cero {
 
 std::expected<Source, std::error_code> Source::from_file(std::string_view path, const Config& config) {
-	auto file = MappedFile::from(path);
+	auto file = FileMapping::from(path);
 	if (file.has_value()) {
 		auto text = file->get_text();
 		return Source(std::move(*file), text, path, config.tab_size);
@@ -42,9 +42,7 @@ SourceLocation Source::locate(uint32_t offset) const {
 	return {path, line, column};
 }
 
-Source::Source(std::optional<MappedFile> file, std::string_view text, std::string_view path, uint32_t tab_size) :
-	file(std::move(file)),
-	text(text),
+Source::Source(std::string_view path, uint32_t tab_size) :
 	path(path),
 	tab_size(tab_size) {
 }

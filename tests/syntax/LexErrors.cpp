@@ -1,11 +1,11 @@
 #include "common/ExhaustiveReporter.hpp"
 #include "common/Test.hpp"
 
-#include <syntax/LexicalToken.hpp>
+#include <syntax/Token.hpp>
 
 CERO_TEST(SourceTooLarge) {
 	ExhaustiveReporter r;
-	r.expect(1, 1, cero::Message::SourceInputTooLarge, cero::LexicalToken::MaxLength);
+	r.expect(1, 1, cero::Message::SourceInputTooLarge, cero::Token::MaxLength);
 	build_test_source(r, std::string(16779000, ' '));
 }
 

@@ -5,7 +5,7 @@
 
 namespace {
 
-bool all_tokens_match(const cero::TokenStream& token_stream, std::initializer_list<cero::Token> kinds) {
+bool all_tokens_match(const cero::TokenStream& token_stream, std::initializer_list<cero::TokenKind> kinds) {
 	auto tokens = token_stream.get_tokens();
 	CHECK(tokens.size() == kinds.size());
 
@@ -18,7 +18,7 @@ bool all_tokens_match(const cero::TokenStream& token_stream, std::initializer_li
 
 } // namespace
 
-using enum cero::Token;
+using enum cero::TokenKind;
 
 CERO_TEST(LexEmptySource) {
 	auto source = make_test_source("");

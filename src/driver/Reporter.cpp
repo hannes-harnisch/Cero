@@ -20,7 +20,8 @@ void Reporter::on_report(Message message, SourceLocation location, std::format_a
 	if (severity == Severity::Error)
 		has_error_reports = true;
 
-	write_report(message, severity, location, args);
+	auto format = get_message_format(message);
+	write_report(message, severity, location, std::vformat(format, args));
 }
 
 } // namespace cero

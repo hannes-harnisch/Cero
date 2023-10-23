@@ -30,12 +30,12 @@ namespace {
 	};
 
 	std::strong_ordering operator<=>(CodePointRange range, uint32_t code_point) {
-		if (range.begin > code_point)
+		if (range.begin > code_point) {
 			return std::strong_ordering::greater;
-
-		if (range.end < code_point)
+		}
+		if (range.end < code_point) {
 			return std::strong_ordering::less;
-
+		}
 		return std::strong_ordering::equal;
 	}
 
@@ -285,7 +285,7 @@ namespace {
 		{0x2b740, 0x2b81d}, {0x2b820, 0x2cea1}, {0x2ceb0, 0x2ebe0}, {0x2f800, 0x2fa1d}, {0x30000, 0x3134a}, {0x31350, 0x323af},
 		{0xe0100, 0xe01ef},
 	};
-
+ 
 	bool search_range_table(std::span<const CodePointRange> table, uint32_t encoded) {
 		static constexpr uint8_t LENGTHS[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 											  0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0};

@@ -3,7 +3,7 @@
 #include "driver/Message.hpp"
 #include "syntax/Encoding.hpp"
 #include "syntax/LexCursor.hpp"
-#include "syntax/Token.hpp"
+#include "syntax/TokenKind.hpp"
 
 namespace cero {
 
@@ -19,11 +19,12 @@ namespace {
 		return std::bit_cast<uint64_t>(bytes);
 	}
 
-	Token identify_keyword(std::string_view lexeme) {
-		using enum Token;
+	TokenKind identify_keyword(std::string_view lexeme) {
+		using enum TokenKind;
 
-		if (lexeme.length() > sizeof(uint64_t))
+		if (lexeme.length() > sizeof(uint64_t)) {
 			return Name;
+		}
 
 		switch (u64_encode(lexeme)) {
 			case u64_encode("break"): return Break;
@@ -69,14 +70,15 @@ public:
 		TokenStream stream;
 
 		const uint32_t source_length = static_cast<uint32_t>(text.length());
-		if (source_length > LexicalToken::MaxLength) {
-			report(Message::SourceInputTooLarge, cursor, LexicalToken::MaxLength);
+		if (source_length > Token::MaxLength) {
+			report(Message::SourceInputTooLarge, cursor, Token::MaxLength);
 		} else {
-			while (char next = cursor.peek())
-				next_token(next, stream);
+			while (auto next = cursor.peek()) {
+				next_token(*next, stream);
+			}
 		}
 
-		stream.tokens.emplace_back(Token::EndOfFile, source_length, 0);
+		stream.tokens.emplace_back(TokenKind::EndOfFile, source_length, 0);
 		return stream;
 	}
 
@@ -90,8 +92,8 @@ private:
 		const auto token_begin = cursor;
 		cursor.advance();
 
-		using enum Token;
-		Token kind;
+		using enum TokenKind;
+		TokenKind kind;
 		switch (next) {
 			case ' ':
 			case '\t':
@@ -214,7 +216,7 @@ private:
 		stream.tokens.emplace_back(kind, offset, length);
 	}
 
-	Token lex_word(LexCursor token_begin) {
+	TokenKind lex_word(LexCursor token_begin) {
 		eat_word_token_rest();
 		auto length = token_begin.count_rest() - cursor.count_rest();
 		auto lexeme = token_begin.rest().substr(0, length);
@@ -222,13 +224,14 @@ private:
 	}
 
 	void eat_word_token_rest() {
-		while (char next = cursor.peek()) {
-			if (is_standard_ascii(next)) {
-				if (!is_ascii_word_character(next)) {
+		while (auto next = cursor.peek()) {
+			const char c = *next;
+			if (is_standard_ascii(c)) {
+				if (!is_ascii_word_character(c)) {
 					break;
 				}
 			} else {
-				if (!check_multibyte_utf8_value(next, is_utf8_xid_continue, cursor)) {
+				if (!check_multibyte_utf8_value(c, is_utf8_xid_continue, cursor)) {
 					break;
 				}
 			}
@@ -247,25 +250,25 @@ private:
 			char* bytes = reinterpret_cast<char*>(&encoding) + 1;
 
 			for (uint32_t i = 1; i != leading_ones; ++i) {
-				*bytes++ = cursor.next();
+				*bytes++ = cursor.next().value_or('\0');
 			}
 
 			valid = utf8_predicate(encoding);
 		}
 
-		if (!valid)
+		if (!valid) {
 			report(Message::UnexpectedCharacter, token_begin, encoding);
-
+		}
 		return valid;
 	}
 
-	Token lex_number(char next) {
+	TokenKind lex_number(char next) {
 		if (next == '0') {
 			auto backup = cursor;
-			switch (cursor.next()) {
-				case 'x': eat_number_literal(is_hex_digit); return Token::HexIntLiteral;
-				case 'b': eat_number_literal(is_dec_digit); return Token::BinIntLiteral;
-				case 'o': eat_number_literal(is_dec_digit); return Token::OctIntLiteral;
+			switch (cursor.next().value_or('\0')) {
+				case 'x': eat_number_literal(is_hex_digit); return TokenKind::HexIntLiteral;
+				case 'b': eat_number_literal(is_dec_digit); return TokenKind::BinIntLiteral;
+				case 'o': eat_number_literal(is_dec_digit); return TokenKind::OctIntLiteral;
 			}
 			cursor = backup;
 		}
@@ -273,20 +276,20 @@ private:
 		eat_number_literal(is_dec_digit);
 		auto cursor_at_token_end = cursor;
 
-		while (char c = cursor.peek()) {
-			if (!is_whitespace(c))
+		while (auto c = cursor.peek()) {
+			if (!is_whitespace(*c)) {
 				break;
-
+			}
 			cursor.advance();
 		}
 
 		auto cursor_at_dot = cursor;
 
 		// check for rational part
-		next = cursor.next();
+		next = cursor.next().value_or('\0');
 		if (next == '.') {
 			if (eat_decimal_number()) {
-				return Token::FloatLiteral;
+				return TokenKind::FloatLiteral;
 			} else {
 				cursor = cursor_at_dot; // reset to dot if there's no fractional part
 			}
@@ -294,17 +297,18 @@ private:
 			cursor = cursor_at_token_end;
 		}
 
-		return Token::DecIntLiteral;
+		return TokenKind::DecIntLiteral;
 	}
 
 	void eat_number_literal(bool (*char_predicate)(char)) {
 		auto lookahead = cursor;
 
-		while (char next = lookahead.peek()) {
-			if (char_predicate(next)) {
+		while (auto next = lookahead.peek()) {
+			const char c = *next;
+			if (char_predicate(c)) {
 				cursor = lookahead;
 				cursor.advance();
-			} else if (!is_whitespace(next)) {
+			} else if (!is_whitespace(c)) {
 				break;
 			}
 
@@ -316,12 +320,13 @@ private:
 		bool matched = false;
 		auto lookahead = cursor;
 
-		while (char next = lookahead.peek()) {
-			if (is_dec_digit(next)) {
+		while (auto next = lookahead.peek()) {
+			const char c = *next;
+			if (is_dec_digit(c)) {
 				cursor = lookahead;
 				cursor.advance();
 				matched = true;
-			} else if (!is_whitespace(next)) {
+			} else if (!is_whitespace(c)) {
 				break;
 			}
 
@@ -330,125 +335,125 @@ private:
 		return matched;
 	}
 
-	Token match_dot() {
+	TokenKind match_dot() {
 		auto backup = cursor;
 		if (cursor.match('.')) {
 			if (cursor.match('.')) {
-				return Token::Ellipsis;
+				return TokenKind::Ellipsis;
 			}
 			cursor = backup; // reset to ensure the extra dot is not skipped
-		} else if (is_dec_digit(cursor.peek())) {
+		} else if (is_dec_digit(cursor.peek().value_or('\0'))) {
 			eat_number_literal(is_dec_digit);
-			return Token::FloatLiteral;
+			return TokenKind::FloatLiteral;
 		}
 
-		return Token::Dot;
+		return TokenKind::Dot;
 	}
 
-	Token match_colon() {
-		if (cursor.match(':'))
-			return Token::ColonColon;
-
-		return Token::Colon;
+	TokenKind match_colon() {
+		if (cursor.match(':')) {
+			return TokenKind::ColonColon;
+		}
+		return TokenKind::Colon;
 	}
 
-	Token match_left_angle() {
+	TokenKind match_left_angle() {
 		if (cursor.match('<')) {
-			if (cursor.match('='))
-				return Token::LeftAngleAngleEquals;
-
-			return Token::LeftAngleAngle;
+			if (cursor.match('=')) {
+				return TokenKind::LeftAngleAngleEquals;
+			}
+			return TokenKind::LeftAngleAngle;
 		}
 
 		if (cursor.match('='))
-			return Token::LeftAngleEquals;
+			return TokenKind::LeftAngleEquals;
 
-		return Token::LeftAngle;
+		return TokenKind::LeftAngle;
 	}
 
-	Token match_right_angle() {
+	TokenKind match_right_angle() {
 		auto backup = cursor;
 		if (cursor.match('>')) {
 			if (cursor.match('=')) {
-				return Token::RightAngleAngleEquals;
+				return TokenKind::RightAngleAngleEquals;
 			}
 			cursor = backup; // reset to ensure the extra right angle is not skipped
 		} else if (cursor.match('=')) {
-			return Token::RightAngleEquals;
+			return TokenKind::RightAngleEquals;
 		}
 
-		return Token::RightAngle;
+		return TokenKind::RightAngle;
 	}
 
-	Token match_equal() {
-		if (cursor.match('='))
-			return Token::EqualsEquals;
-
-		if (cursor.match('>'))
-			return Token::ThickArrow;
-
-		return Token::Equals;
+	TokenKind match_equal() {
+		if (cursor.match('=')) {
+			return TokenKind::EqualsEquals;
+		}
+		if (cursor.match('>')) {
+			return TokenKind::ThickArrow;
+		}
+		return TokenKind::Equals;
 	}
 
-	Token match_plus() {
-		if (cursor.match('+'))
-			return Token::PlusPlus;
-
-		if (cursor.match('='))
-			return Token::PlusEquals;
-
-		return Token::Plus;
+	TokenKind match_plus() {
+		if (cursor.match('+')) {
+			return TokenKind::PlusPlus;
+		}
+		if (cursor.match('=')) {
+			return TokenKind::PlusEquals;
+		}
+		return TokenKind::Plus;
 	}
 
-	Token match_minus() {
-		if (cursor.match('>'))
-			return Token::ThinArrow;
-
-		if (cursor.match('-'))
-			return Token::MinusMinus;
-
-		if (cursor.match('='))
-			return Token::MinusEquals;
-
-		return Token::Minus;
+	TokenKind match_minus() {
+		if (cursor.match('>')) {
+			return TokenKind::ThinArrow;
+		}
+		if (cursor.match('-')) {
+			return TokenKind::MinusMinus;
+		}
+		if (cursor.match('=')) {
+			return TokenKind::MinusEquals;
+		}
+		return TokenKind::Minus;
 	}
 
-	Token match_star() {
+	TokenKind match_star() {
 		if (cursor.match('*')) {
-			if (cursor.match('='))
-				return Token::StarStarEquals;
-
-			return Token::StarStar;
+			if (cursor.match('=')) {
+				return TokenKind::StarStarEquals;
+			}
+			return TokenKind::StarStar;
 		}
 
-		if (cursor.match('='))
-			return Token::StarEquals;
-
-		return Token::Star;
+		if (cursor.match('=')) {
+			return TokenKind::StarEquals;
+		}
+		return TokenKind::Star;
 	}
 
-	Token match_slash() {
+	TokenKind match_slash() {
 		if (cursor.match('/')) {
 			eat_line_comment();
-			return Token::LineComment;
+			return TokenKind::LineComment;
 		}
 
 		if (cursor.match('*')) {
 			eat_block_comment();
-			return Token::BlockComment;
+			return TokenKind::BlockComment;
 		}
 
-		if (cursor.match('='))
-			return Token::SlashEquals;
-
-		return Token::Slash;
+		if (cursor.match('=')) {
+			return TokenKind::SlashEquals;
+		}
+		return TokenKind::Slash;
 	}
 
 	void eat_line_comment() {
-		while (char next = cursor.peek()) {
-			if (next == '\n')
+		while (auto next = cursor.peek()) {
+			if (*next == '\n') {
 				break;
-
+			}
 			cursor.advance();
 		}
 	}
@@ -471,73 +476,77 @@ private:
 			}
 		}
 
-		if (unclosed_count != 0)
+		if (unclosed_count != 0) {
 			report(Message::UnterminatedBlockComment, comment_begin);
+		}
 	}
 
-	Token match_percent() {
-		if (cursor.match('='))
-			return Token::PercentEquals;
-
-		return Token::Percent;
+	TokenKind match_percent() {
+		if (cursor.match('=')) {
+			return TokenKind::PercentEquals;
+		}
+		return TokenKind::Percent;
 	}
 
-	Token match_bang() {
-		if (cursor.match('='))
-			return Token::BangEquals;
-
-		return Token::Bang;
+	TokenKind match_bang() {
+		if (cursor.match('=')) {
+			return TokenKind::BangEquals;
+		}
+		return TokenKind::Bang;
 	}
 
-	Token match_ampersand() {
-		if (cursor.match('&'))
-			return Token::AmpersandAmpersand;
-
-		if (cursor.match('='))
-			return Token::AmpersandEquals;
-
-		return Token::Ampersand;
+	TokenKind match_ampersand() {
+		if (cursor.match('&')) {
+			return TokenKind::AmpersandAmpersand;
+		}
+		if (cursor.match('=')) {
+			return TokenKind::AmpersandEquals;
+		}
+		return TokenKind::Ampersand;
 	}
 
-	Token match_pipe() {
-		if (cursor.match('|'))
-			return Token::PipePipe;
-
-		if (cursor.match('='))
-			return Token::PipeEquals;
-
-		return Token::Pipe;
+	TokenKind match_pipe() {
+		if (cursor.match('|')) {
+			return TokenKind::PipePipe;
+		}
+		if (cursor.match('=')) {
+			return TokenKind::PipeEquals;
+		}
+		return TokenKind::Pipe;
 	}
 
-	Token match_tilde() {
-		if (cursor.match('='))
-			return Token::TildeEquals;
-
-		return Token::Tilde;
+	TokenKind match_tilde() {
+		if (cursor.match('=')) {
+			return TokenKind::TildeEquals;
+		}
+		return TokenKind::Tilde;
 	}
 
 	void eat_quoted_sequence(char quote) {
 		bool ignore_quote = false;
-		while (char next = cursor.peek()) {
-			if (next == '\n') {
+		while (auto next = cursor.peek()) {
+			const char c = *next;
+			if (c == '\n') {
 				report(Message::MissingClosingQuote, cursor);
 				break;
 			}
 
 			cursor.advance();
 
-			if (next == '\\')
+			if (c == '\\') {
 				ignore_quote ^= true; // bool gets flipped so we correctly handle an escaped backslash within the literal
-			else if (next == quote && !ignore_quote)
+			} else if (c == quote && !ignore_quote) {
 				break;
-			else if (ignore_quote)
+			} else if (ignore_quote) {
 				ignore_quote = false;
+			}
 		}
 	}
 
 	void eat_unicode_token(char next, LexCursor token_begin) {
-		if (check_multibyte_utf8_value(next, is_utf8_xid_start, token_begin))
+		if (check_multibyte_utf8_value(next, is_utf8_xid_start, token_begin)) {
 			eat_word_token_rest();
+		}
 	}
 
 	template<typename... Args>

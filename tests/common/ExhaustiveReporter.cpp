@@ -14,14 +14,11 @@ ExhaustiveReporter::~ExhaustiveReporter() {
 void ExhaustiveReporter::write_report(cero::Message message,
 									  cero::Severity,
 									  cero::SourceLocation location,
-									  std::format_args args) {
-	auto format = cero::get_message_format(message);
-	auto message_text = std::vformat(format, args);
-
+									  std::string message_text) {
 	REQUIRE(!expected_reports.empty());
 
 	auto& expected = expected_reports.front();
-	Report received {message, location, message_text};
+	const Report received {message, location, std::move(message_text)};
 	const bool matches = expected == received;
 	CHECK(matches);
 

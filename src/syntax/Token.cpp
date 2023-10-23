@@ -1,4 +1,4 @@
-#include "LexicalToken.hpp"
+#include "Token.hpp"
 
 #include "syntax/LexCursor.hpp"
 #include "util/Fail.hpp"
@@ -7,8 +7,8 @@ namespace cero {
 
 namespace {
 
-	std::string_view get_token_message_format(Token kind) {
-		using enum Token;
+	std::string_view get_token_message_format(TokenKind kind) {
+		using enum TokenKind;
 		switch (kind) {
 			case Name: return "name `{}`";
 			case LineComment:
@@ -25,8 +25,8 @@ namespace {
 		}
 	}
 
-	std::string_view to_string(Token kind) {
-		using enum Token;
+	std::string_view to_string(TokenKind kind) {
+		using enum TokenKind;
 		switch (kind) {
 			case Name: return "Name";
 			case LineComment: return "LineComment";
@@ -121,24 +121,24 @@ namespace {
 
 } // namespace
 
-std::string_view LexicalToken::get_lexeme(const Source& source) const {
+std::string_view Token::get_lexeme(const Source& source) const {
 	return source.get_text().substr(offset, length);
 }
 
-std::string LexicalToken::to_message_string(const Source& source) const {
+std::string Token::to_message_string(const Source& source) const {
 	auto format = get_token_message_format(kind);
 	auto lexeme = get_lexeme(source);
 	return std::vformat(format, std::make_format_args(lexeme));
 }
 
-std::string LexicalToken::to_log_string(const Source& source) const {
+std::string Token::to_log_string(const Source& source) const {
 	auto token_kind = to_string(kind);
 	auto lexeme = get_lexeme(source);
 	auto location = locate_in(source);
 	return std::format("{} `{}` [{}]", token_kind, lexeme, location.to_string());
 }
 
-SourceLocation LexicalToken::locate_in(const Source& source) const {
+SourceLocation Token::locate_in(const Source& source) const {
 	return source.locate(offset);
 }
 

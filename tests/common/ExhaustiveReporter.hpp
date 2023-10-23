@@ -37,7 +37,7 @@ private:
 	void write_report(cero::Message message,
 					  cero::Severity severity,
 					  cero::SourceLocation location,
-					  std::format_args args) override;
+					  std::string message_text) override;
 
 	void on_expect(uint32_t line, uint32_t column, cero::Message message, std::format_args args);
 };

@@ -6,8 +6,8 @@ ParseCursor::ParseCursor(const TokenStream& token_stream) :
 	cursor(token_stream.get_tokens().begin()) {
 }
 
-bool ParseCursor::match(Token kind) {
-	auto token = next();
+bool ParseCursor::match(TokenKind kind) {
+	auto token = peek();
 	if (token.kind == kind) {
 		advance();
 		return true;
@@ -15,8 +15,8 @@ bool ParseCursor::match(Token kind) {
 	return false;
 }
 
-std::optional<LexicalToken> ParseCursor::match_token(Token kind) {
-	auto token = next();
+std::optional<Token> ParseCursor::match_token(TokenKind kind) {
+	auto token = peek();
 	if (token.kind == kind) {
 		advance();
 		return token;
@@ -24,48 +24,57 @@ std::optional<LexicalToken> ParseCursor::match_token(Token kind) {
 	return std::nullopt;
 }
 
-std::optional<LexicalToken> ParseCursor::match_name() {
-	auto token = next();
-	if (token.kind == Token::Name) {
+std::optional<Token> ParseCursor::match_name() {
+	auto token = peek();
+	if (token.kind == TokenKind::Name) {
 		advance();
 		return token;
 	}
 	return std::nullopt;
 }
 
-Token ParseCursor::peek_kind() const {
+TokenKind ParseCursor::current_kind() const {
 	return cursor->kind;
 }
 
-LexicalToken ParseCursor::peek() const {
+Token ParseCursor::current() const {
 	return *cursor;
 }
 
-LexicalToken ParseCursor::previous() const {
+Token ParseCursor::previous() const {
 	return cursor[-1];
 }
 
-LexicalToken ParseCursor::next() {
-	auto kind = cursor->kind;
-	while (kind == Token::LineComment || kind == Token::BlockComment) {
-		advance();
-		kind = cursor->kind;
-	}
+Token ParseCursor::peek() {
+	skip_comments();
 	return *cursor;
 }
 
-Token ParseCursor::next_kind() {
-	auto kind = cursor->kind;
-	while (kind == Token::LineComment || kind == Token::BlockComment) {
-		advance();
-		kind = cursor->kind;
-	}
-	return kind;
+Token ParseCursor::peek_ahead() {
+	skip_comments();
+	auto saved = cursor;
+	advance();
+	auto token = peek();
+	cursor = saved;
+	return token;
+}
+
+TokenKind ParseCursor::peek_kind() {
+	skip_comments();
+	return cursor->kind;
 }
 
 void ParseCursor::advance() {
-	if (cursor->kind != Token::EndOfFile)
+	if (cursor->kind != TokenKind::EndOfFile)
 		++cursor;
+}
+
+void ParseCursor::skip_comments() {
+	auto kind = cursor->kind;
+	while (kind == TokenKind::LineComment || kind == TokenKind::BlockComment) {
+		++cursor;
+		kind = cursor->kind;
+	}
 }
 
 } // namespace cero

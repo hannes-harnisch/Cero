@@ -20,7 +20,7 @@ public:
 	virtual ~Reporter() = default;
 
 protected:
-	virtual void write_report(Message message, Severity severity, SourceLocation location, std::format_args args) = 0;
+	virtual void write_report(Message message, Severity severity, SourceLocation location, std::string message_text) = 0;
 
 private:
 	bool has_error_reports = false;

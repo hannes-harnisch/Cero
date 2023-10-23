@@ -1,4 +1,4 @@
-#include "MappedFile.hpp"
+#include "FileMapping.hpp"
 
 #include "util/Fail.hpp"
 
@@ -16,20 +16,22 @@ namespace {
 	}
 
 	void close_file(int file_descriptor) {
-		if (::close(file_descriptor) == -1)
+		if (::close(file_descriptor) == -1) {
 			fail_result(std::format("Could not close file (system error {}).", errno));
+		}
 	}
 
 } // namespace
 
-std::expected<MappedFile, std::error_code> MappedFile::from(std::string_view path) {
-	int file_descriptor = ::open(path.data(), O_RDONLY);
-	if (file_descriptor == -1)
+std::expected<FileMapping, std::error_code> FileMapping::from(std::string_view path) {
+	int file = ::open(path.data(), O_RDONLY);
+	if (file == -1) {
 		return unexpected_error();
+	}
 
 	struct stat file_stats = {};
-	if (::fstat(file_descriptor, &file_stats) == -1) {
-		close_file(file_descriptor);
+	if (::fstat(file, &file_stats) == -1) {
+		close_file(file);
 		return unexpected_error();
 	}
 
@@ -38,33 +40,34 @@ std::expected<MappedFile, std::error_code> MappedFile::from(std::string_view pat
 	if (size != 0) {
 		addr = ::mmap(nullptr, size, PROT_READ, MAP_PRIVATE, file_descriptor, 0);
 		if (addr == MAP_FAILED) {
-			close_file(file_descriptor);
+			close_file(file);
 			return unexpected_error();
 		}
 	}
 
-	void* file = reinterpret_cast<void*>(static_cast<uintptr_t>(file_descriptor));
-	return MappedFile(file, nullptr, addr, size);
+	FileMapping f_map;
+	f_map.size = size;
+	f_map.file = file;
+	f_map.map_addr = addr;
+	return f_map;
 }
 
-MappedFile::~MappedFile() {
-	if (addr != nullptr) {
-		if (::munmap(addr, size) == -1)
+FileMapping::~FileMapping() {
+	if (map_addr != nullptr) {
+		if (::munmap(map_addr, size) == -1) {
 			fail_result(std::format("Could not unmap file (system error {}).", errno));
+		}
 	}
 
-	int descriptor = static_cast<int>(reinterpret_cast<uintptr_t>(file));
-	close_file(descriptor);
+	close_file(file);
 }
 
-MappedFile::MappedFile(MappedFile&& other) noexcept :
+FileMapping::FileMapping(FileMapping&& other) noexcept :
+	size(other.size),
 	file(other.file),
-	mapping(other.mapping),
-	addr(other.addr),
-	size(other.size) {
-	other.file = reinterpret_cast<void*>(uintptr_t(-1));
-	other.mapping = nullptr;
-	other.addr = nullptr;
+	map_addr(other.map_addr) {
+	other.file = -1;
+	other.map_addr = nullptr;
 }
 
 } // namespace cero

@@ -2,6 +2,7 @@
 
 #include "driver/Source.hpp"
 
+#include <optional>
 #include <string_view>
 
 namespace cero {
@@ -11,12 +12,12 @@ public:
 	explicit LexCursor(const Source& source);
 
 	// Returns the current character or null if the cursor is at the end.
-	char peek() const;
+	std::optional<char> peek() const;
 
 	// Returns the current character and then advances, or returns null if the cursor is at the end.
-	char next();
+	std::optional<char> next();
 
-	// Advances the cursor.
+	// Moves cursor to the next character.
 	void advance();
 
 	// Returns true and advances if the current character equals the expected, otherwise false.

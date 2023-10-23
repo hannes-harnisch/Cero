@@ -7,18 +7,18 @@ LexCursor::LexCursor(const Source& source) :
 	end(source.get_text().end()) {
 }
 
-char LexCursor::peek() const {
+std::optional<char> LexCursor::peek() const {
 	if (current != end)
 		return *current;
 	else
-		return '\0';
+		return std::nullopt;
 }
 
-char LexCursor::next() {
+std::optional<char> LexCursor::next() {
 	if (current != end)
 		return *current++;
 	else
-		return '\0';
+		return std::nullopt;
 }
 
 void LexCursor::advance() {
