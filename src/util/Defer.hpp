@@ -4,8 +4,6 @@ namespace cero {
 
 template<typename D>
 class Defer {
-	D deferred;
-
 public:
 	Defer(D&& deferred) :
 		deferred(std::move(deferred)) {
@@ -17,6 +15,9 @@ public:
 
 	Defer(const Defer&) = delete;
 	Defer& operator=(const Defer&) = delete;
+
+private:
+	D deferred;
 };
 
 } // namespace cero

@@ -122,7 +122,8 @@ namespace {
 } // namespace
 
 std::string_view Token::get_lexeme(const Source& source) const {
-	return source.get_text().substr(offset, length);
+	// TODO: rewrite this to be more robust with error handling
+	return source.lock().value().get_text().substr(offset, length);
 }
 
 std::string Token::to_message_string(const Source& source) const {

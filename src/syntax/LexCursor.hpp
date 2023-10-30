@@ -9,7 +9,7 @@ namespace cero {
 
 class LexCursor {
 public:
-	explicit LexCursor(const Source& source);
+	explicit LexCursor(std::string_view source_text);
 
 	// Returns the current character or null if the cursor is at the end.
 	std::optional<char> peek() const;

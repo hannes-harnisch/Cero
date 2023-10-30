@@ -19,32 +19,35 @@ Config::Config(std::span<std::string_view> args) {
 void Config::set_command(std::string_view arg) {
 	using enum Command;
 
-	if (arg == "help" || arg == "--help" || arg == "-h")
+	if (arg == "help" || arg == "--help" || arg == "-h") {
 		command = Help;
-	else if (arg == "build")
+	} else if (arg == "build") {
 		command = Build;
-	else if (arg == "install")
+	} else if (arg == "install") {
 		command = Install;
-	else if (arg == "clean")
+	} else if (arg == "clean") {
 		command = Clean;
-	else if (arg == "run")
+	} else if (arg == "run") {
 		command = Run;
-	else if (arg == "eval")
+	} else if (arg == "eval") {
 		command = Eval;
-	else
+	} else {
 		command = Unknown;
+	}
 }
 
 void Config::set_option(std::string_view arg) {
-	if (arg == "-Werror")
+	if (arg == "-Werror") {
 		warnings_as_errors = true;
-	else if (arg == "--log-tokens")
+	} else if (arg == "--log-tokens") {
 		log_tokens = true;
-	else if (arg == "--log-ast")
+	} else if (arg == "--log-ast") {
 		log_ast = true;
+	}
 	// check for all other options here in the future
-	else
+	else {
 		path = arg;
+	}
 }
 
 } // namespace cero

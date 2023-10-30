@@ -19,8 +19,8 @@ namespace {
 		}
 	}
 
-	void close_mapping(HANDLE map_handle) {
-		if (!::CloseHandle(map_handle)) {
+	void close_mapping(HANDLE mapping) {
+		if (!::CloseHandle(mapping)) {
 			fail_result(std::format("Could not close file mapping (system error {}).", ::GetLastError()));
 		}
 	}
@@ -41,19 +41,19 @@ std::expected<FileMapping, std::error_code> FileMapping::from(std::string_view p
 		return unexpected_error();
 	}
 
-	HANDLE map_handle = INVALID_HANDLE_VALUE;
-	LPVOID addr = nullptr;
+	HANDLE mapping = INVALID_HANDLE_VALUE;
+	const void* addr = "";
 	size_t size = static_cast<size_t>(file_size.QuadPart);
 	if (size != 0) {
-		map_handle = ::CreateFileMappingW(file, nullptr, PAGE_READONLY, 0, 0, nullptr);
-		if (map_handle == nullptr) {
+		mapping = ::CreateFileMappingW(file, nullptr, PAGE_READONLY, 0, 0, nullptr);
+		if (mapping == nullptr) {
 			close_file(file);
 			return unexpected_error();
 		}
 
-		addr = ::MapViewOfFile(map_handle, FILE_MAP_READ, 0, 0, 0);
+		addr = ::MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
 		if (addr == nullptr) {
-			close_mapping(map_handle);
+			close_mapping(mapping);
 			close_file(file);
 			return unexpected_error();
 		}
@@ -62,30 +62,30 @@ std::expected<FileMapping, std::error_code> FileMapping::from(std::string_view p
 	FileMapping f_map;
 	f_map.size = size;
 	f_map.file = file;
-	f_map.map_handle = map_handle;
-	f_map.map_addr = addr;
+	f_map.mapping = mapping;
+	f_map.addr = addr;
 	return f_map;
 }
 
 FileMapping::~FileMapping() {
-	if (map_addr != nullptr) {
-		if (!::UnmapViewOfFile(map_addr)) {
+	if (addr != nullptr) {
+		if (!::UnmapViewOfFile(addr)) {
 			fail_result(std::format("Could not unmap file (system error {}).", ::GetLastError()));
 		}
 	}
 
-	close_mapping(map_handle);
+	close_mapping(mapping);
 	close_file(file);
 }
 
 FileMapping::FileMapping(FileMapping&& other) noexcept :
 	size(other.size),
 	file(other.file),
-	map_handle(other.map_handle),
-	map_addr(other.map_addr) {
+	mapping(other.mapping),
+	addr(other.addr) {
 	other.file = INVALID_HANDLE_VALUE;
-	other.map_handle = INVALID_HANDLE_VALUE;
-	other.map_addr = nullptr;
+	other.mapping = INVALID_HANDLE_VALUE;
+	other.addr = nullptr;
 }
 
 } // namespace cero

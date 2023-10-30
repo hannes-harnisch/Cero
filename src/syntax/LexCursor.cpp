@@ -2,36 +2,41 @@
 
 namespace cero {
 
-LexCursor::LexCursor(const Source& source) :
-	current(source.get_text().begin()),
-	end(source.get_text().end()) {
+LexCursor::LexCursor(std::string_view source_text) :
+	current(source_text.begin()),
+	end(source_text.end()) {
 }
 
 std::optional<char> LexCursor::peek() const {
-	if (current != end)
+	if (current != end) {
 		return *current;
-	else
+	} else {
 		return std::nullopt;
+	}
 }
 
 std::optional<char> LexCursor::next() {
-	if (current != end)
+	if (current != end) {
 		return *current++;
-	else
+	} else {
 		return std::nullopt;
+	}
 }
 
 void LexCursor::advance() {
-	if (current != end)
+	if (current != end) {
 		++current;
+	}
 }
 
 bool LexCursor::match(char expected) {
-	if (current == end)
+	if (current == end) {
 		return false;
+	}
 
-	if (*current != expected)
+	if (*current != expected) {
 		return false;
+	}
 
 	++current;
 	return true;

@@ -35,10 +35,10 @@ std::expected<FileMapping, std::error_code> FileMapping::from(std::string_view p
 		return unexpected_error();
 	}
 
-	void* addr = nullptr;
+	const void* addr = "";
 	size_t size = static_cast<size_t>(file_stats.st_size);
 	if (size != 0) {
-		addr = ::mmap(nullptr, size, PROT_READ, MAP_PRIVATE, file_descriptor, 0);
+		addr = ::mmap(nullptr, size, PROT_READ, MAP_PRIVATE, file, 0);
 		if (addr == MAP_FAILED) {
 			close_file(file);
 			return unexpected_error();
@@ -48,13 +48,13 @@ std::expected<FileMapping, std::error_code> FileMapping::from(std::string_view p
 	FileMapping f_map;
 	f_map.size = size;
 	f_map.file = file;
-	f_map.map_addr = addr;
+	f_map.addr = addr;
 	return f_map;
 }
 
 FileMapping::~FileMapping() {
-	if (map_addr != nullptr) {
-		if (::munmap(map_addr, size) == -1) {
+	if (addr != nullptr) {
+		if (::munmap(addr, size) == -1) {
 			fail_result(std::format("Could not unmap file (system error {}).", errno));
 		}
 	}
@@ -65,9 +65,9 @@ FileMapping::~FileMapping() {
 FileMapping::FileMapping(FileMapping&& other) noexcept :
 	size(other.size),
 	file(other.file),
-	map_addr(other.map_addr) {
+	addr(other.addr) {
 	other.file = -1;
-	other.map_addr = nullptr;
+	other.addr = nullptr;
 }
 
 } // namespace cero

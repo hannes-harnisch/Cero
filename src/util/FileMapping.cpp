@@ -3,10 +3,7 @@
 namespace cero {
 
 std::string_view FileMapping::get_text() const {
-	if (size == 0)
-		return "";
-
-	const char* str = static_cast<const char*>(map_addr);
+	const char* str = static_cast<const char*>(addr);
 	return std::string_view(str, size);
 }
 

@@ -23,11 +23,11 @@ private:
 
 #if defined(CERO_WINDOWS)
 	void* file;
-	void* map_handle;
-	void* map_addr;
+	void* mapping;
+	const void* addr;
 #elif defined(CERO_UNIX)
 	int file;
-	void* map_addr;
+	void* addr;
 #else
 	#error Unknown OS.
 #endif

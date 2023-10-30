@@ -11,6 +11,12 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 set(CMAKE_VS_JUST_MY_CODE_DEBUGGING ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
+if (WIN32)
+    add_compile_definitions(CERO_WINDOWS)
+elseif (UNIX)
+    add_compile_definitions(CERO_UNIX)
+endif ()
+
 if (MSVC)
     add_compile_options(/W4)
 else ()

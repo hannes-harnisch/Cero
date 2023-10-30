@@ -5,7 +5,7 @@
 
 cero::Source make_test_source(std::string_view source_text, std::source_location location, const cero::Config& config) {
 	auto path = cero::normalize_function_name(location);
-	return cero::Source::from_text(source_text, path, config);
+	return cero::Source::from_text(path, source_text, config);
 }
 
 void build_test_source(cero::Reporter& reporter, std::string_view source_text, std::source_location location) {

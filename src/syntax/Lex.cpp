@@ -59,11 +59,11 @@ namespace {
 
 class Lexer {
 public:
-	Lexer(const Source& source, Reporter& reporter) :
+	Lexer(const Source& source, Reporter& reporter, std::string_view text) :
 		source(source),
 		reporter(reporter),
-		text(source.get_text()),
-		cursor(source) {
+		text(text),
+		cursor(text) {
 	}
 
 	TokenStream lex() {
@@ -365,8 +365,9 @@ private:
 			return TokenKind::LeftAngleAngle;
 		}
 
-		if (cursor.match('='))
+		if (cursor.match('=')) {
 			return TokenKind::LeftAngleEquals;
+		}
 
 		return TokenKind::LeftAngle;
 	}
@@ -558,7 +559,23 @@ private:
 };
 
 TokenStream lex(const Source& source, Reporter& reporter) {
-	Lexer lexer(source, reporter);
+	auto lock = source.lock();
+
+	std::string_view text;
+	if (lock) {
+		text = lock->get_text();
+	} else {
+		const SourceLocation blank_location {source.get_path(), 0, 0};
+
+		auto error = lock.error().value();
+		if (static_cast<std::errc>(error) == std::errc::no_such_file_or_directory) {
+			reporter.report(Message::FileNotFound, blank_location);
+		} else {
+			reporter.report(Message::CouldNotOpenFile, blank_location, error);
+		}
+	}
+
+	Lexer lexer(source, reporter, text);
 	return lexer.lex();
 }
 
