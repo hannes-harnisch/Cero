@@ -1,7 +1,7 @@
 #include "common/ExhaustiveReporter.hpp"
 #include "common/Test.hpp"
 
-#include <syntax/Lex.hpp>
+#include <cero/syntax/Lex.hpp>
 
 namespace {
 
@@ -9,9 +9,11 @@ bool all_tokens_match(const cero::TokenStream& token_stream, std::initializer_li
 	auto tokens = token_stream.get_tokens();
 	CHECK(tokens.size() == kinds.size());
 
-	for (size_t i = 0; i != tokens.size(); ++i)
-		if (tokens[i].kind != kinds.begin()[i])
+	for (size_t i = 0; i != tokens.size(); ++i) {
+		if (tokens[i].header.kind != kinds.begin()[i]) {
 			return false;
+		}
+	}
 
 	return true;
 }

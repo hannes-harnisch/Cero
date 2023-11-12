@@ -1,11 +1,9 @@
 #include "common/ExhaustiveReporter.hpp"
 #include "common/Test.hpp"
 
-#include <syntax/Token.hpp>
-
 CERO_TEST(SourceTooLarge) {
 	ExhaustiveReporter r;
-	r.expect(1, 1, cero::Message::SourceInputTooLarge, cero::Token::MaxLength);
+	r.expect(1, 1, cero::Message::SourceInputTooLarge, cero::MaxSourceLength);
 	build_test_source(r, std::string(16779000, ' '));
 }
 
@@ -23,13 +21,14 @@ main()
 CERO_TEST(MissingClosingQuote) {
 	ExhaustiveReporter r;
 	r.expect(4, 28, cero::Message::MissingClosingQuote);
-	r.expect(5, 17, cero::Message::MissingClosingQuote);
-	r.expect(5, 5, cero::Message::ExpectSemicolon, "`let`");
+	r.expect(6, 17, cero::Message::MissingClosingQuote);
 	build_test_source(r, R"_____(
 foo()
 {
 	let string = "Oh no...;
+	;
 	let ch = 'x;
+	;
 }
 )_____");
 }

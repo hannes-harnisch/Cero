@@ -1,20 +1,15 @@
 #pragma once
 
+#include <cero/io/Config.hpp>
+#include <cero/io/Reporter.hpp>
+#include <cero/io/Source.hpp>
 #include <doctest/doctest.h>
-#include <driver/Config.hpp>
-#include <driver/Reporter.hpp>
-#include <driver/Source.hpp>
 
-#include <source_location>
-#include <string>
+#include <string_view>
 
-cero::Source make_test_source(std::string_view source_text,
-							  std::source_location location = std::source_location::current(),
-							  const cero::Config& config = cero::Config());
+cero::SourceLock make_test_source(std::string_view source_text, const cero::Config& config = cero::Config());
 
-void build_test_source(cero::Reporter& reporter,
-					   std::string_view source_text,
-					   std::source_location location = std::source_location::current());
+void build_test_source(cero::Reporter& reporter, std::string_view source_text);
 
-// Defines a test case function by combining the test name with an easily identifiable prefix.
-#define CERO_TEST(name) DOCTEST_CREATE_AND_REGISTER_FUNCTION(Test_##name, #name)
+// Creates and registers a test case.
+#define CERO_TEST(NAME) DOCTEST_CREATE_AND_REGISTER_FUNCTION(NAME, #NAME)

@@ -1,8 +1,4 @@
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-file(GLOB_RECURSE CERO_SRC CONFIGURE_DEPENDS "*.cpp")
+file(GLOB_RECURSE CERO_SRC CONFIGURE_DEPENDS "cero/*.cpp")
 list(FILTER CERO_SRC EXCLUDE REGEX ".+\\..+\\.cpp")
 
 if (WIN32)
@@ -14,8 +10,10 @@ elseif (UNIX)
 endif ()
 
 add_library(Cero ${CERO_SRC})
+target_include_directories(Cero PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_include_directories(Cero PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+add_executable(CeroCompiler "Main.cpp")
+target_link_libraries(CeroCompiler PRIVATE Cero)
 
 set_target_properties(Cero PROPERTIES
         PRECOMPILE_HEADERS PrecompiledHeader.hpp)

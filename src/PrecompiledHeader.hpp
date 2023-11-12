@@ -9,7 +9,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <deque>
-#include <expected>
 #include <filesystem>
 #include <format>
 #include <iostream>

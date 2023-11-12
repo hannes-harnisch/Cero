@@ -1,7 +1,7 @@
 #include "common/ExhaustiveReporter.hpp"
 #include "common/Test.hpp"
 
-#include <syntax/Parse.hpp>
+#include <cero/syntax/Parse.hpp>
 
 CERO_TEST(AstStringForSimpleFunction) {
 	auto source = make_test_source(R"_____(
@@ -15,7 +15,7 @@ main()
 	auto ast = cero::parse(source, r);
 
 	auto str = ast.to_string(source);
-	auto expected = R"_____(Printing AST for Test_AstStringForSimpleFunction
+	auto expected = R"_____(Printing AST for AstStringForSimpleFunction
 └── function `main`
     ├── parameters
     ├── outputs
@@ -36,7 +36,7 @@ a(int32 x, bool _a, bool _b = x) -> float32
 	auto ast = cero::parse(source, r);
 
 	auto str = ast.to_string(source);
-	auto expected = R"_____(Printing AST for Test_AstStringForSimpleFunctionWithParametersAndReturn
+	auto expected = R"_____(Printing AST for AstStringForSimpleFunctionWithParametersAndReturn
 └── function `a`
     ├── parameters
     │   ├── value parameter `x`
@@ -71,7 +71,7 @@ b(int32 i, float64 f)
 	auto ast = cero::parse(source, r);
 
 	auto str = ast.to_string(source);
-	auto expected = R"_____(Printing AST for Test_AstStringForCall
+	auto expected = R"_____(Printing AST for AstStringForCall
 ├── function `a`
 │   ├── parameters
 │   │   ├── value parameter `_a`

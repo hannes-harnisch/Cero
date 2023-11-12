@@ -1,10 +1,14 @@
-﻿AccessModifierOffset: '-4'
+﻿AccessModifierOffset: -4
 AlignAfterOpenBracket: Align
 AlignArrayOfStructures: None
-AlignConsecutiveAssignments: false
-AlignConsecutiveBitFields: true
-AlignConsecutiveDeclarations: false
-AlignConsecutiveMacros: true
+AlignConsecutiveAssignments:
+  Enabled: false
+AlignConsecutiveBitFields:
+  Enabled: true
+AlignConsecutiveDeclarations:
+  Enabled: false
+AlignConsecutiveMacros:
+  Enabled: true
 AlignEscapedNewlines: Right
 AlignOperands: Align
 AlignTrailingComments: true
@@ -19,8 +23,8 @@ AllowShortLambdasOnASingleLine: Inline
 AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
-AlwaysBreakTemplateDeclarations: true
-AttributeMacros: []
+AlwaysBreakTemplateDeclarations: Yes
+AttributeMacros: [ ]
 BinPackArguments: true
 BinPackParameters: false
 BitFieldColonSpacing: Both
@@ -64,16 +68,16 @@ EmptyLineAfterAccessModifier: Never
 EmptyLineBeforeAccessModifier: Always
 ExperimentalAutoDetectBinPacking: false
 FixNamespaceComments: true
-ForEachMacros: []
-IfMacros: []
+ForEachMacros: [ ]
+IfMacros: [ ]
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex:		'".*"'
-    Priority:	1
-  - Regex:		'<.*\.(h|hpp|hh|hxx)>'
-    Priority:	2
-  - Regex:		'<.*>'
-    Priority:	3
+  - Regex: '".*"'
+    Priority: 1
+  - Regex: '<.*\.(h|hpp|hh|hxx)>'
+    Priority: 2
+  - Regex: '<.*>'
+    Priority: 3
 IncludeIsMainRegex: ""
 IncludeIsMainSourceRegex: ""
 IndentAccessModifiers: false
@@ -82,12 +86,13 @@ IndentCaseLabels: true
 IndentExternBlock: Indent
 IndentGotoLabels: true
 IndentPPDirectives: BeforeHash
-IndentRequires: false
+IndentRequiresClause: false
 IndentWidth: 4
 IndentWrappedFunctionNames: false
 InsertBraces: true
+InsertNewlineAtEOF: true
 InsertTrailingCommas: None
-JavaImportGroups: []
+JavaImportGroups: [ ]
 JavaScriptQuotes: Double
 JavaScriptWrapImports: true
 KeepEmptyLinesAtTheStartOfBlocks: false
@@ -97,7 +102,7 @@ MacroBlockBegin: ""
 MacroBlockEnd: ""
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: Inner
-NamespaceMacros: []
+NamespaceMacros: [ ]
 ObjCBinPackProtocolList: Auto
 ObjCBlockIndentWidth: 4
 ObjCBreakBeforeNestedBlockParam: true
@@ -107,8 +112,8 @@ PPIndentWidth: -1
 PackConstructorInitializers: Never
 PenaltyBreakAssignment: 1000
 PenaltyBreakBeforeFirstCallParameter: 1000
-PenaltyBreakComment : 0
-PenaltyBreakFirstLessLess : 0
+PenaltyBreakComment: 0
+PenaltyBreakFirstLessLess: 0
 PenaltyBreakOpenParenthesis: 0
 PenaltyBreakString: 0
 PenaltyBreakTemplateDeclaration: 0
@@ -117,15 +122,15 @@ PenaltyIndentedWhitespace: 0
 PenaltyReturnTypeOnItsOwnLine: 1000
 PointerAlignment: Left
 QualifierAlignment: Custom
-QualifierOrder: ['static', 'constexpr', 'inline', 'const', 'volatile', 'restrict', 'type']
-RawStringFormats: []
+QualifierOrder: [ 'static', 'constexpr', 'inline', 'const', 'volatile', 'restrict', 'type' ]
+RawStringFormats: [ ]
 ReferenceAlignment: Pointer
 ReflowComments: true
 RemoveBracesLLVM: false
 RequiresClausePosition: OwnLine
 SeparateDefinitionBlocks: Always
 ShortNamespaceLines: 1
-SortIncludes: true
+SortIncludes: CaseSensitive
 SortJavaStaticImport: After
 SortUsingDeclarations: true
 SpaceAfterCStyleCast: true
@@ -138,7 +143,6 @@ SpaceBeforeCpp11BracedList: true
 SpaceBeforeCtorInitializerColon: true
 SpaceBeforeInheritanceColon: true
 SpaceBeforeParens: ControlStatements
-SpaceBeforeParensOptions:
 SpaceBeforeRangeBasedForLoopColon: true
 SpaceBeforeSquareBrackets: false
 SpaceInEmptyBlock: false
@@ -154,10 +158,10 @@ SpacesInLineCommentPrefix:
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
 Standard: c++20
-StatementAttributeLikeMacros: []
-StatementMacros: []
+StatementAttributeLikeMacros: [ ]
+StatementMacros: [ ]
 TabWidth: 4
-TypenameMacros: []
+TypenameMacros: [ ]
 UseCRLF: false
 UseTab: Always
-WhitespaceSensitiveMacros: []
+WhitespaceSensitiveMacros: [ ]

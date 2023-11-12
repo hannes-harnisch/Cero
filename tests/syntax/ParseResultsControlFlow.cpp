@@ -1,8 +1,8 @@
-#include "common/AstCompare.hpp"
+#include "AstCompare.hpp"
 #include "common/ExhaustiveReporter.hpp"
 #include "common/Test.hpp"
 
-#include <syntax/Parse.hpp>
+#include <cero/syntax/Parse.hpp>
 
 CERO_TEST(ParseSimpleFunction) {
 	auto source = make_test_source(R"_____(
