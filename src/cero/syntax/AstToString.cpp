@@ -6,9 +6,9 @@ namespace cero {
 
 namespace {
 
-	std::string_view to_string(ParameterSpecifier specifier) {
-		using enum ParameterSpecifier;
+	std::string_view parameter_specifier_to_string(ParameterSpecifier specifier) {
 		switch (specifier) {
+			using enum ParameterSpecifier;
 			case None: return "value";
 			case In: return "in";
 			case Var: return "var";
@@ -16,9 +16,9 @@ namespace {
 		fail_unreachable();
 	}
 
-	std::string_view to_string(VariabilitySpecifier spec) {
-		using enum VariabilitySpecifier;
+	std::string_view variability_specifier_to_string(VariabilitySpecifier spec) {
 		switch (spec) {
+			using enum VariabilitySpecifier;
 			case In: return "in";
 			case Var: return "var";
 			case VarBounded: return "var (bounded)";
@@ -27,9 +27,9 @@ namespace {
 		fail_unreachable();
 	}
 
-	std::string_view to_string(BindingSpecifier spec) {
-		using enum BindingSpecifier;
+	std::string_view binding_specifier_to_string(BindingSpecifier spec) {
 		switch (spec) {
+			using enum BindingSpecifier;
 			case Let: return "let";
 			case Var: return "var";
 			case Const: return "const";
@@ -39,9 +39,9 @@ namespace {
 		fail_unreachable();
 	}
 
-	std::string_view to_string(NumericLiteralKind kind) {
-		using enum NumericLiteralKind;
+	std::string_view numeric_literal_kind_to_string(NumericLiteralKind kind) {
 		switch (kind) {
+			using enum NumericLiteralKind;
 			case Decimal: return "decimal";
 			case Hexadecimal: return "hexadecimal";
 			case Binary: return "binary";
@@ -55,36 +55,39 @@ namespace {
 } // namespace
 
 AstToString::AstToString(const Ast& ast, const SourceLock& source) :
-	string(std::format("Printing AST for {}\n", source.get_path())),
-	ast(ast),
-	source(source) {
-	prefixes.emplace();
+	ast_(ast),
+	edge_(&Body),
+	string_(std::format("AST for {} ({} node{})\n",
+						source.get_path(),
+						ast_.get_node_count(),
+						ast_.get_node_count() == 1 ? "" : "s")) {
+	prefixes_.emplace();
 }
 
 std::string AstToString::make_string() {
-	ast.visit(*this);
-	return std::move(string);
+	ast_.visit(*this);
+	return std::move(string_);
 }
 
 void AstToString::push_level() {
-	std::string prefix = prefixes.top();
-	prefix.append(edge->prefix);
-	prefixes.push(std::move(prefix));
+	std::string prefix = prefixes_.top();
+	prefix.append(edge_->prefix);
+	prefixes_.push(std::move(prefix));
 }
 
 void AstToString::pop_level() {
-	prefixes.pop();
+	prefixes_.pop();
 }
 
 void AstToString::set_tail(bool at_tail) {
-	edge = at_tail ? &Tail : &Body;
+	edge_ = at_tail ? &Tail : &Body;
 }
 
 void AstToString::add_line(std::string_view text) {
-	string.append(prefixes.top());
-	string.append(edge->branch);
-	string.append(text);
-	string.append("\n");
+	string_.append(prefixes_.top());
+	string_.append(edge_->branch);
+	string_.append(text);
+	string_.append("\n");
 }
 
 void AstToString::add_body_line(std::string_view text) {
@@ -98,7 +101,7 @@ void AstToString::add_tail_line(std::string_view text) {
 }
 
 void AstToString::visit(AstId node) {
-	ast.visit_node(*this, node);
+	ast_.visit_node(*this, node);
 }
 
 void AstToString::visit_body(AstId node) {
@@ -169,7 +172,7 @@ void AstToString::visit(const AstFunctionDefinition& function_def) {
 }
 
 void AstToString::visit(const AstFunctionDefinition::Parameter& parameter) {
-	add_line(std::format("{} parameter `{}`", to_string(parameter.specifier), parameter.name));
+	add_line(std::format("{} parameter `{}`", parameter_specifier_to_string(parameter.specifier), parameter.name));
 	push_level();
 
 	bool has_default_argument = !parameter.default_argument.is_null();
@@ -203,7 +206,7 @@ void AstToString::visit(const AstBlockStatement& block) {
 }
 
 void AstToString::visit(const AstBindingStatement& binding) {
-	add_line(std::format("{} binding `{}`", to_string(binding.specifier), binding.name));
+	add_line(std::format("{} binding `{}`", binding_specifier_to_string(binding.specifier), binding.name));
 	push_level();
 
 	bool has_type = !binding.type.is_null();
@@ -357,7 +360,7 @@ void AstToString::visit(const AstArrayLiteralExpr& array_literal) {
 }
 
 void AstToString::visit(const AstUnaryExpr& unary_expression) {
-	add_line(std::format("`{}`", to_string(unary_expression.op)));
+	add_line(std::format("`{}`", unary_operator_to_string(unary_expression.op)));
 	push_level();
 
 	visit_tail(unary_expression.operand);
@@ -366,7 +369,7 @@ void AstToString::visit(const AstUnaryExpr& unary_expression) {
 }
 
 void AstToString::visit(const AstBinaryExpr& binary_expression) {
-	add_line(std::format("`{}`", to_string(binary_expression.op)));
+	add_line(std::format("`{}`", binary_operator_to_string(binary_expression.op)));
 	push_level();
 
 	visit_body(binary_expression.left);
@@ -399,7 +402,8 @@ void AstToString::visit(const AstContinueExpr& continue_expression) {
 }
 
 void AstToString::visit(const AstNumericLiteralExpr& numeric_literal) {
-	add_line(std::format("{} literal `{}`", to_string(numeric_literal.kind), " ---TODO--- ")); // TODO: add number
+	add_line(std::format("{} literal `{}`", numeric_literal_kind_to_string(numeric_literal.kind), " ---TODO--- ")); // TODO: add
+																													// number
 }
 
 void AstToString::visit(const AstStringLiteralExpr& string_literal) {
@@ -407,7 +411,7 @@ void AstToString::visit(const AstStringLiteralExpr& string_literal) {
 }
 
 void AstToString::visit(const AstVariabilityExpr& variability) {
-	add_line(std::format("variability `{}`", to_string(variability.specifier)));
+	add_line(std::format("variability `{}`", variability_specifier_to_string(variability.specifier)));
 	push_level();
 	visit_each_in(variability.arguments);
 	pop_level();
@@ -468,7 +472,7 @@ void AstToString::visit(const AstFunctionTypeExpr& function_type) {
 }
 
 void AstToString::visit(const AstFunctionTypeExpr::Parameter& parameter) {
-	add_line(std::format("{} parameter `{}`", to_string(parameter.specifier), parameter.name));
+	add_line(std::format("{} parameter `{}`", parameter_specifier_to_string(parameter.specifier), parameter.name));
 
 	push_level();
 	visit_tail(parameter.type);

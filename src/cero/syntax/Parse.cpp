@@ -2,7 +2,7 @@
 
 #include "cero/syntax/Lex.hpp"
 #include "cero/syntax/Literal.hpp"
-#include "cero/syntax/ParseCursor.hpp"
+#include "cero/syntax/TokenCursor.hpp"
 #include "cero/util/Algorithm.hpp"
 #include "cero/util/Defer.hpp"
 #include "cero/util/Fail.hpp"
@@ -25,49 +25,49 @@ struct ParseError {};
 class Parser {
 public:
 	Parser(const TokenStream& token_stream, const SourceLock& source, Reporter& reporter) :
-		source(source),
-		reporter(reporter),
-		cursor(token_stream) {
+		source_(source),
+		reporter_(reporter),
+		cursor_(token_stream) {
 	}
 
 	Ast parse() {
 		std::vector<AstNode> definitions;
-		while (!cursor.match(TokenKind::EndOfFile)) {
+		while (!cursor_.match(TokenKind::EndOfFile)) {
 			try {
 				definitions.emplace_back(parse_definition());
 			} catch (ParseError) {
 				recover_at_definition_scope();
 			}
 		}
-		auto defs = ast.store_multiple(definitions);
-		ast.store(AstRoot {defs});
-		return std::move(ast);
+		auto defs = ast_.store_multiple(definitions);
+		ast_.store(AstRoot {defs});
+		return std::move(ast_);
 	}
 
 private:
-	Ast ast;
-	const SourceLock& source;
-	Reporter& reporter;
-	ParseCursor cursor;
-	bool is_looking_ahead = false;
-	bool is_binding_allowed = true;
-	uint32_t open_angles = 0;
+	Ast ast_;
+	const SourceLock& source_;
+	Reporter& reporter_;
+	TokenCursor cursor_;
+	bool is_looking_ahead_ = false;
+	bool is_binding_allowed_ = true;
+	uint32_t open_angles_ = 0;
 
 	class Lookahead {
 	public:
 		Lookahead(Parser& parser) :
 			parser(parser),
 			restore(true),
-			saved_node_count(parser.ast.ast_nodes.size()),
-			was_looking_ahead(parser.is_looking_ahead) {
-			parser.is_looking_ahead = true;
+			saved_node_count(parser.ast_.ast_nodes_.size()),
+			was_looking_ahead(parser.is_looking_ahead_) {
+			parser.is_looking_ahead_ = true;
 		}
 
 		~Lookahead() {
 			if (restore) {
 				parser.rescind_lookahead(saved_node_count);
 			}
-			parser.is_looking_ahead = was_looking_ahead;
+			parser.is_looking_ahead_ = was_looking_ahead;
 		}
 
 		void accept() {
@@ -94,25 +94,25 @@ private:
 
 	AstNode parse_definition() {
 		auto access_specifier = AccessSpecifier::None;
-		if (cursor.match(TokenKind::Private)) {
+		if (cursor_.match(TokenKind::Private)) {
 			access_specifier = AccessSpecifier::Private;
-		} else if (cursor.match(TokenKind::Public)) {
+		} else if (cursor_.match(TokenKind::Public)) {
 			access_specifier = AccessSpecifier::Public;
 		}
 
-		if (auto name_token = cursor.match_name()) {
+		if (auto name_token = cursor_.match_name()) {
 			return parse_function(access_specifier, *name_token);
 		}
 
-		if (cursor.match(TokenKind::Struct)) {
+		if (cursor_.match(TokenKind::Struct)) {
 			return parse_struct(access_specifier);
 		}
 
-		if (cursor.match(TokenKind::Enum)) {
+		if (cursor_.match(TokenKind::Enum)) {
 			return parse_enum(access_specifier);
 		}
 
-		report_expectation(Message::ExpectFuncStructEnum, cursor.current());
+		report_expectation(Message::ExpectFuncStructEnum, cursor_.current());
 		throw ParseError();
 	}
 
@@ -122,8 +122,8 @@ private:
 
 		TokenKind kind;
 		do {
-			cursor.advance();
-			kind = cursor.current_kind();
+			cursor_.advance();
+			kind = cursor_.current_kind();
 		} while (!contains(recovery_tokens, kind));
 	}
 
@@ -138,7 +138,7 @@ private:
 	}
 
 	AstNode parse_function(AccessSpecifier access_specifier, Token name_token) {
-		auto name = name_token.get_lexeme(source);
+		auto name = name_token.get_lexeme(source_);
 		expect(TokenKind::LeftParen, Message::ExpectParenAfterFuncName);
 
 		auto parameters = parse_function_definition_parameters();
@@ -157,10 +157,10 @@ private:
 
 	std::vector<AstFunctionDefinition::Parameter> parse_function_definition_parameters() {
 		std::vector<AstFunctionDefinition::Parameter> parameters;
-		if (!cursor.match(TokenKind::RightParen)) {
+		if (!cursor_.match(TokenKind::RightParen)) {
 			do {
 				parameters.emplace_back(parse_function_definition_parameter());
-			} while (cursor.match(TokenKind::Comma));
+			} while (cursor_.match(TokenKind::Comma));
 			expect(TokenKind::RightParen, Message::ExpectParenAfterParams);
 		}
 		return parameters;
@@ -168,21 +168,21 @@ private:
 
 	AstFunctionDefinition::Parameter parse_function_definition_parameter() {
 		auto specifier = ParameterSpecifier::None;
-		if (cursor.match(TokenKind::In)) {
+		if (cursor_.match(TokenKind::In)) {
 			specifier = ParameterSpecifier::In;
-		} else if (cursor.match(TokenKind::Var)) {
+		} else if (cursor_.match(TokenKind::Var)) {
 			specifier = ParameterSpecifier::Var;
 		}
 
-		auto type = ast.store(parse_type());
+		auto type = ast_.store(parse_type());
 		auto name = expect_name(Message::ExpectParamName);
 		if (name.empty()) {
 			throw ParseError(); // TODO: explain why this is necessary
 		}
 
 		OptionalAstId default_argument;
-		if (cursor.match(TokenKind::Equals)) {
-			default_argument = ast.store(parse_subexpression());
+		if (cursor_.match(TokenKind::Equals)) {
+			default_argument = ast_.store(parse_subexpression());
 		}
 
 		return {specifier, type, name, default_argument};
@@ -190,33 +190,33 @@ private:
 
 	std::vector<AstFunctionDefinition::Output> parse_function_definition_outputs() {
 		std::vector<AstFunctionDefinition::Output> outputs;
-		if (cursor.match(TokenKind::ThinArrow)) {
+		if (cursor_.match(TokenKind::ThinArrow)) {
 			do {
 				outputs.emplace_back(parse_function_definition_output());
-			} while (cursor.match(TokenKind::Comma));
+			} while (cursor_.match(TokenKind::Comma));
 		}
 		return outputs;
 	}
 
 	AstFunctionDefinition::Output parse_function_definition_output() {
-		auto type = ast.store(parse_type());
+		auto type = ast_.store(parse_type());
 
 		StringId name;
-		if (auto name_token = cursor.match_name()) {
-			name = name_token->get_lexeme(source);
+		if (auto name_token = cursor_.match_name()) {
+			name = name_token->get_lexeme(source_);
 		}
 
 		return {type, name};
 	}
 
 	AstIdSet parse_block() {
-		const uint32_t saved_angles = open_angles;
-		const bool saved_binding_allowed = is_binding_allowed;
-		open_angles = 0;
-		is_binding_allowed = true;
+		const uint32_t saved_angles = open_angles_;
+		const bool saved_binding_allowed = is_binding_allowed_;
+		open_angles_ = 0;
+		is_binding_allowed_ = true;
 
 		std::vector<AstNode> statements;
-		while (!cursor.match(TokenKind::RightBrace)) {
+		while (!cursor_.match(TokenKind::RightBrace)) {
 			try {
 				statements.emplace_back(parse_statement());
 			} catch (ParseError) {
@@ -227,24 +227,24 @@ private:
 			}
 		}
 
-		open_angles = saved_angles;
-		is_binding_allowed = saved_binding_allowed;
-		return ast.store_multiple(statements);
+		open_angles_ = saved_angles;
+		is_binding_allowed_ = saved_binding_allowed;
+		return ast_.store_multiple(statements);
 	}
 
 	bool recover_at_statement_scope() {
-		TokenKind kind = cursor.current_kind();
+		TokenKind kind = cursor_.current_kind();
 		while (kind != TokenKind::EndOfFile) {
 			if (kind == TokenKind::Semicolon) {
-				cursor.advance();
+				cursor_.advance();
 				return false;
 			}
 			if (kind == TokenKind::RightBrace) {
 				return false;
 			}
 
-			cursor.advance();
-			kind = cursor.current_kind();
+			cursor_.advance();
+			kind = cursor_.current_kind();
 		}
 		return true;
 	}
@@ -255,7 +255,7 @@ private:
 		auto stmt = (this->*parse)();
 
 		if (!parses_complete_stmt) {
-			if (auto name_token = cursor.match_name()) {
+			if (auto name_token = cursor_.match_name()) {
 				stmt = on_trailing_name(std::move(stmt), *name_token);
 			}
 			expect(TokenKind::Semicolon, Message::ExpectSemicolon);
@@ -264,36 +264,19 @@ private:
 	}
 
 	PrefixParse lookup_statement_parse(bool& parses_complete_stmt) {
-		PrefixParse parse;
-
-		auto next = cursor.peek_kind();
-		using enum TokenKind;
+		auto next = cursor_.peek_kind();
 		switch (next) {
-			case If:
-				parses_complete_stmt = true;
-				parse = &Parser::on_if_stmt;
-				break;
-			case For:
-				parses_complete_stmt = true;
-				parse = &Parser::on_for;
-				break;
-			case While:
-				parses_complete_stmt = true;
-				parse = &Parser::on_while;
-				break;
-			case LeftBrace:
-				parses_complete_stmt = true;
-				parse = &Parser::on_left_brace;
-				break;
-			case Let: parse = &Parser::on_let; break;
-			case Var:; parse = &Parser::on_var; break;
-			case Const: parse = &Parser::on_const; break;
-			case Static: parse = &Parser::on_static; break;
+			using enum TokenKind;
+			case If: parses_complete_stmt = true; return &Parser::on_if_stmt;
+			case For: parses_complete_stmt = true; return &Parser::on_for;
+			case While: parses_complete_stmt = true; return &Parser::on_while;
+			case LeftBrace: parses_complete_stmt = true; return &Parser::on_left_brace;
+			case Let: return &Parser::on_let;
+			case Var: return &Parser::on_var;
+			case Const: return &Parser::on_const;
+			case Static: return &Parser::on_static;
 			default: return &Parser::parse_expression_or_binding;
 		}
-
-		cursor.advance();
-		return parse;
 	}
 
 	AstNode on_trailing_name(AstNode left_expr, Token name_token) {
@@ -308,37 +291,37 @@ private:
 			throw ParseError();
 		}
 
-		auto name = name_token.get_lexeme(source);
-		auto left = ast.store(std::move(left_expr));
+		auto name = name_token.get_lexeme(source_);
+		auto left = ast_.store(std::move(left_expr));
 
 		OptionalAstId initializer;
-		if (cursor.match(TokenKind::Equals)) {
-			initializer = ast.store(parse_subexpression());
+		if (cursor_.match(TokenKind::Equals)) {
+			initializer = ast_.store(parse_subexpression());
 		}
 
 		return {AstBindingStatement {BindingSpecifier::Let, left, name, initializer}};
 	}
 
 	AstNode parse_expression_or_binding() {
-		const bool saved_is_binding_allowed = is_binding_allowed;
-		is_binding_allowed = true;
+		const bool saved_is_binding_allowed = is_binding_allowed_;
+		is_binding_allowed_ = true;
 		Defer _ = [&] {
-			is_binding_allowed = saved_is_binding_allowed;
+			is_binding_allowed_ = saved_is_binding_allowed;
 		};
 		return parse_expression(Precedence::Statement);
 	}
 
 	AstNode parse_subexpression(Precedence precedence = Precedence::Statement) {
-		const bool saved_is_binding_allowed = is_binding_allowed;
-		is_binding_allowed = false;
+		const bool saved_is_binding_allowed = is_binding_allowed_;
+		is_binding_allowed_ = false;
 		Defer _ = [&] {
-			is_binding_allowed = saved_is_binding_allowed;
+			is_binding_allowed_ = saved_is_binding_allowed;
 		};
 		return parse_expression(precedence);
 	}
 
 	AstNode parse_expression(Precedence precedence) {
-		auto next = cursor.peek();
+		auto next = cursor_.peek();
 
 		auto parse_prefix = lookup_prefix_parse(next.header.kind);
 		if (parse_prefix == nullptr) {
@@ -346,10 +329,9 @@ private:
 			throw ParseError();
 		}
 
-		cursor.advance();
 		auto expression = (this->*parse_prefix)();
 		while (auto parse = get_next_non_prefix_parse(precedence)) {
-			auto left = ast.store(std::move(expression));
+			auto left = ast_.store(std::move(expression));
 			expression = (this->*parse)(left);
 		}
 
@@ -357,10 +339,8 @@ private:
 	}
 
 	static PrefixParse lookup_prefix_parse(TokenKind kind) {
-		using enum TokenKind;
-		using enum UnaryOperator;
-
 		switch (kind) {
+			using enum TokenKind;
 			case Name: return &Parser::on_name;
 			case If: return &Parser::on_if_expr;
 			case Var: return &Parser::on_variability;
@@ -377,21 +357,21 @@ private:
 			case Continue: return &Parser::on_continue;
 			case Return: return &Parser::on_return;
 			case Throw: return &Parser::on_throw;
-			case Ampersand: return &Parser::on_prefix_operator<AddressOf>;
-			case Minus: return &Parser::on_prefix_operator<Negate>;
-			case Bang: return &Parser::on_prefix_operator<LogicalNot>;
-			case Tilde: return &Parser::on_prefix_operator<BitwiseNot>;
-			case PlusPlus: return &Parser::on_prefix_operator<PreIncrement>;
-			case MinusMinus: return &Parser::on_prefix_operator<PreDecrement>;
+			case Ampersand: return &Parser::on_prefix_operator<UnaryOperator::AddressOf>;
+			case Minus: return &Parser::on_prefix_operator<UnaryOperator::Negate>;
+			case Bang: return &Parser::on_prefix_operator<UnaryOperator::LogicalNot>;
+			case Tilde: return &Parser::on_prefix_operator<UnaryOperator::BitwiseNot>;
+			case PlusPlus: return &Parser::on_prefix_operator<UnaryOperator::PreIncrement>;
+			case MinusMinus: return &Parser::on_prefix_operator<UnaryOperator::PreDecrement>;
 			case Caret: return &Parser::on_caret;
 			default: return nullptr;
 		}
 	}
 
 	NonPrefixParse get_next_non_prefix_parse(Precedence current_precedence) {
-		auto token = cursor.peek();
+		auto token = cursor_.peek();
 
-		if (token.header.kind == TokenKind::RightAngle && open_angles > 0) {
+		if (token.header.kind == TokenKind::RightAngle && open_angles_ > 0) {
 			return nullptr;
 		}
 
@@ -400,7 +380,6 @@ private:
 			return nullptr;
 		}
 
-		cursor.advance();
 		return rule.func;
 	}
 
@@ -409,9 +388,9 @@ private:
 			return lookup_non_prefix_parse(current.header.kind);
 		}
 
-		auto next = cursor.peek_ahead();
+		auto next = cursor_.peek_ahead();
 		if (next.header.kind == TokenKind::RightAngle && next.header.offset == current.header.offset + 1) {
-			cursor.advance();
+			cursor_.advance();
 			return {Precedence::Bitwise, &Parser::on_infix_operator<BinaryOperator::RightShift>};
 		} else {
 			return {Precedence::Comparison, &Parser::on_infix_operator<BinaryOperator::Greater>};
@@ -419,12 +398,12 @@ private:
 	}
 
 	static NonPrefixParseRule lookup_non_prefix_parse(TokenKind kind) {
-		using enum TokenKind;
 		using enum Precedence;
 		using enum UnaryOperator;
 		using enum BinaryOperator;
 
 		switch (kind) {
+			using enum TokenKind;
 			case Equals: return {Assignment, &Parser::on_infix_operator<Assign>};
 			case PlusEquals: return {Assignment, &Parser::on_infix_operator<AddAssign>};
 			case MinusEquals: return {Assignment, &Parser::on_infix_operator<SubtractAssign>};
@@ -465,53 +444,58 @@ private:
 	}
 
 	AstNode on_if_stmt() {
-		auto condition = ast.store(parse_expression_or_binding());
+		cursor_.advance();
+		auto condition = ast_.store(parse_expression_or_binding());
 		expect_colon_or_block();
 
-		auto then_stmt = ast.store(parse_statement());
+		auto then_stmt = ast_.store(parse_statement());
 
 		OptionalAstId else_stmt;
-		if (cursor.match(TokenKind::Else)) {
-			else_stmt = ast.store(parse_statement());
+		if (cursor_.match(TokenKind::Else)) {
+			else_stmt = ast_.store(parse_statement());
 		}
 
 		return {AstIfExpr {condition, then_stmt, else_stmt}};
 	}
 
 	AstNode on_if_expr() {
-		auto condition = ast.store(parse_expression_or_binding());
+		cursor_.advance();
+		auto condition = ast_.store(parse_expression_or_binding());
 		expect(TokenKind::Colon, Message::ExpectColonInIfExpr);
-		auto then_expr = ast.store(parse_subexpression());
+		auto then_expr = ast_.store(parse_subexpression());
 		expect(TokenKind::Else, Message::ExpectElse);
-		auto else_expr = ast.store(parse_subexpression());
+		auto else_expr = ast_.store(parse_subexpression());
 
 		return {AstIfExpr {condition, then_expr, else_expr}};
 	}
 
 	AstNode on_while() {
-		auto condition = ast.store(parse_expression_or_binding());
+		cursor_.advance();
+		auto condition = ast_.store(parse_expression_or_binding());
 		expect_colon_or_block();
-		auto statement = ast.store(parse_statement());
+		auto statement = ast_.store(parse_statement());
 		return {AstWhileLoop {condition, statement}};
 	}
 
 	AstNode on_for() {
+		cursor_.advance();
 		to_do();
 	}
 
 	AstNode on_left_brace() {
+		cursor_.advance();
 		auto statements = parse_block();
 		return {AstBlockStatement {statements}};
 	}
 
 	void expect_colon_or_block() {
-		if (auto colon = cursor.match_token(TokenKind::Colon)) {
-			auto next = cursor.peek();
+		if (auto colon = cursor_.match_token(TokenKind::Colon)) {
+			auto next = cursor_.peek();
 			if (next.header.kind == TokenKind::LeftBrace) {
-				report(Message::UnnecessaryColonBeforeBlock, colon->locate_in(source));
+				report(Message::UnnecessaryColonBeforeBlock, colon->locate_in(source_));
 			}
 		} else {
-			auto next = cursor.peek();
+			auto next = cursor_.peek();
 			if (next.header.kind != TokenKind::LeftBrace) {
 				report_expectation(Message::ExpectColonOrBlock, next);
 			}
@@ -519,18 +503,20 @@ private:
 	}
 
 	AstNode on_let() {
+		cursor_.advance();
 		auto name = expect_name(Message::ExpectNameAfterLet);
 
 		OptionalAstId initializer;
-		if (cursor.match(TokenKind::Equals)) {
-			initializer = ast.store(parse_subexpression());
+		if (cursor_.match(TokenKind::Equals)) {
+			initializer = ast_.store(parse_subexpression());
 		}
 
 		return {AstBindingStatement {BindingSpecifier::Let, {}, name, initializer}};
 	}
 
 	AstNode on_var() {
-		if (cursor.peek_kind() == TokenKind::LeftBrace) {
+		cursor_.advance();
+		if (cursor_.peek_kind() == TokenKind::LeftBrace) {
 			return {parse_variability()};
 		}
 
@@ -538,12 +524,15 @@ private:
 	}
 
 	AstNode on_const() {
+		cursor_.advance();
 		return {parse_binding(BindingSpecifier::Const)};
 	}
 
 	AstNode on_static() {
+		cursor_.advance();
+
 		auto specifier = BindingSpecifier::Static;
-		if (cursor.match(TokenKind::Var)) {
+		if (cursor_.match(TokenKind::Var)) {
 			specifier = BindingSpecifier::StaticVar;
 		}
 
@@ -551,121 +540,123 @@ private:
 	}
 
 	AstBindingStatement parse_binding(BindingSpecifier specifier) {
-		auto lookahead = cursor;
+		auto lookahead = cursor_;
 		if (auto name_token = lookahead.match_name()) {
 			if (lookahead.match(TokenKind::Equals)) {
-				cursor = lookahead;
-				auto name = name_token->get_lexeme(source);
-				auto initializer = ast.store(parse_subexpression());
+				cursor_ = lookahead;
+				auto name = name_token->get_lexeme(source_);
+				auto initializer = ast_.store(parse_subexpression());
 				return {specifier, {}, name, initializer};
 			}
 		}
 
-		auto type = ast.store(parse_type());
+		auto type = ast_.store(parse_type());
 		auto name = expect_name(Message::ExpectNameAfterDeclType);
 
 		OptionalAstId initializer;
-		if (cursor.match(TokenKind::Equals)) {
-			initializer = ast.store(parse_subexpression());
+		if (cursor_.match(TokenKind::Equals)) {
+			initializer = ast_.store(parse_subexpression());
 		}
 
 		return {specifier, type, name, initializer};
 	}
 
 	AstNode on_name() {
-		auto name = cursor.previous().get_lexeme(source);
+		auto name = cursor_.next().value().get_lexeme(source_);
 		return parse_name(name);
 	}
 
 	AstNode parse_name(std::string_view name) {
-		auto saved_cursor = cursor;
-		if (cursor.match(TokenKind::LeftAngle)) {
+		auto saved_cursor = cursor_;
+		if (cursor_.match(TokenKind::LeftAngle)) {
 			return parse_generic_name(name, saved_cursor);
 		}
 
 		return {AstNameExpr {name}};
 	}
 
-	AstNode parse_generic_name(std::string_view name, ParseCursor name_start) {
-		++open_angles;
+	AstNode parse_generic_name(std::string_view name, TokenCursor name_start) {
+		++open_angles_;
 		Defer _ = [&] {
-			--open_angles;
+			--open_angles_;
 		};
 
 		std::vector<AstNode> generic_args;
-		if (!cursor.match(TokenKind::RightAngle)) {
-			size_t saved_node_count = ast.ast_nodes.size();
+		if (!cursor_.match(TokenKind::RightAngle)) {
+			size_t saved_node_count = ast_.ast_nodes_.size();
 
 			bool fall_back = should_fall_back_to_name();
 
-			cursor = name_start;
+			cursor_ = name_start;
 			rescind_lookahead(saved_node_count);
 
 			if (fall_back) {
 				return {AstNameExpr {name}};
 			}
 
-			cursor.advance();
+			cursor_.advance();
 			do {
 				generic_args.emplace_back(parse_subexpression());
-			} while (cursor.match(TokenKind::Comma));
-			cursor.advance();
+			} while (cursor_.match(TokenKind::Comma));
+			cursor_.advance();
 		}
 
-		auto arguments = ast.store_multiple(generic_args);
+		auto arguments = ast_.store_multiple(generic_args);
 		return {AstGenericNameExpr {name, arguments}};
 	}
 
 	bool should_fall_back_to_name() {
-		bool saved = is_looking_ahead;
-		is_looking_ahead = true;
+		bool saved = is_looking_ahead_;
+		is_looking_ahead_ = true;
 		Defer _ = [&] {
-			is_looking_ahead = saved;
+			is_looking_ahead_ = saved;
 		};
 
 		do {
 			parse_subexpression();
-		} while (cursor.match(TokenKind::Comma));
+		} while (cursor_.match(TokenKind::Comma));
 
 		static constexpr TokenKind fallbacks[] {TokenKind::DecIntLiteral, TokenKind::HexIntLiteral, TokenKind::BinIntLiteral,
 												TokenKind::OctIntLiteral, TokenKind::FloatLiteral,	TokenKind::CharLiteral,
 												TokenKind::StringLiteral, TokenKind::Minus,			TokenKind::Tilde,
 												TokenKind::Ampersand,	  TokenKind::Bang,			TokenKind::PlusPlus,
 												TokenKind::MinusMinus};
-		if (cursor.match(TokenKind::RightAngle)) {
-			auto kind = cursor.peek_kind();
-			return (kind == TokenKind::Name && !is_binding_allowed) || contains(fallbacks, kind)
-				   || (open_angles == 1 && kind == TokenKind::RightAngle);
+		if (cursor_.match(TokenKind::RightAngle)) {
+			auto kind = cursor_.peek_kind();
+			return (kind == TokenKind::Name && !is_binding_allowed_) || contains(fallbacks, kind)
+				   || (open_angles_ == 1 && kind == TokenKind::RightAngle);
 		}
 		return true;
 	}
 
 	template<AstNumericLiteralExpr (*EVALUATE)(std::string_view)>
 	AstNode on_numeric_literal() {
-		auto lexeme = cursor.previous().get_lexeme(source);
+		auto lexeme = cursor_.next().value().get_lexeme(source_);
 		return {EVALUATE(lexeme)};
 	}
 
 	AstNode on_string_literal() {
-		auto lexeme = cursor.previous().get_lexeme(source);
+		auto lexeme = cursor_.next().value().get_lexeme(source_);
 		return {evaluate_string_literal(lexeme)};
 	}
 
 	AstNode on_prefix_left_paren() { // TODO: function type
-		uint32_t saved = open_angles;
-		open_angles = 0;
+		uint32_t saved = open_angles_;
+		open_angles_ = 0;
 		Defer _ = [&] {
-			open_angles = saved;
+			open_angles_ = saved;
 		};
 
+		cursor_.advance();
+
 		std::vector<AstNode> arguments;
-		if (!cursor.match(TokenKind::RightParen)) {
+		if (!cursor_.match(TokenKind::RightParen)) {
 			do {
 				arguments.emplace_back(parse_subexpression());
-			} while (cursor.match(TokenKind::Comma));
+			} while (cursor_.match(TokenKind::Comma));
 			expect(TokenKind::RightParen, Message::ExpectClosingParen);
 		}
-		return {AstGroupExpr {ast.store_multiple(arguments)}};
+		return {AstGroupExpr {ast_.store_multiple(arguments)}};
 	}
 
 	AstNode on_prefix_left_bracket() {
@@ -673,85 +664,91 @@ private:
 	}
 
 	AstIdSet parse_bracketed_arguments() {
-		uint32_t saved = open_angles;
-		open_angles = 0;
+		uint32_t saved = open_angles_;
+		open_angles_ = 0;
 		Defer _ = [&] {
-			open_angles = saved;
+			open_angles_ = saved;
 		};
 
 		std::vector<AstNode> arguments;
-		if (!cursor.match(TokenKind::RightBracket)) {
+		if (!cursor_.match(TokenKind::RightBracket)) {
 			do {
 				arguments.emplace_back(parse_subexpression());
-			} while (cursor.match(TokenKind::Comma));
+			} while (cursor_.match(TokenKind::Comma));
 			expect(TokenKind::RightBracket, Message::ExpectBracketAfterIndex);
 		}
-		return ast.store_multiple(arguments);
+		return ast_.store_multiple(arguments);
 	}
 
 	AstNode on_break() {
+		cursor_.advance();
 		auto label = parse_optional_subexpression();
 		return {AstBreakExpr {label}};
 	}
 
 	AstNode on_continue() {
+		cursor_.advance();
 		auto label = parse_optional_subexpression();
 		return {AstContinueExpr {label}};
 	}
 
 	AstNode on_return() {
+		cursor_.advance();
 		std::vector<AstNode> values;
 		if (expression_may_follow()) {
 			do {
 				values.emplace_back(parse_subexpression());
-			} while (cursor.match(TokenKind::Comma));
+			} while (cursor_.match(TokenKind::Comma));
 		}
 
-		auto return_values = ast.store_multiple(values);
+		auto return_values = ast_.store_multiple(values);
 		return {AstReturnExpr {return_values}};
 	}
 
 	AstNode on_throw() {
+		cursor_.advance();
 		auto expr = parse_optional_subexpression();
 		return {AstThrowExpr {expr}};
 	}
 
 	OptionalAstId parse_optional_subexpression() {
 		if (expression_may_follow()) {
-			return ast.store(parse_subexpression());
+			return ast_.store(parse_subexpression());
 		}
 
 		return {};
 	}
 
 	bool expression_may_follow() {
-		auto next = cursor.peek_kind();
+		auto next = cursor_.peek_kind();
 		return lookup_prefix_parse(next) != nullptr;
 	}
 
 	template<UnaryOperator O>
 	AstNode on_prefix_operator() {
-		auto right = ast.store(parse_subexpression(Precedence::Prefix));
+		cursor_.advance();
+		auto right = ast_.store(parse_subexpression(Precedence::Prefix));
 		return {AstUnaryExpr {O, right}};
 	}
 
 	template<BinaryOperator O>
 	AstNode on_infix_operator(AstId left) {
-		auto target = cursor.previous();
+		auto target = cursor_.next().value();
 		auto precedence = lookup_precedence_for_associativity(O);
-		auto right = ast.store(parse_subexpression(precedence));
+		auto right = ast_.store(parse_subexpression(precedence));
 		validate_associativity(O, left, right, target);
 		return {AstBinaryExpr {O, left, right}};
 	}
 
 	template<UnaryOperator O>
 	AstNode on_postfix_operator(AstId left) {
+		cursor_.advance();
 		return {AstUnaryExpr {O, left}};
 	}
 
 	void validate_associativity(BinaryOperator current, AstId left_id, AstId right_id, Token target) {
-		auto& left_node = ast.get(left_id);
-		auto& right_node = ast.get(right_id);
+		auto& left_node = ast_.get(left_id);
+		auto& right_node = ast_.get(right_id);
 
 		if (auto right = right_node.get<AstBinaryExpr>()) {
 			validate_binary_associativity(current, right->op, target);
@@ -766,13 +763,16 @@ private:
 
 	void validate_binary_associativity(BinaryOperator left, BinaryOperator right, Token target) {
 		if (associates_ambiguous_operators(left, right)) {
-			auto location = target.locate_in(source);
-			report(Message::AmbiguousOperatorMixing, location, to_string(left), to_string(right));
+			auto location = target.locate_in(source_);
+			auto left_str = binary_operator_to_string(left);
+			auto right_str = binary_operator_to_string(right);
+			report(Message::AmbiguousOperatorMixing, location, left_str, right_str);
 		}
 	}
 
 	static bool associates_ambiguous_operators(BinaryOperator left, BinaryOperator right) {
 		using enum BinaryOperator;
+
 		static constexpr BinaryOperator bitwise_operators[] {BitAnd, BitOr, Xor, LeftShift, RightShift};
 		static constexpr BinaryOperator arithmetic_operators[] {Add, Subtract, Multiply, Divide, Remainder, Power};
 		static constexpr BinaryOperator comparison_operators[] {Equal, NotEqual, Less, Greater, LessEqual, GreaterEqual};
@@ -813,42 +813,48 @@ private:
 
 	void validate_unary_binary_associativity(UnaryOperator left, BinaryOperator right, Token target) {
 		if (left == UnaryOperator::Negate && right == BinaryOperator::Power) {
-			auto location = target.locate_in(source);
+			auto location = target.locate_in(source_);
 			report(Message::AmbiguousOperatorMixing, location, "-", "**");
 		}
 	}
 
 	AstNode on_dot(AstId left) {
+		cursor_.advance();
 		auto member = expect_name(Message::ExpectNameAfterDot);
 		return {AstMemberExpr {left, member}};
 	}
 
 	AstNode on_infix_left_paren(AstId left) {
-		uint32_t saved = open_angles;
-		open_angles = 0;
+		uint32_t saved = open_angles_;
+		open_angles_ = 0;
 		Defer _ = [&] {
-			open_angles = saved;
+			open_angles_ = saved;
 		};
 
+		cursor_.advance();
 		std::vector<AstNode> arguments;
-		if (!cursor.match(TokenKind::RightParen)) {
+		if (!cursor_.match(TokenKind::RightParen)) {
 			do {
 				arguments.emplace_back(parse_subexpression());
-			} while (cursor.match(TokenKind::Comma));
+			} while (cursor_.match(TokenKind::Comma));
 			expect(TokenKind::RightParen, Message::ExpectClosingParen);
 		}
-		return {AstCallExpr {left, ast.store_multiple(arguments)}};
+		return {AstCallExpr {left, ast_.store_multiple(arguments)}};
 	}
 
 	AstNode on_infix_left_bracket(AstId left) {
-		return {AstIndexExpr {left, parse_bracketed_arguments()}};
+		cursor_.advance();
+		auto arguments = parse_bracketed_arguments();
+		return {AstIndexExpr {left, arguments}};
 	}
 
 	AstNode on_caret() {
+		cursor_.advance();
 		return parse_pointer_type();
 	}
 
 	AstNode on_variability() {
+		cursor_.advance();
 		return {parse_variability()};
 	}
 
@@ -856,37 +862,37 @@ private:
 		auto specifier = VariabilitySpecifier::Var;
 
 		std::vector<AstNode> arguments;
-		if (cursor.match(TokenKind::LeftBrace)) {
-			uint32_t saved = open_angles;
-			open_angles = 0;
+		if (cursor_.match(TokenKind::LeftBrace)) {
+			uint32_t saved = open_angles_;
+			open_angles_ = 0;
 			Defer _ = [&] {
-				open_angles = saved;
+				open_angles_ = saved;
 			};
 
 			specifier = VariabilitySpecifier::VarBounded;
-			if (!cursor.match(TokenKind::RightBrace)) {
+			if (!cursor_.match(TokenKind::RightBrace)) {
 				do {
 					arguments.emplace_back(parse_subexpression());
-				} while (cursor.match(TokenKind::Comma));
+				} while (cursor_.match(TokenKind::Comma));
 
-				if (cursor.match(TokenKind::Ellipsis)) {
+				if (cursor_.match(TokenKind::Ellipsis)) {
 					specifier = VariabilitySpecifier::VarUnbounded;
 				}
 
 				expect(TokenKind::RightBrace, Message::ExpectBraceAfterVariability);
 			}
 		}
-		return {specifier, ast.store_multiple(arguments)};
+		return {specifier, ast_.store_multiple(arguments)};
 	}
 
 	AstNode parse_type() {
-		if (cursor.match(TokenKind::Caret)) {
+		if (cursor_.match(TokenKind::Caret)) {
 			return parse_pointer_type();
 		}
-		if (cursor.match(TokenKind::LeftBracket)) {
+		if (cursor_.match(TokenKind::LeftBracket)) {
 			return parse_array_type();
 		}
-		if (cursor.match(TokenKind::LeftParen)) {
+		if (cursor_.match(TokenKind::LeftParen)) {
 			return parse_function_type();
 		}
 
@@ -896,22 +902,22 @@ private:
 
 	AstNode parse_array_type() {
 		OptionalAstId bound;
-		if (!cursor.match(TokenKind::RightBracket)) {
-			bound = ast.store(parse_subexpression());
+		if (!cursor_.match(TokenKind::RightBracket)) {
+			bound = ast_.store(parse_subexpression());
 			expect(TokenKind::RightBracket, Message::ExpectBracketAfterArrayBound);
 		}
 
-		auto type = ast.store(parse_type());
+		auto type = ast_.store(parse_type());
 		return {AstArrayTypeExpr {bound, type}};
 	}
 
 	AstNode parse_pointer_type() {
 		AstVariabilityExpr variability;
-		if (cursor.match(TokenKind::Var)) {
+		if (cursor_.match(TokenKind::Var)) {
 			variability = parse_variability();
 		}
 
-		auto type = ast.store(parse_type());
+		auto type = ast_.store(parse_type());
 		return {AstPointerTypeExpr {variability, type}};
 	}
 
@@ -924,10 +930,10 @@ private:
 
 	std::vector<AstFunctionTypeExpr::Parameter> parse_function_type_parameters() {
 		std::vector<AstFunctionTypeExpr::Parameter> parameters;
-		if (!cursor.match(TokenKind::RightParen)) {
+		if (!cursor_.match(TokenKind::RightParen)) {
 			do {
 				parameters.emplace_back(parse_function_type_parameter());
-			} while (cursor.match(TokenKind::Comma));
+			} while (cursor_.match(TokenKind::Comma));
 			expect(TokenKind::RightParen, Message::ExpectParenAfterParams);
 		}
 		return parameters;
@@ -935,21 +941,21 @@ private:
 
 	AstFunctionTypeExpr::Parameter parse_function_type_parameter() {
 		auto specifier = ParameterSpecifier::None;
-		if (cursor.match(TokenKind::In)) {
+		if (cursor_.match(TokenKind::In)) {
 			specifier = ParameterSpecifier::In;
-		} else if (cursor.match(TokenKind::Var)) {
+		} else if (cursor_.match(TokenKind::Var)) {
 			specifier = ParameterSpecifier::Var;
 		}
 
-		auto type = ast.store(parse_type());
+		auto type = ast_.store(parse_type());
 
 		std::string_view name;
-		if (auto name_token = cursor.match_name()) {
-			name = name_token->get_lexeme(source);
+		if (auto name_token = cursor_.match_name()) {
+			name = name_token->get_lexeme(source_);
 		}
 
-		if (auto equal = cursor.match_token(TokenKind::Equals)) {
-			auto location = equal->locate_in(source);
+		if (auto equal = cursor_.match_token(TokenKind::Equals)) {
+			auto location = equal->locate_in(source_);
 			report(Message::FuncTypeDefaultArgument, location);
 			throw ParseError();
 		}
@@ -958,13 +964,13 @@ private:
 
 	std::vector<AstFunctionTypeExpr::Output> parse_function_type_outputs() {
 		std::vector<AstFunctionTypeExpr::Output> outputs;
-		if (cursor.match(TokenKind::LeftParen)) {
+		if (cursor_.match(TokenKind::LeftParen)) {
 			do {
 				outputs.emplace_back(parse_function_type_output());
-			} while (cursor.match(TokenKind::Comma));
+			} while (cursor_.match(TokenKind::Comma));
 			expect(TokenKind::RightParen, Message::ExpectParenAfterOutputs);
 		} else {
-			auto type = ast.store(parse_type());
+			auto type = ast_.store(parse_type());
 			outputs.emplace_back(type, std::string_view());
 		}
 
@@ -972,25 +978,25 @@ private:
 	}
 
 	AstFunctionTypeExpr::Output parse_function_type_output() {
-		auto type = ast.store(parse_type());
+		auto type = ast_.store(parse_type());
 
 		std::string_view name;
-		if (auto token = cursor.match_name()) {
-			name = token->get_lexeme(source);
+		if (auto token = cursor_.match_name()) {
+			name = token->get_lexeme(source_);
 		}
 
 		return {type, name};
 	}
 
 	void rescind_lookahead(size_t saved_node_count) {
-		auto first = ast.ast_nodes.begin() + static_cast<ptrdiff_t>(saved_node_count);
-		ast.ast_nodes.erase(first, ast.ast_nodes.end());
+		auto first = ast_.ast_nodes_.begin() + static_cast<ptrdiff_t>(saved_node_count);
+		ast_.ast_nodes_.erase(first, ast_.ast_nodes_.end());
 	}
 
 	void expect(TokenKind kind, Message message) {
-		auto token = cursor.peek();
+		auto token = cursor_.peek();
 		if (token.header.kind == kind) {
-			cursor.advance();
+			cursor_.advance();
 		} else {
 			report_expectation(message, token);
 			throw ParseError();
@@ -998,10 +1004,10 @@ private:
 	}
 
 	std::string_view expect_name(Message message) {
-		auto token = cursor.peek();
+		auto token = cursor_.peek();
 		if (token.header.kind == TokenKind::Name) {
-			cursor.advance();
-			return token.get_lexeme(source);
+			cursor_.advance();
+			return token.get_lexeme(source_);
 		}
 
 		report_expectation(message, token);
@@ -1009,20 +1015,20 @@ private:
 	}
 
 	void report_expectation(Message message, Token unexpected) {
-		auto location = unexpected.locate_in(source);
-		report(message, location, unexpected.to_message_string(source));
+		auto location = unexpected.locate_in(source_);
+		report(message, location, unexpected.to_message_string(source_));
 	}
 
 	template<typename... Args>
 	void report(Message message, CodeLocation location, Args&&... args) {
-		if (!is_looking_ahead) {
-			reporter.report(message, location, std::forward<Args>(args)...);
+		if (!is_looking_ahead_) {
+			reporter_.report(message, location, std::forward<Args>(args)...);
 		}
 	}
 
 	static Precedence lookup_precedence_for_associativity(BinaryOperator op) {
-		using enum BinaryOperator;
 		switch (op) {
+			using enum BinaryOperator;
 			case Add:
 			case Subtract: return Precedence::Bitwise;
 			case Multiply:

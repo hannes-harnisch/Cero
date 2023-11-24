@@ -19,12 +19,11 @@ public:
 
 	virtual ~Reporter() = default;
 
-protected:
-	virtual void write_report(Message message, Severity severity, CodeLocation location, std::string message_text) = 0;
-
 private:
-	bool has_error_reports = false;
-	bool warnings_as_errors = false;
+	bool has_error_reports_ = false;
+	bool warnings_as_errors_ = false;
+
+	virtual void handle_report(Message message, Severity severity, CodeLocation location, std::string message_text) = 0;
 
 	void on_report(Message message, CodeLocation location, std::format_args args, size_t arg_count);
 };

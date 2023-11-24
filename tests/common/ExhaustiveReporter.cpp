@@ -12,18 +12,19 @@ ExhaustiveReporter::~ExhaustiveReporter() {
 	CHECK(expected_reports_.empty());
 }
 
-void ExhaustiveReporter::write_report(cero::Message message,
-									  cero::Severity,
-									  cero::CodeLocation location,
-									  std::string message_text) {
-	REQUIRE(!expected_reports_.empty());
+void ExhaustiveReporter::handle_report(cero::Message message,
+									   cero::Severity,
+									   cero::CodeLocation location,
+									   std::string message_text) {
+	const bool reports_not_exhausted = !expected_reports_.empty();
+	REQUIRE(reports_not_exhausted); // If this fails, every expected report was already seen and an unexpected one was received.
 
 	const Report& expected = expected_reports_.front();
 	const Report received {message, location, std::move(message_text)};
-	const bool matches = expected == received;
-	CHECK(matches);
+	const bool report_matches = expected == received;
+	CHECK(report_matches); // If this fails, the received report does not match the report that is expected to be seen next.
 
-	if (matches) {
+	if (report_matches) {
 		expected_reports_.pop();
 	}
 }

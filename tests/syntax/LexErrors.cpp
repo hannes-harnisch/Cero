@@ -3,7 +3,7 @@
 
 CERO_TEST(SourceTooLarge) {
 	ExhaustiveReporter r;
-	r.expect(1, 1, cero::Message::SourceInputTooLarge, cero::MaxSourceLength);
+	r.expect(0, 0, cero::Message::SourceInputTooLarge, cero::MaxSourceLength);
 	build_test_source(r, std::string(16779000, ' '));
 }
 

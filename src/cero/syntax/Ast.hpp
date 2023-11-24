@@ -21,7 +21,7 @@ public:
 	std::string to_string(const SourceLock& source) const;
 
 private:
-	std::vector<AstNode> ast_nodes;
+	std::vector<AstNode> ast_nodes_;
 
 	AstId store(AstNode node);
 	AstIdSet store_multiple(std::span<AstNode> nodes);

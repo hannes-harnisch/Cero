@@ -6,10 +6,10 @@
 namespace cero {
 
 class AstId {
-	uint32_t index;
+	uint32_t index_;
 
 	explicit AstId(uint32_t index) :
-		index(index) {
+		index_(index) {
 	}
 
 	friend class Ast;
@@ -20,56 +20,56 @@ class AstId {
 class OptionalAstId {
 public:
 	OptionalAstId() :
-		index(UINT32_MAX) {
+		index_(UINT32_MAX) {
 	}
 
 	OptionalAstId(AstId id) :
-		index(id.index) {
+		index_(id.index_) {
 	}
 
 	explicit operator bool() const {
-		return index != UINT32_MAX;
+		return index_ != UINT32_MAX;
 	}
 
 	bool is_null() const {
-		return index == UINT32_MAX;
+		return index_ == UINT32_MAX;
 	}
 
 	AstId get() const {
-		CERO_ASSERT_DEBUG(index != UINT32_MAX, "can't call get on a null AST ID");
-		return AstId(index);
+		CERO_ASSERT_DEBUG(index_ != UINT32_MAX, "can't call get on a null AST ID");
+		return AstId(index_);
 	}
 
 private:
-	uint32_t index;
+	uint32_t index_;
 };
 
 class AstIdSet {
 public:
 	AstIdSet() :
-		count(0),
-		first(UINT32_MAX) {
+		count_(0),
+		first_(UINT32_MAX) {
 	}
 
 	AstId operator[](size_t index) const {
-		if (index < count) {
-			return AstId(first + static_cast<uint32_t>(index));
+		if (index < count_) {
+			return AstId(first_ + static_cast<uint32_t>(index));
 		}
 
 		fail_assert("index out of bounds");
 	}
 
 	uint32_t size() const {
-		return count;
+		return count_;
 	}
 
 private:
-	uint32_t count;
-	uint32_t first;
+	uint32_t count_;
+	uint32_t first_;
 
 	AstIdSet(uint32_t count, uint32_t first) :
-		count(count),
-		first(first) {
+		count_(count),
+		first_(first) {
 	}
 
 	friend class Ast;
@@ -209,7 +209,7 @@ enum class UnaryOperator : uint8_t {
 	BitwiseNot
 };
 
-std::string_view to_string(UnaryOperator op);
+std::string_view unary_operator_to_string(UnaryOperator op);
 
 struct AstUnaryExpr {
 	UnaryOperator op;
@@ -250,7 +250,7 @@ enum class BinaryOperator : uint8_t {
 	RightShiftAssign
 };
 
-std::string_view to_string(BinaryOperator op);
+std::string_view binary_operator_to_string(BinaryOperator op);
 
 struct AstBinaryExpr {
 	BinaryOperator op;

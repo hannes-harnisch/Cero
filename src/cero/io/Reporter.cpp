@@ -27,27 +27,27 @@ namespace {
 } // namespace
 
 bool Reporter::has_errors() const {
-	return has_error_reports;
+	return has_error_reports_;
 }
 
 void Reporter::set_warnings_as_errors(bool value) {
-	warnings_as_errors = value;
+	warnings_as_errors_ = value;
 }
 
 void Reporter::on_report(Message message, CodeLocation location, std::format_args args, size_t arg_count) {
 	verify_message_arg_count(message, arg_count);
 
 	auto severity = get_message_severity(message);
-	if (warnings_as_errors && severity == Severity::Warning) {
+	if (warnings_as_errors_ && severity == Severity::Warning) {
 		severity = Severity::Error;
 	}
 
 	if (severity == Severity::Error) {
-		has_error_reports = true;
+		has_error_reports_ = true;
 	}
 
 	auto format = get_message_format(message);
-	write_report(message, severity, location, std::vformat(format, args));
+	handle_report(message, severity, location, std::vformat(format, args));
 }
 
 } // namespace cero

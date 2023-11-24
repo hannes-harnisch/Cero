@@ -7,15 +7,15 @@
 
 namespace cero {
 
-class LexCursor {
+class SourceCursor {
 public:
-	explicit LexCursor(std::string_view source_text);
-
-	// Returns the current character or null if the cursor is at the end.
-	std::optional<char> peek() const;
+	explicit SourceCursor(const SourceLock& source);
 
 	// Returns the current character and then advances, or returns null if the cursor is at the end.
 	std::optional<char> next();
+
+	// Returns the current character or null if the cursor is at the end.
+	std::optional<char> peek() const;
 
 	// Moves cursor to the next character.
 	void advance();
@@ -26,15 +26,13 @@ public:
 	// True if the cursor is not at the end.
 	bool valid() const;
 
-	// Returns a view of the remaining source text after the cursor position.
-	std::string_view rest() const;
-
-	// Returns how many characters are left in the source text after the cursor position.
-	uint32_t count_rest() const;
+	// Current offset from the beginning of the source text.
+	uint32_t offset() const;
 
 private:
-	std::string_view::iterator current;
-	std::string_view::iterator end;
+	std::string_view::iterator it_;
+	std::string_view::iterator end_;
+	uint32_t offset_;
 };
 
 } // namespace cero

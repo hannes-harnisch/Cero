@@ -4,9 +4,13 @@
 
 namespace cero {
 
-class ParseCursor {
+// An instance of this class must not outlive the token stream it is initialized with.
+class TokenCursor {
 public:
-	explicit ParseCursor(const TokenStream& token_stream);
+	explicit TokenCursor(const TokenStream& token_stream);
+
+	// Returns the current character and then advances, or returns null if the cursor is at the end.
+	std::optional<Token> next();
 
 	// Returns true and advances if the current token kind equals the expected, otherwise returns false.
 	bool match(TokenKind kind);
@@ -31,17 +35,18 @@ public:
 	// Returns the current token kind, not skipping comments.
 	TokenKind current_kind() const;
 
-	// Returns the token that was last advanced after.
-	Token previous() const;
-
 	// Moves cursor to the next token.
 	void advance();
+
+	// True if the cursor is not at the end.
+	bool valid() const;
 
 	// Advance to the next non-comment token.
 	void skip_comments();
 
 private:
-	std::span<const Token>::iterator cursor;
+	std::vector<TokenStream::Unit>::const_iterator it_;
+	std::vector<TokenStream::Unit>::const_iterator end_;
 };
 
 } // namespace cero

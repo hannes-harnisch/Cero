@@ -2,7 +2,7 @@
 
 #include "cero/io/Message.hpp"
 #include "cero/syntax/Encoding.hpp"
-#include "cero/syntax/LexCursor.hpp"
+#include "cero/syntax/SourceCursor.hpp"
 
 namespace cero {
 
@@ -59,185 +59,201 @@ namespace {
 class Lexer {
 public:
 	Lexer(const SourceLock& source, Reporter& reporter) :
-		source(source),
-		reporter(reporter),
-		text(source.get_text()),
-		cursor(text) {
+		source_(source),
+		reporter_(reporter),
+		cursor_(source) {
 	}
 
 	TokenStream lex() {
-		TokenStream stream;
-
-		if (text.length() > MaxSourceLength) {
-			report(Message::SourceInputTooLarge, cursor, MaxSourceLength);
+		if (source_.get_length() > MaxSourceLength) {
+			const CodeLocation blank {source_.get_path(), 0, 0};
+			reporter_.report(Message::SourceInputTooLarge, blank, MaxSourceLength);
 		} else {
-			while (auto next = cursor.peek()) {
-				next_token(*next, stream);
-			}
+			lex_source();
 		}
 
-		stream.tokens.push_back({{TokenKind::EndOfFile, static_cast<uint32_t>(text.length())}, 0});
-		return stream;
+		stream_.add_header({TokenKind::EndOfFile, cursor_.offset()});
+		return std::move(stream_);
 	}
 
 private:
-	const SourceLock& source;
-	Reporter& reporter;
-	std::string_view text;
-	LexCursor cursor;
+	const SourceLock& source_;
+	Reporter& reporter_;
+	SourceCursor cursor_;
+	TokenStream stream_;
 
-	void next_token(char next, TokenStream& stream) {
-		const auto token_begin = cursor;
-		cursor.advance();
+	void lex_source() {
+		while (auto next = cursor_.peek()) {
+			const char c = *next;
+			const auto begin_offset = cursor_.offset();
+			cursor_.advance();
 
-		using enum TokenKind;
-		TokenKind kind;
-		switch (next) {
-			case ' ':
-			case '\t':
-			case '\n':
-			case '\v':
-			case '\f':
-			case '\r': return;
+			bool is_variable_length = false;
+			TokenKind kind;
+			switch (c) {
+				case ' ':
+				case '\t':
+				case '\n':
+				case '\v':
+				case '\f':
+				case '\r': continue;
 
-			case '_':
-			case 'a':
-			case 'b':
-			case 'c':
-			case 'd':
-			case 'e':
-			case 'f':
-			case 'g':
-			case 'h':
-			case 'i':
-			case 'j':
-			case 'k':
-			case 'l':
-			case 'm':
-			case 'n':
-			case 'o':
-			case 'p':
-			case 'q':
-			case 'r':
-			case 's':
-			case 't':
-			case 'u':
-			case 'v':
-			case 'w':
-			case 'x':
-			case 'y':
-			case 'z':
-			case 'A':
-			case 'B':
-			case 'C':
-			case 'D':
-			case 'E':
-			case 'F':
-			case 'G':
-			case 'H':
-			case 'I':
-			case 'J':
-			case 'K':
-			case 'L':
-			case 'M':
-			case 'N':
-			case 'O':
-			case 'P':
-			case 'Q':
-			case 'R':
-			case 'S':
-			case 'T':
-			case 'U':
-			case 'V':
-			case 'W':
-			case 'X':
-			case 'Y':
-			case 'Z': kind = lex_word(token_begin); break;
+				case '_':
+				case 'a':
+				case 'b':
+				case 'c':
+				case 'd':
+				case 'e':
+				case 'f':
+				case 'g':
+				case 'h':
+				case 'i':
+				case 'j':
+				case 'k':
+				case 'l':
+				case 'm':
+				case 'n':
+				case 'o':
+				case 'p':
+				case 'q':
+				case 'r':
+				case 's':
+				case 't':
+				case 'u':
+				case 'v':
+				case 'w':
+				case 'x':
+				case 'y':
+				case 'z':
+				case 'A':
+				case 'B':
+				case 'C':
+				case 'D':
+				case 'E':
+				case 'F':
+				case 'G':
+				case 'H':
+				case 'I':
+				case 'J':
+				case 'K':
+				case 'L':
+				case 'M':
+				case 'N':
+				case 'O':
+				case 'P':
+				case 'Q':
+				case 'R':
+				case 'S':
+				case 'T':
+				case 'U':
+				case 'V':
+				case 'W':
+				case 'X':
+				case 'Y':
+				case 'Z':
+					kind = lex_word(begin_offset);
+					is_variable_length = kind == TokenKind::Name;
+					break;
 
-			case '0':
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9': kind = lex_number(next); break;
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+				case '8':
+				case '9':
+					kind = lex_number(c);
+					is_variable_length = true;
+					break;
 
-			case '.': kind = match_dot(); break;
-			case ':': kind = match_colon(); break;
-			case ',': kind = Comma; break;
-			case ';': kind = Semicolon; break;
-			case '{': kind = LeftBrace; break;
-			case '}': kind = RightBrace; break;
-			case '(': kind = LeftParen; break;
-			case ')': kind = RightParen; break;
-			case '[': kind = LeftBracket; break;
-			case ']': kind = RightBracket; break;
-			case '<': kind = match_left_angle(); break;
-			case '>': kind = match_right_angle(); break;
-			case '=': kind = match_equal(); break;
-			case '+': kind = match_plus(); break;
-			case '-': kind = match_minus(); break;
-			case '*': kind = match_star(); break;
-			case '/': kind = match_slash(); break;
-			case '%': kind = match_percent(); break;
-			case '!': kind = match_bang(); break;
-			case '&': kind = match_ampersand(); break;
-			case '|': kind = match_pipe(); break;
-			case '~': kind = match_tilde(); break;
-			case '^': kind = Caret; break;
-			case '?': kind = QuestionMark; break;
-			case '@': kind = At; break;
-			case '$': kind = Dollar; break;
-			case '#': kind = Hash; break;
-			case '"':
-				eat_quoted_sequence('"');
-				kind = StringLiteral;
-				break;
+				case '.':
+					kind = match_dot();
+					is_variable_length = kind == TokenKind::FloatLiteral;
+					break;
 
-			case '\'':
-				eat_quoted_sequence('\'');
-				kind = CharLiteral;
-				break;
+				case ':': kind = match_colon(); break;
+				case ',': kind = TokenKind::Comma; break;
+				case ';': kind = TokenKind::Semicolon; break;
+				case '{': kind = TokenKind::LeftBrace; break;
+				case '}': kind = TokenKind::RightBrace; break;
+				case '(': kind = TokenKind::LeftParen; break;
+				case ')': kind = TokenKind::RightParen; break;
+				case '[': kind = TokenKind::LeftBracket; break;
+				case ']': kind = TokenKind::RightBracket; break;
+				case '<': kind = match_left_angle(); break;
+				case '>': kind = match_right_angle(); break;
+				case '=': kind = match_equal(); break;
+				case '+': kind = match_plus(); break;
+				case '-': kind = match_minus(); break;
+				case '*': kind = match_star(); break;
+				case '/':
+					kind = match_slash();
+					is_variable_length = kind == TokenKind::LineComment || kind == TokenKind::BlockComment;
+					break;
 
-			default:
-				eat_unicode_token(next, token_begin);
-				kind = Name;
-				break;
+				case '%': kind = match_percent(); break;
+				case '!': kind = match_bang(); break;
+				case '&': kind = match_ampersand(); break;
+				case '|': kind = match_pipe(); break;
+				case '~': kind = match_tilde(); break;
+				case '^': kind = TokenKind::Caret; break;
+				case '?': kind = TokenKind::QuestionMark; break;
+				case '@': kind = TokenKind::At; break;
+				case '$': kind = TokenKind::Dollar; break;
+				case '#': kind = TokenKind::Hash; break;
+				case '"':
+					eat_quoted_sequence('"');
+					kind = TokenKind::StringLiteral;
+					is_variable_length = true;
+					break;
+
+				case '\'':
+					eat_quoted_sequence('\'');
+					kind = TokenKind::CharLiteral;
+					is_variable_length = true;
+					break;
+
+				default:
+					eat_unicode_token(c, begin_offset);
+					kind = TokenKind::Name;
+					is_variable_length = true;
+					break;
+			}
+
+			stream_.add_header({kind, begin_offset});
+			if (is_variable_length) {
+				stream_.add_length(cursor_.offset() - begin_offset);
+			}
 		}
-
-		const uint32_t rest = token_begin.count_rest();
-		const uint32_t offset = static_cast<uint32_t>(text.length()) - rest;
-		const uint32_t length = rest - cursor.count_rest();
-		stream.tokens.push_back({{kind, offset}, length});
 	}
 
-	TokenKind lex_word(LexCursor token_begin) {
+	TokenKind lex_word(uint32_t begin_offset) {
 		eat_word_token_rest();
-		auto length = token_begin.count_rest() - cursor.count_rest();
-		auto lexeme = token_begin.rest().substr(0, length);
+		auto length = cursor_.offset() - begin_offset;
+		auto lexeme = source_.get_text().substr(begin_offset, length);
 		return identify_keyword(lexeme);
 	}
 
 	void eat_word_token_rest() {
-		while (auto next = cursor.peek()) {
+		while (auto next = cursor_.peek()) {
 			const char c = *next;
 			if (is_standard_ascii(c)) {
 				if (!is_ascii_word_character(c)) {
 					break;
 				}
 			} else {
-				if (!check_multibyte_utf8_value(c, is_utf8_xid_continue, cursor)) {
+				if (!check_multibyte_utf8_value(c, &is_utf8_xid_continue, cursor_.offset())) {
 					break;
 				}
 			}
-			cursor.advance();
+			cursor_.advance();
 		}
 	}
 
-	bool check_multibyte_utf8_value(char next, bool (*utf8_predicate)(uint32_t), LexCursor token_begin) {
+	bool check_multibyte_utf8_value(char next, bool (*utf8_predicate)(uint32_t), uint32_t begin_offset) {
 		const auto leading_byte = static_cast<uint8_t>(next);
 		const auto leading_ones = static_cast<uint8_t>(std::countl_one(leading_byte));
 
@@ -248,64 +264,64 @@ private:
 			char* bytes = reinterpret_cast<char*>(&encoding) + 1;
 
 			for (uint32_t i = 1; i != leading_ones; ++i) {
-				*bytes++ = cursor.next().value_or('\0');
+				*bytes++ = cursor_.next().value_or('\0');
 			}
 
 			valid = utf8_predicate(encoding);
 		}
 
 		if (!valid) {
-			report(Message::UnexpectedCharacter, token_begin, encoding);
+			report(Message::UnexpectedCharacter, begin_offset, encoding);
 		}
 		return valid;
 	}
 
 	TokenKind lex_number(char next) {
 		if (next == '0') {
-			auto backup = cursor;
-			switch (cursor.next().value_or('\0')) {
-				case 'x': eat_number_literal(is_hex_digit); return TokenKind::HexIntLiteral;
-				case 'b': eat_number_literal(is_dec_digit); return TokenKind::BinIntLiteral;
-				case 'o': eat_number_literal(is_dec_digit); return TokenKind::OctIntLiteral;
+			auto backup = cursor_;
+			switch (cursor_.next().value_or('\0')) {
+				case 'x': eat_number_literal(&is_hex_digit); return TokenKind::HexIntLiteral;
+				case 'b': eat_number_literal(&is_dec_digit); return TokenKind::BinIntLiteral;
+				case 'o': eat_number_literal(&is_dec_digit); return TokenKind::OctIntLiteral;
 			}
-			cursor = backup;
+			cursor_ = backup;
 		}
 
-		eat_number_literal(is_dec_digit);
-		auto cursor_at_token_end = cursor;
+		eat_number_literal(&is_dec_digit);
+		auto cursor_at_token_end = cursor_;
 
-		while (auto c = cursor.peek()) {
+		while (auto c = cursor_.peek()) {
 			if (!is_whitespace(*c)) {
 				break;
 			}
-			cursor.advance();
+			cursor_.advance();
 		}
 
-		auto cursor_at_dot = cursor;
+		auto cursor_at_dot = cursor_;
 
 		// check for rational part
-		next = cursor.next().value_or('\0');
+		next = cursor_.next().value_or('\0');
 		if (next == '.') {
 			if (eat_decimal_number()) {
 				return TokenKind::FloatLiteral;
 			} else {
-				cursor = cursor_at_dot; // reset to dot if there's no fractional part
+				cursor_ = cursor_at_dot; // reset to dot if there's no fractional part
 			}
 		} else {
-			cursor = cursor_at_token_end;
+			cursor_ = cursor_at_token_end;
 		}
 
 		return TokenKind::DecIntLiteral;
 	}
 
 	void eat_number_literal(bool (*char_predicate)(char)) {
-		auto lookahead = cursor;
+		auto lookahead = cursor_;
 
 		while (auto next = lookahead.peek()) {
 			const char c = *next;
 			if (char_predicate(c)) {
-				cursor = lookahead;
-				cursor.advance();
+				cursor_ = lookahead;
+				cursor_.advance();
 			} else if (!is_whitespace(c)) {
 				break;
 			}
@@ -316,13 +332,13 @@ private:
 
 	bool eat_decimal_number() {
 		bool matched = false;
-		auto lookahead = cursor;
+		auto lookahead = cursor_;
 
 		while (auto next = lookahead.peek()) {
 			const char c = *next;
 			if (is_dec_digit(c)) {
-				cursor = lookahead;
-				cursor.advance();
+				cursor_ = lookahead;
+				cursor_.advance();
 				matched = true;
 			} else if (!is_whitespace(c)) {
 				break;
@@ -334,14 +350,14 @@ private:
 	}
 
 	TokenKind match_dot() {
-		auto backup = cursor;
-		if (cursor.match('.')) {
-			if (cursor.match('.')) {
+		auto backup = cursor_;
+		if (cursor_.match('.')) {
+			if (cursor_.match('.')) {
 				return TokenKind::Ellipsis;
 			}
-			cursor = backup; // reset to ensure the extra dot is not skipped
-		} else if (is_dec_digit(cursor.peek().value_or('\0'))) {
-			eat_number_literal(is_dec_digit);
+			cursor_ = backup; // reset to ensure the extra dot is not skipped
+		} else if (is_dec_digit(cursor_.peek().value_or('\0'))) {
+			eat_number_literal(&is_dec_digit);
 			return TokenKind::FloatLiteral;
 		}
 
@@ -349,21 +365,21 @@ private:
 	}
 
 	TokenKind match_colon() {
-		if (cursor.match(':')) {
+		if (cursor_.match(':')) {
 			return TokenKind::ColonColon;
 		}
 		return TokenKind::Colon;
 	}
 
 	TokenKind match_left_angle() {
-		if (cursor.match('<')) {
-			if (cursor.match('=')) {
+		if (cursor_.match('<')) {
+			if (cursor_.match('=')) {
 				return TokenKind::LeftAngleAngleEquals;
 			}
 			return TokenKind::LeftAngleAngle;
 		}
 
-		if (cursor.match('=')) {
+		if (cursor_.match('=')) {
 			return TokenKind::LeftAngleEquals;
 		}
 
@@ -371,13 +387,13 @@ private:
 	}
 
 	TokenKind match_right_angle() {
-		auto backup = cursor;
-		if (cursor.match('>')) {
-			if (cursor.match('=')) {
+		auto backup = cursor_;
+		if (cursor_.match('>')) {
+			if (cursor_.match('=')) {
 				return TokenKind::RightAngleAngleEquals;
 			}
-			cursor = backup; // reset to ensure the extra right angle is not skipped
-		} else if (cursor.match('=')) {
+			cursor_ = backup; // reset to ensure the extra right angle is not skipped
+		} else if (cursor_.match('=')) {
 			return TokenKind::RightAngleEquals;
 		}
 
@@ -385,93 +401,93 @@ private:
 	}
 
 	TokenKind match_equal() {
-		if (cursor.match('=')) {
+		if (cursor_.match('=')) {
 			return TokenKind::EqualsEquals;
 		}
-		if (cursor.match('>')) {
+		if (cursor_.match('>')) {
 			return TokenKind::ThickArrow;
 		}
 		return TokenKind::Equals;
 	}
 
 	TokenKind match_plus() {
-		if (cursor.match('+')) {
+		if (cursor_.match('+')) {
 			return TokenKind::PlusPlus;
 		}
-		if (cursor.match('=')) {
+		if (cursor_.match('=')) {
 			return TokenKind::PlusEquals;
 		}
 		return TokenKind::Plus;
 	}
 
 	TokenKind match_minus() {
-		if (cursor.match('>')) {
+		if (cursor_.match('>')) {
 			return TokenKind::ThinArrow;
 		}
-		if (cursor.match('-')) {
+		if (cursor_.match('-')) {
 			return TokenKind::MinusMinus;
 		}
-		if (cursor.match('=')) {
+		if (cursor_.match('=')) {
 			return TokenKind::MinusEquals;
 		}
 		return TokenKind::Minus;
 	}
 
 	TokenKind match_star() {
-		if (cursor.match('*')) {
-			if (cursor.match('=')) {
+		if (cursor_.match('*')) {
+			if (cursor_.match('=')) {
 				return TokenKind::StarStarEquals;
 			}
 			return TokenKind::StarStar;
 		}
 
-		if (cursor.match('=')) {
+		if (cursor_.match('=')) {
 			return TokenKind::StarEquals;
 		}
 		return TokenKind::Star;
 	}
 
 	TokenKind match_slash() {
-		if (cursor.match('/')) {
+		if (cursor_.match('/')) {
 			eat_line_comment();
 			return TokenKind::LineComment;
 		}
 
-		if (cursor.match('*')) {
+		if (cursor_.match('*')) {
 			eat_block_comment();
 			return TokenKind::BlockComment;
 		}
 
-		if (cursor.match('=')) {
+		if (cursor_.match('=')) {
 			return TokenKind::SlashEquals;
 		}
 		return TokenKind::Slash;
 	}
 
 	void eat_line_comment() {
-		while (auto next = cursor.peek()) {
+		while (auto next = cursor_.peek()) {
 			if (*next == '\n') {
 				break;
 			}
-			cursor.advance();
+			cursor_.advance();
 		}
 	}
 
 	void eat_block_comment() {
-		auto comment_begin = cursor;
+		auto comment_begin = cursor_.offset();
 
 		uint32_t unclosed_count = 1;
-		while (cursor.valid()) {
-			if (cursor.match('*')) {
-				if (cursor.match('/') && --unclosed_count == 0) {
+		while (cursor_.valid()) {
+			if (cursor_.match('*')) {
+				if (cursor_.match('/') && --unclosed_count == 0) {
 					return;
 				}
-			} else if (cursor.match('/')) {
-				if (cursor.match('*')) {
+			} else if (cursor_.match('/')) {
+				if (cursor_.match('*')) {
 					++unclosed_count;
 				}
 			} else {
-				cursor.advance();
+				cursor_.advance();
 			}
 		}
 
@@ -481,41 +497,41 @@ private:
 	}
 
 	TokenKind match_percent() {
-		if (cursor.match('=')) {
+		if (cursor_.match('=')) {
 			return TokenKind::PercentEquals;
 		}
 		return TokenKind::Percent;
 	}
 
 	TokenKind match_bang() {
-		if (cursor.match('=')) {
+		if (cursor_.match('=')) {
 			return TokenKind::BangEquals;
 		}
 		return TokenKind::Bang;
 	}
 
 	TokenKind match_ampersand() {
-		if (cursor.match('&')) {
+		if (cursor_.match('&')) {
 			return TokenKind::AmpersandAmpersand;
 		}
-		if (cursor.match('=')) {
+		if (cursor_.match('=')) {
 			return TokenKind::AmpersandEquals;
 		}
 		return TokenKind::Ampersand;
 	}
 
 	TokenKind match_pipe() {
-		if (cursor.match('|')) {
+		if (cursor_.match('|')) {
 			return TokenKind::PipePipe;
 		}
-		if (cursor.match('=')) {
+		if (cursor_.match('=')) {
 			return TokenKind::PipeEquals;
 		}
 		return TokenKind::Pipe;
 	}
 
 	TokenKind match_tilde() {
-		if (cursor.match('=')) {
+		if (cursor_.match('=')) {
 			return TokenKind::TildeEquals;
 		}
 		return TokenKind::Tilde;
@@ -523,14 +539,14 @@ private:
 
 	void eat_quoted_sequence(char quote) {
 		bool ignore_quote = false;
-		while (auto next = cursor.peek()) {
+		while (auto next = cursor_.peek()) {
 			const char c = *next;
 			if (c == '\n') {
-				report(Message::MissingClosingQuote, cursor);
+				report(Message::MissingClosingQuote, cursor_.offset());
 				break;
 			}
 
-			cursor.advance();
+			cursor_.advance();
 
 			if (c == '\\') {
 				ignore_quote ^= true; // bool gets flipped so we correctly handle an escaped backslash within the literal
@@ -542,17 +558,16 @@ private:
 		}
 	}
 
-	void eat_unicode_token(char next, LexCursor token_begin) {
-		if (check_multibyte_utf8_value(next, is_utf8_xid_start, token_begin)) {
+	void eat_unicode_token(char next, uint32_t begin_offset) {
+		if (check_multibyte_utf8_value(next, &is_utf8_xid_start, begin_offset)) {
 			eat_word_token_rest();
 		}
 	}
 
 	template<typename... Args>
-	void report(Message message, LexCursor report_cursor, Args&&... args) const {
-		auto offset = static_cast<uint32_t>(text.length()) - report_cursor.count_rest();
-		auto location = source.locate(offset);
-		reporter.report(message, location, std::forward<Args>(args)...);
+	void report(Message message, uint32_t begin_offset, Args&&... args) const {
+		auto location = source_.locate(begin_offset);
+		reporter_.report(message, location, std::forward<Args>(args)...);
 	}
 };
 

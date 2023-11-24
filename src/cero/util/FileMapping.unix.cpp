@@ -54,7 +54,7 @@ Result<FileMapping, std::error_code> FileMapping::from(std::string_view path) {
 
 FileMapping::~FileMapping() {
 	if (addr_ != nullptr) {
-		if (::munmap(addr_, size_) == -1) {
+		if (::munmap(const_cast<void*>(addr_), size_) == -1) {
 			fail_result(std::format("Could not unmap file (system error {}).", errno));
 		}
 	}

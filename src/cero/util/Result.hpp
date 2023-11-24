@@ -199,6 +199,33 @@ public:
 		}
 	}
 
+	template<typename Fn>
+	Result<T, std::invoke_result_t<Fn, E>> transform_error(Fn&& fn) & {
+		if (has_value_) {
+			return value_;
+		} else {
+			return std::forward<Fn>(fn)(error_);
+		}
+	}
+
+	template<typename Fn>
+	Result<T, std::invoke_result_t<Fn, E>> transform_error(Fn&& fn) const& {
+		if (has_value_) {
+			return value_;
+		} else {
+			return std::forward<Fn>(fn)(error_);
+		}
+	}
+
+	template<typename Fn>
+	Result<T, std::invoke_result_t<Fn, E>> transform_error(Fn&& fn) && {
+		if (has_value_) {
+			return std::move(value_);
+		} else {
+			return std::forward<Fn>(fn)(std::move(error_));
+		}
+	}
+
 private:
 	bool has_value_;
 

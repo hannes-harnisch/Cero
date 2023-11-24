@@ -2,9 +2,9 @@
 
 namespace cero {
 
-std::string_view to_string(UnaryOperator op) {
-	using enum UnaryOperator;
+std::string_view unary_operator_to_string(UnaryOperator op) {
 	switch (op) {
+		using enum UnaryOperator;
 		case PreIncrement: return "prefix ++";
 		case PreDecrement: return "prefix --";
 		case PostIncrement: return "postfix ++";
@@ -18,9 +18,9 @@ std::string_view to_string(UnaryOperator op) {
 	fail_unreachable();
 }
 
-std::string_view to_string(BinaryOperator op) {
-	using enum BinaryOperator;
+std::string_view binary_operator_to_string(BinaryOperator op) {
 	switch (op) {
+		using enum BinaryOperator;
 		case Add: return "+";
 		case Subtract: return "-";
 		case Multiply: return "*";

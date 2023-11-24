@@ -4,31 +4,31 @@
 #include <doctest/doctest.h>
 
 AstChildScope::~AstChildScope() {
-	--level;
+	--level_;
 }
 
 AstChildScope::AstChildScope(uint32_t& level) :
-	level(level) {
-	++level;
+	level_(level) {
+	++level_;
 }
 
 AstCompare::AstCompare(const cero::Ast& ast) :
-	ast(ast),
-	current_level(0) {
+	ast_(ast),
+	current_level_(0) {
 }
 
 AstCompare::~AstCompare() {
-	CHECK(current_level == 0);
-	CHECK(data.empty());
+	CHECK(current_level_ == 0);
+	CHECK(data_.empty());
 }
 
 void AstCompare::compare() {
-	CHECK(current_level == 0); // scopes were improperly closed if this isn't 0
-	ast.visit(*this);
+	CHECK(current_level_ == 0); // scopes were improperly closed if this isn't 0
+	ast_.visit(*this);
 }
 
 AstChildScope AstCompare::mark_children() {
-	return AstChildScope(current_level);
+	return AstChildScope(current_level_);
 }
 
 void AstCompare::add_root() {
@@ -38,14 +38,14 @@ void AstCompare::add_root() {
 void AstCompare::visit(const cero::AstRoot& root) {
 	expect(cero::AstNodeKind::Root);
 
-	ast.visit_nodes(*this, root.definitions);
+	ast_.visit_nodes(*this, root.definitions);
 }
 
 void AstCompare::add_struct_definition(cero::AccessSpecifier access, std::string_view name) {
 	record(cero::AstNodeKind::StructDefinition);
 
-	data.emplace(access);
-	data.emplace(name);
+	data_.emplace(access);
+	data_.emplace(name);
 }
 
 void AstCompare::visit(const cero::AstStructDefinition& struct_def) {
@@ -61,8 +61,8 @@ void AstCompare::visit(const cero::AstStructDefinition& struct_def) {
 void AstCompare::add_enum_definition(cero::AccessSpecifier access, std::string_view name) {
 	record(cero::AstNodeKind::EnumDefinition);
 
-	data.emplace(access);
-	data.emplace(name);
+	data_.emplace(access);
+	data_.emplace(name);
 }
 
 void AstCompare::visit(const cero::AstEnumDefinition& enum_def) {
@@ -77,17 +77,17 @@ void AstCompare::visit(const cero::AstEnumDefinition& enum_def) {
 
 void AstCompare::add_function_definition(cero::AccessSpecifier access, std::string_view name) {
 	record(cero::AstNodeKind::FunctionDefinition);
-	data.emplace(access);
-	data.emplace(name);
+	data_.emplace(access);
+	data_.emplace(name);
 }
 
 void AstCompare::add_function_definition_parameter(cero::ParameterSpecifier specifier, std::string_view name) {
-	data.emplace(specifier);
-	data.emplace(name);
+	data_.emplace(specifier);
+	data_.emplace(name);
 }
 
 void AstCompare::add_function_definition_output(std::string_view name) {
-	data.emplace(name);
+	data_.emplace(name);
 }
 
 void AstCompare::visit(const cero::AstFunctionDefinition& function_def) {
@@ -136,8 +136,8 @@ void AstCompare::visit(const cero::AstBlockStatement& block_stmt) {
 void AstCompare::add_binding_statement(cero::BindingSpecifier specifier, std::string_view name) {
 	record(cero::AstNodeKind::BindingStatement);
 
-	data.emplace(specifier);
-	data.emplace(name);
+	data_.emplace(specifier);
+	data_.emplace(name);
 }
 
 void AstCompare::visit(const cero::AstBindingStatement& binding_stmt) {
@@ -190,7 +190,7 @@ void AstCompare::visit(const cero::AstForLoop& for_loop) {
 
 void AstCompare::add_name_expr(std::string_view name) {
 	record(cero::AstNodeKind::NameExpr);
-	data.emplace(name);
+	data_.emplace(name);
 }
 
 void AstCompare::visit(const cero::AstNameExpr& name_expr) {
@@ -202,7 +202,7 @@ void AstCompare::visit(const cero::AstNameExpr& name_expr) {
 
 void AstCompare::add_generic_name_expr(std::string_view name) {
 	record(cero::AstNodeKind::GenericNameExpr);
-	data.emplace(name);
+	data_.emplace(name);
 }
 
 void AstCompare::visit(const cero::AstGenericNameExpr& generic_name) {
@@ -216,7 +216,7 @@ void AstCompare::visit(const cero::AstGenericNameExpr& generic_name) {
 
 void AstCompare::add_member_expr(std::string_view name) {
 	record(cero::AstNodeKind::MemberExpr);
-	data.emplace(name);
+	data_.emplace(name);
 }
 
 void AstCompare::visit(const cero::AstMemberExpr& member_expr) {
@@ -273,7 +273,7 @@ void AstCompare::visit(const cero::AstArrayLiteralExpr& array_literal) {
 
 void AstCompare::add_unary_expr(cero::UnaryOperator op) {
 	record(cero::AstNodeKind::UnaryExpr);
-	data.emplace(op);
+	data_.emplace(op);
 }
 
 void AstCompare::visit(const cero::AstUnaryExpr& unary_expr) {
@@ -287,7 +287,7 @@ void AstCompare::visit(const cero::AstUnaryExpr& unary_expr) {
 
 void AstCompare::add_binary_expr(cero::BinaryOperator op) {
 	record(cero::AstNodeKind::BinaryExpr);
-	data.emplace(op);
+	data_.emplace(op);
 }
 
 void AstCompare::visit(const cero::AstBinaryExpr& binary_expr) {
@@ -336,7 +336,7 @@ void AstCompare::visit(const cero::AstContinueExpr& continue_expr) {
 
 void AstCompare::add_numeric_literal_expr(cero::NumericLiteralKind kind) {
 	record(cero::AstNodeKind::NumericLiteralExpr);
-	data.emplace(kind);
+	data_.emplace(kind);
 }
 
 void AstCompare::visit(const cero::AstNumericLiteralExpr& numeric_literal) {
@@ -405,20 +405,20 @@ void AstCompare::visit(const cero::AstFunctionTypeExpr& function_type) {
 }
 
 void AstCompare::visit_child(cero::AstId id) {
-	++current_level;
-	ast.visit_node(*this, id);
-	--current_level;
+	++current_level_;
+	ast_.visit_node(*this, id);
+	--current_level_;
 }
 
 void AstCompare::visit_children(cero::AstIdSet ids) {
-	++current_level;
-	ast.visit_nodes(*this, ids);
-	--current_level;
+	++current_level_;
+	ast_.visit_nodes(*this, ids);
+	--current_level_;
 }
 
 void AstCompare::record(cero::AstNodeKind type) {
-	data.emplace(type);
-	data.emplace(current_level);
+	data_.emplace(type);
+	data_.emplace(current_level_);
 }
 
 void AstCompare::expect(cero::AstNodeKind type) {
@@ -426,15 +426,15 @@ void AstCompare::expect(cero::AstNodeKind type) {
 	CHECK(recorded == type);
 
 	auto level = pop<uint32_t>();
-	CHECK(level == current_level);
+	CHECK(level == current_level_);
 }
 
 template<typename T>
 T AstCompare::pop() {
-	T* next = std::any_cast<T>(&data.front());
+	T* next = std::any_cast<T>(&data_.front());
 	REQUIRE(next != nullptr);
 
 	T value = std::move(*next);
-	data.pop();
+	data_.pop();
 	return value;
 }

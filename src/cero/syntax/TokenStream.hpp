@@ -10,15 +10,26 @@ namespace cero {
 
 class TokenStream {
 public:
-	std::span<const Token> get_tokens() const;
-	Token at(size_t index) const;
+	uint32_t num_tokens() const;
 
 	std::string to_string(const SourceLock& source) const;
 
 private:
-	std::vector<Token> tokens;
+	union Unit {
+		TokenHeader header;
+		uint32_t length;
+	};
+
+	std::vector<Unit> stream_;
+	uint32_t num_tokens_;
+
+	TokenStream();
+
+	void add_header(TokenHeader header);
+	void add_length(uint32_t length);
 
 	friend class Lexer;
+	friend class TokenCursor;
 };
 
 } // namespace cero

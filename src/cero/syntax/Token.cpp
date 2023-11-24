@@ -1,6 +1,6 @@
 #include "Token.hpp"
 
-#include "cero/syntax/LexCursor.hpp"
+#include "cero/syntax/SourceCursor.hpp"
 #include "cero/util/Fail.hpp"
 
 namespace cero {
@@ -195,6 +195,7 @@ std::string_view get_fixed_length_lexeme(TokenKind kind) {
 		case Use: return "use";
 		case Var: return "var";
 		case While: return "while";
+		case EndOfFile: return "";
 		default: return {};
 	}
 }
@@ -204,14 +205,18 @@ bool TokenHeader::is_variable_length() const {
 }
 
 std::string_view Token::get_lexeme(const SourceLock& source) const {
-	return source.get_text().substr(header.offset, length);
+	if (length == 0) {
+		return get_fixed_length_lexeme(header.kind);
+	} else {
+		return source.get_text().substr(header.offset, length);
+	}
 }
 
 namespace {
 
 	std::string_view get_token_message_format(TokenKind kind) {
-		using enum TokenKind;
 		switch (kind) {
+			using enum TokenKind;
 			case Name: return "name `{}`";
 			case LineComment:
 			case BlockComment: return "comment";

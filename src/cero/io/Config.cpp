@@ -59,7 +59,7 @@ bool Config::parse_option(std::string_view arg) {
 		warnings_as_errors = true;
 	} else if (arg == "--log-tokens") {
 		log_tokens = true;
-	} else if (arg == "--log-ast") {
+	} else if (arg == "--log-ast_") {
 		log_ast = true;
 	}
 	// check for all other options here in the future

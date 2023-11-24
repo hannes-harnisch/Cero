@@ -15,7 +15,7 @@ main()
 	auto ast = cero::parse(source, r);
 
 	auto str = ast.to_string(source);
-	auto expected = R"_____(Printing AST for AstStringForSimpleFunction
+	auto expected = R"_____(AST for AstStringForSimpleFunction (2 nodes)
 └── function `main`
     ├── parameters
     ├── outputs
@@ -36,7 +36,7 @@ a(int32 x, bool _a, bool _b = x) -> float32
 	auto ast = cero::parse(source, r);
 
 	auto str = ast.to_string(source);
-	auto expected = R"_____(Printing AST for AstStringForSimpleFunctionWithParametersAndReturn
+	auto expected = R"_____(AST for AstStringForSimpleFunctionWithParametersAndReturn (7 nodes)
 └── function `a`
     ├── parameters
     │   ├── value parameter `x`
@@ -71,7 +71,7 @@ b(int32 i, float64 f)
 	auto ast = cero::parse(source, r);
 
 	auto str = ast.to_string(source);
-	auto expected = R"_____(Printing AST for AstStringForCall
+	auto expected = R"_____(AST for AstStringForCall (15 nodes)
 ├── function `a`
 │   ├── parameters
 │   │   ├── value parameter `_a`

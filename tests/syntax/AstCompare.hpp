@@ -10,7 +10,7 @@ public:
 	~AstChildScope();
 
 private:
-	uint32_t& level;
+	uint32_t& level_;
 
 	friend class AstCompare;
 	AstChildScope(uint32_t& level);
@@ -48,9 +48,9 @@ public:
 	AstCompare& operator=(const AstCompare&) = delete;
 
 private:
-	const cero::Ast& ast;
-	std::queue<std::any> data;
-	uint32_t current_level;
+	const cero::Ast& ast_;
+	std::queue<std::any> data_;
+	uint32_t current_level_;
 
 	void visit(const cero::AstRoot& root) override;
 	void visit(const cero::AstStructDefinition& struct_def) override;

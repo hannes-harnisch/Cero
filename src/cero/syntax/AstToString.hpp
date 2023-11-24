@@ -7,6 +7,12 @@
 namespace cero {
 
 class AstToString : public AstVisitor {
+public:
+	AstToString(const Ast& ast, const SourceLock& source);
+
+	std::string make_string();
+
+private:
 	struct Edge {
 		std::string_view branch;
 		std::string_view prefix;
@@ -15,18 +21,11 @@ class AstToString : public AstVisitor {
 	static constexpr Edge Body {"├── ", "│   "};
 	static constexpr Edge Tail {"└── ", "    "};
 
-	std::string string;
-	const Ast& ast;
-	const SourceLock& source;
-	std::stack<std::string> prefixes;
-	const Edge* edge = &Body;
+	const Ast& ast_;
+	std::stack<std::string> prefixes_;
+	const Edge* edge_;
+	std::string string_;
 
-public:
-	AstToString(const Ast& ast, const SourceLock& source);
-
-	std::string make_string();
-
-private:
 	void push_level();
 	void pop_level();
 

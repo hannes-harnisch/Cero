@@ -2,20 +2,17 @@
 #include "common/Test.hpp"
 
 #include <cero/syntax/Lex.hpp>
+#include <cero/syntax/TokenCursor.hpp>
 
 namespace {
 
-bool all_tokens_match(const cero::TokenStream& token_stream, std::initializer_list<cero::TokenKind> kinds) {
-	auto tokens = token_stream.get_tokens();
-	CHECK(tokens.size() == kinds.size());
+void check_token_kinds(const cero::TokenStream& token_stream, std::initializer_list<cero::TokenKind> kinds) {
+	REQUIRE(token_stream.num_tokens() == kinds.size());
 
-	for (size_t i = 0; i != tokens.size(); ++i) {
-		if (tokens[i].header.kind != kinds.begin()[i]) {
-			return false;
-		}
+	cero::TokenCursor c(token_stream);
+	for (auto kind : kinds) {
+		CHECK(kind == c.next().value().header.kind);
 	}
-
-	return true;
 }
 
 } // namespace
@@ -28,7 +25,7 @@ CERO_TEST(LexEmptySource) {
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
 
-	CHECK(all_tokens_match(tokens, {EndOfFile}));
+	check_token_kinds(tokens, {EndOfFile});
 }
 
 CERO_TEST(LexIntegerLiterals) {
@@ -50,26 +47,39 @@ CERO_TEST(LexIntegerLiterals) {
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
 
-	CHECK(all_tokens_match(tokens, {DecIntLiteral, Semicolon, DecIntLiteral, Semicolon,		DecIntLiteral, Semicolon,
-									DecIntLiteral, Semicolon, HexIntLiteral, Semicolon,		HexIntLiteral, Semicolon,
-									HexIntLiteral, Name,	  Semicolon,	 HexIntLiteral, Name,		   Semicolon,
-									BinIntLiteral, Semicolon, BinIntLiteral, Semicolon,		OctIntLiteral, Semicolon,
-									OctIntLiteral, Semicolon, EndOfFile}));
+	check_token_kinds(tokens,
+					  {DecIntLiteral, Semicolon,	 DecIntLiteral, Semicolon,	   DecIntLiteral, Semicolon,	 DecIntLiteral,
+					   Semicolon,	  HexIntLiteral, Semicolon,		HexIntLiteral, Semicolon,	  HexIntLiteral, Name,
+					   Semicolon,	  HexIntLiteral, Name,			Semicolon,	   BinIntLiteral, Semicolon,	 BinIntLiteral,
+					   Semicolon,	  OctIntLiteral, Semicolon,		OctIntLiteral, Semicolon,	  EndOfFile});
 
-	CHECK(tokens.at(0).get_lexeme(source) == "0");
-	CHECK(tokens.at(2).get_lexeme(source) == "123");
-	CHECK(tokens.at(4).get_lexeme(source) == "123 456");
-	CHECK(tokens.at(6).get_lexeme(source) == "1234 5678");
-	CHECK(tokens.at(8).get_lexeme(source) == "0x123 456 eaeAEB234 32 B");
-	CHECK(tokens.at(10).get_lexeme(source) == "0x AB3235");
-	CHECK(tokens.at(12).get_lexeme(source) == "0x AB3235");
-	CHECK(tokens.at(13).get_lexeme(source) == "i");
-	CHECK(tokens.at(15).get_lexeme(source) == "0x 29356237");
-	CHECK(tokens.at(16).get_lexeme(source) == "kk");
-	CHECK(tokens.at(18).get_lexeme(source) == "0b010110111");
-	CHECK(tokens.at(20).get_lexeme(source) == "0b 0110 11101 110");
-	CHECK(tokens.at(22).get_lexeme(source) == "0o1125417245");
-	CHECK(tokens.at(24).get_lexeme(source) == "0o 124 22115 2736");
+	cero::TokenCursor c(tokens);
+	CHECK(c.next().value().get_lexeme(source) == "0");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == "123");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == "123 456");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == "1234 5678");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == "0x123 456 eaeAEB234 32 B");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == "0x AB3235");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == "0x AB3235");
+	CHECK(c.next().value().get_lexeme(source) == "i");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == "0x 29356237");
+	CHECK(c.next().value().get_lexeme(source) == "kk");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == "0b010110111");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == "0b 0110 11101 110");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == "0o1125417245");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == "0o 124 22115 2736");
+	CHECK(c.next().value().get_lexeme(source) == ";");
 }
 
 CERO_TEST(LexFloatLiterals) {
@@ -88,27 +98,36 @@ CERO_TEST(LexFloatLiterals) {
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
 
-	CHECK(all_tokens_match(tokens,
-						   {FloatLiteral, Semicolon,	 DecIntLiteral, Dot,	   Semicolon,	 FloatLiteral, Semicolon,
-							FloatLiteral, Semicolon,	 FloatLiteral,	Semicolon, FloatLiteral, Semicolon,	   FloatLiteral,
-							Semicolon,	  DecIntLiteral, Dot,			Dot,	   Name,		 Semicolon,	   FloatLiteral,
-							Dot,		  Name,			 Semicolon,		EndOfFile}));
+	check_token_kinds(tokens, {FloatLiteral, Semicolon,		DecIntLiteral, Dot,		  Semicolon,	FloatLiteral, Semicolon,
+							   FloatLiteral, Semicolon,		FloatLiteral,  Semicolon, FloatLiteral, Semicolon,	  FloatLiteral,
+							   Semicolon,	 DecIntLiteral, Dot,		   Dot,		  Name,			Semicolon,	  FloatLiteral,
+							   Dot,			 Name,			Semicolon,	   EndOfFile});
 
-	CHECK(tokens.at(0).get_lexeme(source) == "1.0");
-	CHECK(tokens.at(2).get_lexeme(source) == "1");
-	CHECK(tokens.at(3).get_lexeme(source) == ".");
-	CHECK(tokens.at(5).get_lexeme(source) == ".4");
-	CHECK(tokens.at(7).get_lexeme(source) == ".045");
-	CHECK(tokens.at(9).get_lexeme(source) == "100 000.000 231");
-	CHECK(tokens.at(11).get_lexeme(source) == "123 .456 7");
-	CHECK(tokens.at(13).get_lexeme(source) == "234 5 . 23 948");
-	CHECK(tokens.at(15).get_lexeme(source) == "1");
-	CHECK(tokens.at(16).get_lexeme(source) == ".");
-	CHECK(tokens.at(17).get_lexeme(source) == ".");
-	CHECK(tokens.at(18).get_lexeme(source) == "z");
-	CHECK(tokens.at(20).get_lexeme(source) == "1.0");
-	CHECK(tokens.at(21).get_lexeme(source) == ".");
-	CHECK(tokens.at(22).get_lexeme(source) == "a");
+	cero::TokenCursor c(tokens);
+	CHECK(c.next().value().get_lexeme(source) == "1.0");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == "1");
+	CHECK(c.next().value().get_lexeme(source) == ".");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == ".4");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == ".045");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == "100 000.000 231");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == "123 .456 7");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == "234 5 . 23 948");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == "1");
+	CHECK(c.next().value().get_lexeme(source) == ".");
+	CHECK(c.next().value().get_lexeme(source) == ".");
+	CHECK(c.next().value().get_lexeme(source) == "z");
+	CHECK(c.next().value().get_lexeme(source) == ";");
+	CHECK(c.next().value().get_lexeme(source) == "1.0");
+	CHECK(c.next().value().get_lexeme(source) == ".");
+	CHECK(c.next().value().get_lexeme(source) == "a");
+	CHECK(c.next().value().get_lexeme(source) == ";");
 }
 
 CERO_TEST(LexStringLiteralsWithEscapes) {
@@ -126,17 +145,18 @@ CERO_TEST(LexStringLiteralsWithEscapes) {
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
 
-	CHECK(all_tokens_match(tokens, {StringLiteral, StringLiteral, StringLiteral, StringLiteral, StringLiteral, StringLiteral,
-									StringLiteral, StringLiteral, EndOfFile}));
+	check_token_kinds(tokens, {StringLiteral, StringLiteral, StringLiteral, StringLiteral, StringLiteral, StringLiteral,
+							   StringLiteral, StringLiteral, EndOfFile});
 
-	CHECK(tokens.at(0).get_lexeme(source) == "\"123\\\"\"");
-	CHECK(tokens.at(1).get_lexeme(source) == "\"\\\"\"");
-	CHECK(tokens.at(2).get_lexeme(source) == "\"\"");
-	CHECK(tokens.at(3).get_lexeme(source) == "\"\\\\\"");
-	CHECK(tokens.at(4).get_lexeme(source) == "\"\\a\"");
-	CHECK(tokens.at(5).get_lexeme(source) == "\"\\np\"");
-	CHECK(tokens.at(6).get_lexeme(source) == "\"\\\"\\\\a\\a\"");
-	CHECK(tokens.at(7).get_lexeme(source) == "\"\\\"\\\\\\\"\\\\\\\\a\\\\a\\\"\"");
+	cero::TokenCursor c(tokens);
+	CHECK(c.next().value().get_lexeme(source) == "\"123\\\"\"");
+	CHECK(c.next().value().get_lexeme(source) == "\"\\\"\"");
+	CHECK(c.next().value().get_lexeme(source) == "\"\"");
+	CHECK(c.next().value().get_lexeme(source) == "\"\\\\\"");
+	CHECK(c.next().value().get_lexeme(source) == "\"\\a\"");
+	CHECK(c.next().value().get_lexeme(source) == "\"\\np\"");
+	CHECK(c.next().value().get_lexeme(source) == "\"\\\"\\\\a\\a\"");
+	CHECK(c.next().value().get_lexeme(source) == "\"\\\"\\\\\\\"\\\\\\\\a\\\\a\\\"\"");
 }
 
 CERO_TEST(LexLineComments) {
@@ -150,12 +170,13 @@ CERO_TEST(LexLineComments) {
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
 
-	CHECK(all_tokens_match(tokens, {LineComment, LineComment, LineComment, LineComment, EndOfFile}));
+	check_token_kinds(tokens, {LineComment, LineComment, LineComment, LineComment, EndOfFile});
 
-	CHECK(tokens.at(0).get_lexeme(source) == "//");
-	CHECK(tokens.at(1).get_lexeme(source) == "// ");
-	CHECK(tokens.at(2).get_lexeme(source) == "// abc");
-	CHECK(tokens.at(3).get_lexeme(source) == "// //");
+	cero::TokenCursor c(tokens);
+	CHECK(c.next().value().get_lexeme(source) == "//");
+	CHECK(c.next().value().get_lexeme(source) == "// ");
+	CHECK(c.next().value().get_lexeme(source) == "// abc");
+	CHECK(c.next().value().get_lexeme(source) == "// //");
 }
 
 CERO_TEST(LexBlockComments) {
@@ -179,19 +200,20 @@ CERO_TEST(LexBlockComments) {
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
 
-	CHECK(all_tokens_match(tokens, {BlockComment, BlockComment, BlockComment, BlockComment, BlockComment, BlockComment,
-									BlockComment, BlockComment, BlockComment, BlockComment, EndOfFile}));
+	check_token_kinds(tokens, {BlockComment, BlockComment, BlockComment, BlockComment, BlockComment, BlockComment, BlockComment,
+							   BlockComment, BlockComment, BlockComment, EndOfFile});
 
-	CHECK(tokens.at(0).get_lexeme(source) == "/**/");
-	CHECK(tokens.at(1).get_lexeme(source) == "/* abc\n*/");
-	CHECK(tokens.at(2).get_lexeme(source) == "/*\n\n\n*/");
-	CHECK(tokens.at(3).get_lexeme(source) == "/*/**/*/");
-	CHECK(tokens.at(4).get_lexeme(source) == "/*a/*b*/c*/");
-	CHECK(tokens.at(5).get_lexeme(source) == "/*/*/**/*/*/");
-	CHECK(tokens.at(6).get_lexeme(source) == "/***/");
-	CHECK(tokens.at(7).get_lexeme(source) == "/* **** */");
-	CHECK(tokens.at(8).get_lexeme(source) == "/*/ */");
-	CHECK(tokens.at(9).get_lexeme(source) == "/*// */");
+	cero::TokenCursor c(tokens);
+	CHECK(c.next().value().get_lexeme(source) == "/**/");
+	CHECK(c.next().value().get_lexeme(source) == "/* abc\n*/");
+	CHECK(c.next().value().get_lexeme(source) == "/*\n\n\n*/");
+	CHECK(c.next().value().get_lexeme(source) == "/*/**/*/");
+	CHECK(c.next().value().get_lexeme(source) == "/*a/*b*/c*/");
+	CHECK(c.next().value().get_lexeme(source) == "/*/*/**/*/*/");
+	CHECK(c.next().value().get_lexeme(source) == "/***/");
+	CHECK(c.next().value().get_lexeme(source) == "/* **** */");
+	CHECK(c.next().value().get_lexeme(source) == "/*/ */");
+	CHECK(c.next().value().get_lexeme(source) == "/*// */");
 }
 
 CERO_TEST(LexBracketCaret) {
@@ -202,7 +224,7 @@ CERO_TEST(LexBracketCaret) {
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
 
-	CHECK(all_tokens_match(tokens, {LeftBracket, Caret, EndOfFile}));
+	check_token_kinds(tokens, {LeftBracket, Caret, EndOfFile});
 }
 
 CERO_TEST(LexUnicodeNames) {
@@ -214,9 +236,10 @@ CERO_TEST(LexUnicodeNames) {
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
 
-	CHECK(all_tokens_match(tokens, {Name, LeftParen, RightParen, LeftBrace, RightBrace, EndOfFile}));
+	check_token_kinds(tokens, {Name, LeftParen, RightParen, LeftBrace, RightBrace, EndOfFile});
 
-	CHECK(tokens.at(0).get_lexeme(source) == "𖭽");
+	cero::TokenCursor c(tokens);
+	CHECK(c.next().value().get_lexeme(source) == "𖭽");
 }
 
 CERO_TEST(LexOperators) {
@@ -234,30 +257,30 @@ CERO_TEST(LexOperators) {
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
 
-	CHECK(all_tokens_match(tokens, {Bang,
-									Plus,
-									Minus,
-									Star,
-									Slash,
-									Percent,
-									EqualsEquals,
-									BangEquals,
-									LeftAngle,
-									RightAngle,
-									LeftAngleEquals,
-									RightAngleEquals,
-									Dot,
-									ColonColon,
-									AmpersandAmpersand,
-									PipePipe,
-									Equals,
-									Ampersand,
-									Pipe,
-									Tilde,
-									LeftAngleAngle,
-									RightAngle,
-									RightAngle,
-									EndOfFile}));
+	check_token_kinds(tokens, {Bang,
+							   Plus,
+							   Minus,
+							   Star,
+							   Slash,
+							   Percent,
+							   EqualsEquals,
+							   BangEquals,
+							   LeftAngle,
+							   RightAngle,
+							   LeftAngleEquals,
+							   RightAngleEquals,
+							   Dot,
+							   ColonColon,
+							   AmpersandAmpersand,
+							   PipePipe,
+							   Equals,
+							   Ampersand,
+							   Pipe,
+							   Tilde,
+							   LeftAngleAngle,
+							   RightAngle,
+							   RightAngle,
+							   EndOfFile});
 }
 
 CERO_TEST(LexDotDot) {
@@ -268,5 +291,5 @@ CERO_TEST(LexDotDot) {
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
 
-	CHECK(all_tokens_match(tokens, {Dot, Dot, EndOfFile}));
+	check_token_kinds(tokens, {Dot, Dot, EndOfFile});
 }
