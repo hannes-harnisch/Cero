@@ -44,8 +44,8 @@ private:
 	void visit(const AstStructDefinition&) override;
 	void visit(const AstEnumDefinition&) override;
 	void visit(const AstFunctionDefinition&) override;
-	void visit(const AstFunctionDefinition::Parameter& parameter);
-	void visit(const AstFunctionDefinition::Output& output);
+	void visit(const AstFunctionParameter&) override;
+	void visit(const AstFunctionOutput&) override;
 	void visit(const AstBlockStatement&) override;
 	void visit(const AstBindingStatement&) override;
 	void visit(const AstIfExpr&) override;
@@ -71,8 +71,6 @@ private:
 	void visit(const AstPointerTypeExpr&) override;
 	void visit(const AstArrayTypeExpr&) override;
 	void visit(const AstFunctionTypeExpr&) override;
-	void visit(const AstFunctionTypeExpr::Parameter& parameter);
-	void visit(const AstFunctionTypeExpr::Output& output);
 };
 
 } // namespace cero

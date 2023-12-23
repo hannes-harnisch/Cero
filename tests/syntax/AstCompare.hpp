@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cero/syntax/Ast.hpp>
 #include <cero/syntax/AstVisitor.hpp>
 
 #include <any>
@@ -29,8 +30,8 @@ public:
 	void add_struct_definition(cero::AccessSpecifier access, std::string_view name);
 	void add_enum_definition(cero::AccessSpecifier access, std::string_view name);
 	void add_function_definition(cero::AccessSpecifier access, std::string_view name);
-	void add_function_definition_parameter(cero::ParameterSpecifier specifier, std::string_view name);
-	void add_function_definition_output(std::string_view name);
+	void add_function_parameter(cero::ParameterSpecifier specifier, std::string_view name);
+	void add_function_output(std::string_view name);
 	void add_block_statement();
 	void add_binding_statement(cero::BindingSpecifier specifier, std::string_view name);
 	void add_while_loop();
@@ -56,6 +57,8 @@ private:
 	void visit(const cero::AstStructDefinition& struct_def) override;
 	void visit(const cero::AstEnumDefinition& enum_def) override;
 	void visit(const cero::AstFunctionDefinition& function_def) override;
+	void visit(const cero::AstFunctionParameter& function_param) override;
+	void visit(const cero::AstFunctionOutput& function_output) override;
 	void visit(const cero::AstBlockStatement& block_stmt) override;
 	void visit(const cero::AstBindingStatement& binding_stmt) override;
 	void visit(const cero::AstIfExpr& if_stmt) override;

@@ -171,7 +171,7 @@ void AstToString::visit(const AstFunctionDefinition& function_def) {
 	pop_level();
 }
 
-void AstToString::visit(const AstFunctionDefinition::Parameter& parameter) {
+void AstToString::visit(const AstFunctionParameter& parameter) {
 	add_line(std::format("{} parameter `{}`", parameter_specifier_to_string(parameter.specifier), parameter.name));
 	push_level();
 
@@ -186,7 +186,7 @@ void AstToString::visit(const AstFunctionDefinition::Parameter& parameter) {
 	pop_level();
 }
 
-void AstToString::visit(const AstFunctionDefinition::Output& output) {
+void AstToString::visit(const AstFunctionOutput& output) {
 	if (output.name.empty()) {
 		add_line("output");
 	} else {
@@ -468,26 +468,6 @@ void AstToString::visit(const AstFunctionTypeExpr& function_type) {
 	visit_each_in(function_type.outputs);
 	pop_level();
 
-	pop_level();
-}
-
-void AstToString::visit(const AstFunctionTypeExpr::Parameter& parameter) {
-	add_line(std::format("{} parameter `{}`", parameter_specifier_to_string(parameter.specifier), parameter.name));
-
-	push_level();
-	visit_tail(parameter.type);
-	pop_level();
-}
-
-void AstToString::visit(const AstFunctionTypeExpr::Output& output) {
-	if (output.name.empty()) {
-		add_line("output");
-	} else {
-		add_line(std::format("output `{}`", output.name));
-	}
-
-	push_level();
-	visit_tail(output.type);
 	pop_level();
 }
 

@@ -10,7 +10,7 @@ void Ast::visit(AstVisitor& visitor) const {
 
 void Ast::visit_node(AstVisitor& visitor, AstId node_id) const {
 	auto& node = ast_nodes_[node_id.index_];
-	switch (node.type) {
+	switch (node.get_kind()) {
 #define CERO_AST_NODE_TYPE(X)                                                                                                  \
 	case AstNodeKind::X: visitor.visit(node.X##_); break;
 		CERO_AST_NODE_TYPES

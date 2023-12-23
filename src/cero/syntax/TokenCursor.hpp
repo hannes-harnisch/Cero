@@ -45,8 +45,8 @@ public:
 	void skip_comments();
 
 private:
-	std::vector<TokenStream::Unit>::const_iterator it_;
-	std::vector<TokenStream::Unit>::const_iterator end_;
+	std::span<const TokenStream::Unit>::iterator it_;
+	std::span<const TokenStream::Unit>::iterator end_;
 };
 
 } // namespace cero

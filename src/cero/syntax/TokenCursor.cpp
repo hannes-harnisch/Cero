@@ -3,8 +3,8 @@
 namespace cero {
 
 TokenCursor::TokenCursor(const TokenStream& token_stream) :
-	it_(token_stream.stream_.begin()),
-	end_(token_stream.stream_.end()) {
+	it_(token_stream.raw().begin()),
+	end_(token_stream.raw().end()) {
 }
 
 std::optional<Token> TokenCursor::next() {

@@ -12,6 +12,8 @@ public:
 	virtual void visit(const AstStructDefinition& struct_def) = 0;
 	virtual void visit(const AstEnumDefinition& enum_def) = 0;
 	virtual void visit(const AstFunctionDefinition& function_def) = 0;
+	virtual void visit(const AstFunctionParameter& function_param) = 0;
+	virtual void visit(const AstFunctionOutput& function_output) = 0;
 	virtual void visit(const AstBlockStatement& block_stmt) = 0;
 	virtual void visit(const AstBindingStatement& binding_stmt) = 0;
 	virtual void visit(const AstIfExpr& if_stmt) = 0;

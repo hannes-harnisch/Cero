@@ -44,7 +44,7 @@ f() -> List<List<List<int32>>>
 	c.add_root();
 
 	c.add_function_definition(cero::AccessSpecifier::None, "a");
-	c.add_function_definition_output("");
+	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
 		c.add_generic_name_expr("List");
@@ -67,7 +67,7 @@ f() -> List<List<List<int32>>>
 	}
 
 	c.add_function_definition(cero::AccessSpecifier::None, "b");
-	c.add_function_definition_output("");
+	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
 		c.add_generic_name_expr("List");
@@ -90,7 +90,7 @@ f() -> List<List<List<int32>>>
 	}
 
 	c.add_function_definition(cero::AccessSpecifier::None, "c");
-	c.add_function_definition_output("");
+	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
 		c.add_generic_name_expr("List");
@@ -117,7 +117,7 @@ f() -> List<List<List<int32>>>
 	}
 
 	c.add_function_definition(cero::AccessSpecifier::None, "d");
-	c.add_function_definition_output("");
+	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
 		c.add_generic_name_expr("List");
@@ -144,7 +144,7 @@ f() -> List<List<List<int32>>>
 	}
 
 	c.add_function_definition(cero::AccessSpecifier::None, "e");
-	c.add_function_definition_output("");
+	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
 		c.add_generic_name_expr("List");
@@ -171,7 +171,7 @@ f() -> List<List<List<int32>>>
 	}
 
 	c.add_function_definition(cero::AccessSpecifier::None, "f");
-	c.add_function_definition_output("");
+	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
 		c.add_generic_name_expr("List");
@@ -215,17 +215,17 @@ oof(int32 a, int32 b) -> bool
 	c.add_root();
 
 	c.add_function_definition(cero::AccessSpecifier::None, "oof");
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "a");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "a");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("int32");
 	}
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "b");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "b");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("int32");
 	}
-	c.add_function_definition_output("");
+	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("bool");
@@ -276,12 +276,12 @@ ouch(float32 e) -> float64
 	c.add_root();
 
 	c.add_function_definition(cero::AccessSpecifier::None, "ouch");
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "e");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "e");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("float32");
 	}
-	c.add_function_definition_output("");
+	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("float64");
@@ -328,12 +328,12 @@ ouch(float32 e) -> float64
 	c.add_root();
 
 	c.add_function_definition(cero::AccessSpecifier::None, "ouch");
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "e");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "e");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("float32");
 	}
-	c.add_function_definition_output("");
+	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("float64");
@@ -386,7 +386,7 @@ meow() -> A<(D >> E)>
 	c.add_root();
 
 	c.add_function_definition(cero::AccessSpecifier::None, "woof");
-	c.add_function_definition_output("");
+	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
 		c.add_generic_name_expr("A");
@@ -414,7 +414,7 @@ meow() -> A<(D >> E)>
 	}
 
 	c.add_function_definition(cero::AccessSpecifier::None, "meow");
-	c.add_function_definition_output("");
+	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
 		c.add_generic_name_expr("A");
@@ -463,7 +463,7 @@ moo(List<int32> _a,
 	c.add_root();
 
 	c.add_function_definition(cero::AccessSpecifier::None, "moo");
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_a");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "_a");
 	{
 		auto _1 = c.mark_children();
 		c.add_generic_name_expr("List");
@@ -472,7 +472,7 @@ moo(List<int32> _a,
 			c.add_name_expr("int32");
 		}
 	}
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_b");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "_b");
 	{
 		auto _1 = c.mark_children();
 		c.add_generic_name_expr("List");
@@ -485,7 +485,7 @@ moo(List<int32> _a,
 			}
 		}
 	}
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_c");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "_c");
 	{
 		auto _1 = c.mark_children();
 		c.add_generic_name_expr("List");
@@ -498,7 +498,7 @@ moo(List<int32> _a,
 			}
 		}
 	}
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_d");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "_d");
 	{
 		auto _1 = c.mark_children();
 		c.add_generic_name_expr("List");
@@ -515,7 +515,7 @@ moo(List<int32> _a,
 			}
 		}
 	}
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_e");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "_e");
 	{
 		auto _1 = c.mark_children();
 		c.add_generic_name_expr("List");
@@ -532,7 +532,7 @@ moo(List<int32> _a,
 			}
 		}
 	}
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_f");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "_f");
 	{
 		auto _1 = c.mark_children();
 		c.add_generic_name_expr("List");
@@ -549,7 +549,7 @@ moo(List<int32> _a,
 			}
 		}
 	}
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "_g");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "_g");
 	{
 		auto _1 = c.mark_children();
 		c.add_generic_name_expr("List");

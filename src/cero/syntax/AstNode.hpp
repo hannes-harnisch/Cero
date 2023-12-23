@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cero/io/Source.hpp"
 #include "cero/util/Macros.hpp"
 #include "cero/util/Traits.hpp"
 
@@ -77,7 +78,58 @@ private:
 
 using StringId = std::string_view;
 
+#define CERO_AST_NODE_TYPES                                                                                                    \
+	CERO_AST_NODE_TYPE(Root)                                                                                                   \
+	CERO_AST_NODE_TYPE(StructDefinition)                                                                                       \
+	CERO_AST_NODE_TYPE(EnumDefinition)                                                                                         \
+	CERO_AST_NODE_TYPE(FunctionDefinition)                                                                                     \
+	CERO_AST_NODE_TYPE(FunctionParameter)                                                                                      \
+	CERO_AST_NODE_TYPE(FunctionOutput)                                                                                         \
+	CERO_AST_NODE_TYPE(BlockStatement)                                                                                         \
+	CERO_AST_NODE_TYPE(BindingStatement)                                                                                       \
+	CERO_AST_NODE_TYPE(IfExpr)                                                                                                 \
+	CERO_AST_NODE_TYPE(WhileLoop)                                                                                              \
+	CERO_AST_NODE_TYPE(ForLoop)                                                                                                \
+	CERO_AST_NODE_TYPE(NameExpr)                                                                                               \
+	CERO_AST_NODE_TYPE(GenericNameExpr)                                                                                        \
+	CERO_AST_NODE_TYPE(MemberExpr)                                                                                             \
+	CERO_AST_NODE_TYPE(GenericMemberExpr)                                                                                      \
+	CERO_AST_NODE_TYPE(GroupExpr)                                                                                              \
+	CERO_AST_NODE_TYPE(CallExpr)                                                                                               \
+	CERO_AST_NODE_TYPE(IndexExpr)                                                                                              \
+	CERO_AST_NODE_TYPE(ArrayLiteralExpr)                                                                                       \
+	CERO_AST_NODE_TYPE(UnaryExpr)                                                                                              \
+	CERO_AST_NODE_TYPE(BinaryExpr)                                                                                             \
+	CERO_AST_NODE_TYPE(ReturnExpr)                                                                                             \
+	CERO_AST_NODE_TYPE(ThrowExpr)                                                                                              \
+	CERO_AST_NODE_TYPE(BreakExpr)                                                                                              \
+	CERO_AST_NODE_TYPE(ContinueExpr)                                                                                           \
+	CERO_AST_NODE_TYPE(NumericLiteralExpr)                                                                                     \
+	CERO_AST_NODE_TYPE(StringLiteralExpr)                                                                                      \
+	CERO_AST_NODE_TYPE(VariabilityExpr)                                                                                        \
+	CERO_AST_NODE_TYPE(PointerTypeExpr)                                                                                        \
+	CERO_AST_NODE_TYPE(ArrayTypeExpr)                                                                                          \
+	CERO_AST_NODE_TYPE(FunctionTypeExpr)
+
+enum class AstNodeKind {
+#define CERO_AST_NODE_TYPE(X) X,
+	CERO_AST_NODE_TYPES
+#undef CERO_AST_NODE_TYPE
+};
+
+template<AstNodeKind K>
+struct AstNodeHeader {
+	AstNodeKind kind : 8;
+	unsigned offset : SourceOffsetBits;
+
+	AstNodeHeader(uint32_t offset) :
+		kind(K),
+		offset(offset) {
+	}
+};
+
 struct AstRoot {
+	AstNodeHeader<AstNodeKind::Root> header;
 	AstIdSet definitions;
 };
 
@@ -88,11 +140,13 @@ enum class AccessSpecifier : uint8_t {
 };
 
 struct AstStructDefinition {
+	AstNodeHeader<AstNodeKind::StructDefinition> header;
 	AccessSpecifier access;
 	StringId name;
 };
 
 struct AstEnumDefinition {
+	AstNodeHeader<AstNodeKind::EnumDefinition> header;
 	AccessSpecifier access;
 	StringId name;
 };
@@ -103,27 +157,31 @@ enum class ParameterSpecifier : uint8_t {
 	Var
 };
 
+struct AstFunctionParameter {
+	AstNodeHeader<AstNodeKind::FunctionParameter> header;
+	ParameterSpecifier specifier = {};
+	AstId type;
+	StringId name;
+	OptionalAstId default_argument;
+};
+
+struct AstFunctionOutput {
+	AstNodeHeader<AstNodeKind::FunctionOutput> header;
+	AstId type;
+	StringId name;
+};
+
 struct AstFunctionDefinition {
-	struct Parameter {
-		ParameterSpecifier specifier = {};
-		AstId type;
-		StringId name;
-		OptionalAstId default_argument;
-	};
-
-	struct Output {
-		AstId type;
-		StringId name;
-	};
-
+	AstNodeHeader<AstNodeKind::FunctionDefinition> header;
 	AccessSpecifier access = {};
 	StringId name;
-	std::vector<Parameter> parameters;
-	std::vector<Output> outputs;
+	std::vector<AstFunctionParameter> parameters;
+	std::vector<AstFunctionOutput> outputs;
 	AstIdSet statements;
 };
 
 struct AstBlockStatement {
+	AstNodeHeader<AstNodeKind::BlockStatement> header;
 	AstIdSet statements;
 };
 
@@ -136,6 +194,7 @@ enum class BindingSpecifier : uint8_t {
 };
 
 struct AstBindingStatement {
+	AstNodeHeader<AstNodeKind::BindingStatement> header;
 	BindingSpecifier specifier = {};
 	OptionalAstId type;
 	StringId name;
@@ -143,57 +202,68 @@ struct AstBindingStatement {
 };
 
 struct AstIfExpr {
+	AstNodeHeader<AstNodeKind::IfExpr> header;
 	AstId condition;
 	AstId then_expression;
 	OptionalAstId else_expression;
 };
 
 struct AstWhileLoop {
+	AstNodeHeader<AstNodeKind::WhileLoop> header;
 	AstId condition;
 	AstId statement;
 };
 
 struct AstForLoop {
+	AstNodeHeader<AstNodeKind::ForLoop> header;
 	AstId binding;
 	AstId range_expression;
 	AstId statement;
 };
 
 struct AstNameExpr {
+	AstNodeHeader<AstNodeKind::NameExpr> header;
 	StringId name;
 };
 
 struct AstGenericNameExpr {
+	AstNodeHeader<AstNodeKind::GenericNameExpr> header;
 	StringId name;
 	AstIdSet arguments;
 };
 
 struct AstMemberExpr {
+	AstNodeHeader<AstNodeKind::MemberExpr> header;
 	AstId target;
 	StringId member;
 };
 
 struct AstGenericMemberExpr {
+	AstNodeHeader<AstNodeKind::GenericMemberExpr> header;
 	AstId target;
 	StringId member;
 	AstIdSet arguments;
 };
 
 struct AstGroupExpr {
+	AstNodeHeader<AstNodeKind::GroupExpr> header;
 	AstIdSet arguments;
 };
 
 struct AstCallExpr {
+	AstNodeHeader<AstNodeKind::CallExpr> header;
 	AstId callee;
 	AstIdSet arguments;
 };
 
 struct AstIndexExpr {
+	AstNodeHeader<AstNodeKind::IndexExpr> header;
 	AstId target;
 	AstIdSet arguments;
 };
 
 struct AstArrayLiteralExpr {
+	AstNodeHeader<AstNodeKind::ArrayLiteralExpr> header;
 	AstIdSet elements;
 };
 
@@ -212,6 +282,7 @@ enum class UnaryOperator : uint8_t {
 std::string_view unary_operator_to_string(UnaryOperator op);
 
 struct AstUnaryExpr {
+	AstNodeHeader<AstNodeKind::UnaryExpr> header;
 	UnaryOperator op;
 	AstId operand;
 };
@@ -253,24 +324,29 @@ enum class BinaryOperator : uint8_t {
 std::string_view binary_operator_to_string(BinaryOperator op);
 
 struct AstBinaryExpr {
+	AstNodeHeader<AstNodeKind::BinaryExpr> header;
 	BinaryOperator op;
 	AstId left;
 	AstId right;
 };
 
 struct AstReturnExpr {
+	AstNodeHeader<AstNodeKind::ReturnExpr> header;
 	AstIdSet return_values;
 };
 
 struct AstThrowExpr {
+	AstNodeHeader<AstNodeKind::ThrowExpr> header;
 	OptionalAstId expression;
 };
 
 struct AstBreakExpr {
+	AstNodeHeader<AstNodeKind::BreakExpr> header;
 	OptionalAstId label;
 };
 
 struct AstContinueExpr {
+	AstNodeHeader<AstNodeKind::ContinueExpr> header;
 	OptionalAstId label;
 };
 
@@ -284,10 +360,12 @@ enum class NumericLiteralKind : uint8_t {
 };
 
 struct AstNumericLiteralExpr {
+	AstNodeHeader<AstNodeKind::NumericLiteralExpr> header;
 	NumericLiteralKind kind = {};
 };
 
 struct AstStringLiteralExpr {
+	AstNodeHeader<AstNodeKind::StringLiteralExpr> header;
 	std::string value;
 };
 
@@ -299,84 +377,44 @@ enum class VariabilitySpecifier : uint8_t {
 };
 
 struct AstVariabilityExpr {
+	AstNodeHeader<AstNodeKind::VariabilityExpr> header;
 	VariabilitySpecifier specifier = {};
 	AstIdSet arguments;
 };
 
 struct AstPointerTypeExpr {
+	AstNodeHeader<AstNodeKind::PointerTypeExpr> header;
 	AstVariabilityExpr variability;
 	AstId type;
 };
 
 struct AstArrayTypeExpr {
+	AstNodeHeader<AstNodeKind::ArrayTypeExpr> header;
 	OptionalAstId bound;
 	AstId element_type;
 };
 
 struct AstFunctionTypeExpr {
-	struct Parameter {
-		ParameterSpecifier specifier = {};
-		AstId type;
-		StringId name;
-	};
-
-	struct Output {
-		AstId type;
-		StringId name;
-	};
-
-	std::vector<Parameter> parameters;
-	std::vector<Output> outputs;
-};
-
-#define CERO_AST_NODE_TYPES                                                                                                    \
-	CERO_AST_NODE_TYPE(Root)                                                                                                   \
-	CERO_AST_NODE_TYPE(StructDefinition)                                                                                       \
-	CERO_AST_NODE_TYPE(EnumDefinition)                                                                                         \
-	CERO_AST_NODE_TYPE(FunctionDefinition)                                                                                     \
-	CERO_AST_NODE_TYPE(BlockStatement)                                                                                         \
-	CERO_AST_NODE_TYPE(BindingStatement)                                                                                       \
-	CERO_AST_NODE_TYPE(IfExpr)                                                                                                 \
-	CERO_AST_NODE_TYPE(WhileLoop)                                                                                              \
-	CERO_AST_NODE_TYPE(ForLoop)                                                                                                \
-	CERO_AST_NODE_TYPE(NameExpr)                                                                                               \
-	CERO_AST_NODE_TYPE(GenericNameExpr)                                                                                        \
-	CERO_AST_NODE_TYPE(MemberExpr)                                                                                             \
-	CERO_AST_NODE_TYPE(GenericMemberExpr)                                                                                      \
-	CERO_AST_NODE_TYPE(GroupExpr)                                                                                              \
-	CERO_AST_NODE_TYPE(CallExpr)                                                                                               \
-	CERO_AST_NODE_TYPE(IndexExpr)                                                                                              \
-	CERO_AST_NODE_TYPE(ArrayLiteralExpr)                                                                                       \
-	CERO_AST_NODE_TYPE(UnaryExpr)                                                                                              \
-	CERO_AST_NODE_TYPE(BinaryExpr)                                                                                             \
-	CERO_AST_NODE_TYPE(ReturnExpr)                                                                                             \
-	CERO_AST_NODE_TYPE(ThrowExpr)                                                                                              \
-	CERO_AST_NODE_TYPE(BreakExpr)                                                                                              \
-	CERO_AST_NODE_TYPE(ContinueExpr)                                                                                           \
-	CERO_AST_NODE_TYPE(NumericLiteralExpr)                                                                                     \
-	CERO_AST_NODE_TYPE(StringLiteralExpr)                                                                                      \
-	CERO_AST_NODE_TYPE(VariabilityExpr)                                                                                        \
-	CERO_AST_NODE_TYPE(PointerTypeExpr)                                                                                        \
-	CERO_AST_NODE_TYPE(ArrayTypeExpr)                                                                                          \
-	CERO_AST_NODE_TYPE(FunctionTypeExpr)
-
-enum class AstNodeKind : uint8_t {
-#define CERO_AST_NODE_TYPE(X) X,
-	CERO_AST_NODE_TYPES
-#undef CERO_AST_NODE_TYPE
+	AstNodeHeader<AstNodeKind::FunctionTypeExpr> header;
+	std::vector<AstFunctionParameter> parameters;
+	std::vector<AstFunctionOutput> outputs;
 };
 
 class AstNode {
 public:
-	AstNodeKind get_type() const {
-		return type;
+	AstNodeKind get_kind() const {
+		return Root_.header.kind;
+	}
+
+	uint32_t get_offset() const {
+		return Root_.header.offset;
 	}
 
 	template<typename T>
 	const T& as() const {
 #define CERO_AST_NODE_TYPE(X)                                                                                                  \
 	if constexpr (std::is_same_v<T, Ast##X>) {                                                                                 \
-		if (type == AstNodeKind::X)                                                                                            \
+		if (get_kind() == AstNodeKind::X)                                                                                      \
 			return X##_;                                                                                                       \
                                                                                                                                \
 		fail_assert("node does not hold expected type");                                                                       \
@@ -392,10 +430,7 @@ public:
 	const T* get() const {
 #define CERO_AST_NODE_TYPE(X)                                                                                                  \
 	if constexpr (std::is_same_v<T, Ast##X>) {                                                                                 \
-		if (type == AstNodeKind::X)                                                                                            \
-			return &X##_;                                                                                                      \
-		else                                                                                                                   \
-			return nullptr;                                                                                                    \
+		return get_kind() == AstNodeKind::X ? &X##_ : nullptr;                                                                 \
 	} else
 		CERO_AST_NODE_TYPES
 #undef CERO_AST_NODE_TYPE
@@ -405,7 +440,7 @@ public:
 	}
 
 	~AstNode() {
-		switch (type) {
+		switch (get_kind()) {
 #define CERO_AST_NODE_TYPE(X)                                                                                                  \
 	case AstNodeKind::X: X##_.~Ast##X(); break;
 			CERO_AST_NODE_TYPES
@@ -413,9 +448,8 @@ public:
 		}
 	}
 
-	AstNode(AstNode&& other) noexcept :
-		type(other.type) {
-		switch (type) {
+	AstNode(AstNode&& other) noexcept {
+		switch (other.get_kind()) {
 #define CERO_AST_NODE_TYPE(X)                                                                                                  \
 	case AstNodeKind::X: new (&X##_) Ast##X(std::move(other.X##_)); break;
 			CERO_AST_NODE_TYPES
@@ -424,8 +458,7 @@ public:
 	}
 
 	AstNode& operator=(AstNode&& other) noexcept {
-		type = other.type;
-		switch (type) {
+		switch (other.get_kind()) {
 #define CERO_AST_NODE_TYPE(X)                                                                                                  \
 	case AstNodeKind::X: X##_ = std::move(other.X##_); break;
 			CERO_AST_NODE_TYPES
@@ -435,8 +468,6 @@ public:
 	}
 
 private:
-	AstNodeKind type;
-
 	union {
 #define CERO_AST_NODE_TYPE(X) Ast##X X##_;
 		CERO_AST_NODE_TYPES
@@ -444,9 +475,8 @@ private:
 	};
 
 #define CERO_AST_NODE_TYPE(X)                                                                                                  \
-	AstNode(Ast##X node) :                                                                                                     \
-		type(AstNodeKind::X) {                                                                                                 \
-		new (&X##_) Ast##X(std::move(node));                                                                                   \
+	AstNode(Ast##X&& node) :                                                                                                   \
+		X##_(std::move(node)) {                                                                                                \
 	}
 	CERO_AST_NODE_TYPES
 #undef CERO_AST_NODE_TYPE

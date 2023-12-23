@@ -29,12 +29,12 @@ fibonacci(var uint32 n) -> uint32
 	c.add_root();
 
 	c.add_function_definition(cero::AccessSpecifier::None, "fibonacci");
-	c.add_function_definition_parameter(cero::ParameterSpecifier::Var, "n");
+	c.add_function_parameter(cero::ParameterSpecifier::Var, "n");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("uint32");
 	}
-	c.add_function_definition_output("");
+	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("uint32");

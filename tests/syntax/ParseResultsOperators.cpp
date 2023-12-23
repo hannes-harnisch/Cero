@@ -22,17 +22,17 @@ foo(int32 a, int32 b) -> int32
 	c.add_root();
 
 	c.add_function_definition(cero::AccessSpecifier::None, "foo");
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "a");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "a");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("int32");
 	}
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "b");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "b");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("int32");
 	}
-	c.add_function_definition_output("");
+	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("int32");
@@ -128,22 +128,22 @@ bar(int32 a, int32 b, int32 c) -> bool
 	c.add_root();
 
 	c.add_function_definition(cero::AccessSpecifier::None, "bar");
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "a");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "a");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("int32");
 	}
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "b");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "b");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("int32");
 	}
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "c");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "c");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("int32");
 	}
-	c.add_function_definition_output("");
+	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("bool");
@@ -327,27 +327,27 @@ baz(int32 a, int32 b, int32 c, int32 d) -> bool
 	c.add_root();
 
 	c.add_function_definition(cero::AccessSpecifier::None, "baz");
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "a");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "a");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("int32");
 	}
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "b");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "b");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("int32");
 	}
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "c");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "c");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("int32");
 	}
-	c.add_function_definition_parameter(cero::ParameterSpecifier::None, "d");
+	c.add_function_parameter(cero::ParameterSpecifier::None, "d");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("int32");
 	}
-	c.add_function_definition_output("");
+	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
 		c.add_name_expr("bool");

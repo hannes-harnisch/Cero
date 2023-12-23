@@ -81,12 +81,14 @@ void AstCompare::add_function_definition(cero::AccessSpecifier access, std::stri
 	data_.emplace(name);
 }
 
-void AstCompare::add_function_definition_parameter(cero::ParameterSpecifier specifier, std::string_view name) {
+void AstCompare::add_function_parameter(cero::ParameterSpecifier specifier, std::string_view name) {
+	record(cero::AstNodeKind::FunctionParameter);
 	data_.emplace(specifier);
 	data_.emplace(name);
 }
 
-void AstCompare::add_function_definition_output(std::string_view name) {
+void AstCompare::add_function_output(std::string_view name) {
+	record(cero::AstNodeKind::FunctionOutput);
 	data_.emplace(name);
 }
 
@@ -100,27 +102,38 @@ void AstCompare::visit(const cero::AstFunctionDefinition& function_def) {
 	CHECK(name == function_def.name);
 
 	for (auto& param : function_def.parameters) {
-		auto specifier = pop<cero::ParameterSpecifier>();
-		CHECK(specifier == param.specifier);
-
-		auto param_name = pop<std::string_view>();
-		CHECK(param_name == param.name);
-
-		visit_child(param.type);
-
-		if (auto default_arg = param.default_argument) {
-			visit_child(default_arg.get());
-		}
+		visit(param);
 	}
 
 	for (auto& output : function_def.outputs) {
-		auto output_name = pop<std::string_view>();
-		CHECK(output_name == output.name);
-
-		visit_child(output.type);
+		visit(output);
 	}
 
 	visit_children(function_def.statements);
+}
+
+void AstCompare::visit(const cero::AstFunctionParameter& function_param) {
+	expect(cero::AstNodeKind::FunctionParameter);
+
+	auto specifier = pop<cero::ParameterSpecifier>();
+	CHECK(specifier == function_param.specifier);
+
+	auto param_name = pop<std::string_view>();
+	CHECK(param_name == function_param.name);
+
+	visit_child(function_param.type);
+
+	if (auto default_arg = function_param.default_argument) {
+		visit_child(default_arg.get());
+	}
+}
+
+void AstCompare::visit(const cero::AstFunctionOutput& function_output) {
+	expect(cero::AstNodeKind::FunctionOutput);
+	auto output_name = pop<std::string_view>();
+	CHECK(output_name == function_output.name);
+
+	visit_child(function_output.type);
 }
 
 void AstCompare::add_block_statement() {

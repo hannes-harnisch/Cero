@@ -8,6 +8,10 @@ uint32_t TokenStream::num_tokens() const {
 	return num_tokens_;
 }
 
+std::span<const TokenStream::Unit> TokenStream::raw() const {
+	return {stream_};
+}
+
 std::string TokenStream::to_string(const SourceLock& source) const {
 	auto str = std::format("Token stream for {} ({} token{})\n", source.get_path(), num_tokens_, num_tokens_ == 1 ? "" : "s");
 
