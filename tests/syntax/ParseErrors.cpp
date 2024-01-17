@@ -344,9 +344,9 @@ g([4]int32 x) -> int32
 )_____");
 }
 
-CERO_TEST(ExpectBraceAfterVariability) {
+CERO_TEST(ExpectBraceAfterPermission) {
 	ExhaustiveReporter r;
-	r.expect(2, 10, cero::Message::ExpectBraceAfterVariability, "name `MyList`");
+	r.expect(2, 10, cero::Message::ExpectBraceAfterPermission, "name `MyList`");
 
 	build_test_source(r, R"_____(
 f(^var{1 MyList l) -> int32

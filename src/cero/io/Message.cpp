@@ -42,7 +42,7 @@ std::string_view get_message_format(Message message) {
 		case ExpectClosingParen: return "expected closing `)`, but found {}";
 		case ExpectBracketAfterIndex: return "expected `]` after index expression, but found {}";
 		case ExpectBracketAfterArrayBound: return "expected `]` after array bound, but found {}";
-		case ExpectBraceAfterVariability: return "expected `}}` after variability arguments, but found {}";
+		case ExpectBraceAfterPermission: return "expected `}}` after permission arguments, but found {}";
 		case ExpectArrowAfterFuncTypeParams: return "expected `->` after parameters for function type, but found {}";
 		case FuncTypeDefaultArgument: return "parameter in function type cannot have default argument";
 		case AmbiguousOperatorMixing: return "mixing operator `{}` with operator `{}` is ambiguous";

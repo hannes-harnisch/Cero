@@ -47,10 +47,10 @@ f() -> List<List<List<int32>>>
 	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_name_expr("List");
+		c.add_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
 				c.add_name_expr("int32");
@@ -70,10 +70,10 @@ f() -> List<List<List<int32>>>
 	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_name_expr("List");
+		c.add_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
 				c.add_name_expr("int32");
@@ -93,13 +93,13 @@ f() -> List<List<List<int32>>>
 	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_name_expr("List");
+		c.add_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_name_expr("List");
+				c.add_name_expr("List");
 				{
 					auto _4 = c.mark_children();
 					c.add_name_expr("int32");
@@ -120,13 +120,13 @@ f() -> List<List<List<int32>>>
 	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_name_expr("List");
+		c.add_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_name_expr("List");
+				c.add_name_expr("List");
 				{
 					auto _4 = c.mark_children();
 					c.add_name_expr("int32");
@@ -147,13 +147,13 @@ f() -> List<List<List<int32>>>
 	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_name_expr("List");
+		c.add_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_name_expr("List");
+				c.add_name_expr("List");
 				{
 					auto _4 = c.mark_children();
 					c.add_name_expr("int32");
@@ -174,13 +174,13 @@ f() -> List<List<List<int32>>>
 	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_name_expr("List");
+		c.add_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_name_expr("List");
+				c.add_name_expr("List");
 				{
 					auto _4 = c.mark_children();
 					c.add_name_expr("int32");
@@ -298,7 +298,7 @@ ouch(float32 e) -> float64
 				c.add_call_expr();
 				{
 					auto _4 = c.mark_children();
-					c.add_generic_name_expr("b");
+					c.add_name_expr("b");
 					{
 						auto _5 = c.mark_children();
 						c.add_name_expr("c");
@@ -389,7 +389,7 @@ meow() -> A<(D >> E)>
 	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_name_expr("A");
+		c.add_name_expr("A");
 		{
 			auto _2 = c.mark_children();
 			c.add_group_expr();
@@ -417,7 +417,7 @@ meow() -> A<(D >> E)>
 	c.add_function_output("");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_name_expr("A");
+		c.add_name_expr("A");
 		{
 			auto _2 = c.mark_children();
 			c.add_group_expr();
@@ -466,7 +466,7 @@ moo(List<int32> _a,
 	c.add_function_parameter(cero::ParameterSpecifier::None, "_a");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_name_expr("List");
+		c.add_name_expr("List");
 		{
 			auto _2 = c.mark_children();
 			c.add_name_expr("int32");
@@ -475,10 +475,10 @@ moo(List<int32> _a,
 	c.add_function_parameter(cero::ParameterSpecifier::None, "_b");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_name_expr("List");
+		c.add_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
 				c.add_name_expr("int32");
@@ -488,10 +488,10 @@ moo(List<int32> _a,
 	c.add_function_parameter(cero::ParameterSpecifier::None, "_c");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_name_expr("List");
+		c.add_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
 				c.add_name_expr("int32");
@@ -501,13 +501,13 @@ moo(List<int32> _a,
 	c.add_function_parameter(cero::ParameterSpecifier::None, "_d");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_name_expr("List");
+		c.add_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_name_expr("List");
+				c.add_name_expr("List");
 				{
 					auto _4 = c.mark_children();
 					c.add_name_expr("int32");
@@ -518,13 +518,13 @@ moo(List<int32> _a,
 	c.add_function_parameter(cero::ParameterSpecifier::None, "_e");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_name_expr("List");
+		c.add_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_name_expr("List");
+				c.add_name_expr("List");
 				{
 					auto _4 = c.mark_children();
 					c.add_name_expr("int32");
@@ -535,13 +535,13 @@ moo(List<int32> _a,
 	c.add_function_parameter(cero::ParameterSpecifier::None, "_f");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_name_expr("List");
+		c.add_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_name_expr("List");
+				c.add_name_expr("List");
 				{
 					auto _4 = c.mark_children();
 					c.add_name_expr("int32");
@@ -552,13 +552,13 @@ moo(List<int32> _a,
 	c.add_function_parameter(cero::ParameterSpecifier::None, "_g");
 	{
 		auto _1 = c.mark_children();
-		c.add_generic_name_expr("List");
+		c.add_name_expr("List");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_name_expr("List");
+				c.add_name_expr("List");
 				{
 					auto _4 = c.mark_children();
 					c.add_name_expr("int32");
@@ -597,7 +597,7 @@ bark()
 		c.add_binding_statement(cero::BindingSpecifier::Let, "_a");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
 				c.add_name_expr("int32");
@@ -608,10 +608,10 @@ bark()
 		c.add_binding_statement(cero::BindingSpecifier::Let, "_b");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_name_expr("List");
+				c.add_name_expr("List");
 				{
 					auto _4 = c.mark_children();
 					c.add_name_expr("int32");
@@ -623,10 +623,10 @@ bark()
 		c.add_binding_statement(cero::BindingSpecifier::Let, "_c");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_name_expr("List");
+				c.add_name_expr("List");
 				{
 					auto _4 = c.mark_children();
 					c.add_name_expr("int32");
@@ -638,13 +638,13 @@ bark()
 		c.add_binding_statement(cero::BindingSpecifier::Let, "_d");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_name_expr("List");
+				c.add_name_expr("List");
 				{
 					auto _4 = c.mark_children();
-					c.add_generic_name_expr("List");
+					c.add_name_expr("List");
 					{
 						auto _5 = c.mark_children();
 						c.add_name_expr("int32");
@@ -657,13 +657,13 @@ bark()
 		c.add_binding_statement(cero::BindingSpecifier::Let, "_e");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_name_expr("List");
+				c.add_name_expr("List");
 				{
 					auto _4 = c.mark_children();
-					c.add_generic_name_expr("List");
+					c.add_name_expr("List");
 					{
 						auto _5 = c.mark_children();
 						c.add_name_expr("int32");
@@ -676,13 +676,13 @@ bark()
 		c.add_binding_statement(cero::BindingSpecifier::Let, "_f");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_name_expr("List");
+				c.add_name_expr("List");
 				{
 					auto _4 = c.mark_children();
-					c.add_generic_name_expr("List");
+					c.add_name_expr("List");
 					{
 						auto _5 = c.mark_children();
 						c.add_name_expr("int32");
@@ -695,13 +695,13 @@ bark()
 		c.add_binding_statement(cero::BindingSpecifier::Let, "_g");
 		{
 			auto _2 = c.mark_children();
-			c.add_generic_name_expr("List");
+			c.add_name_expr("List");
 			{
 				auto _3 = c.mark_children();
-				c.add_generic_name_expr("List");
+				c.add_name_expr("List");
 				{
 					auto _4 = c.mark_children();
-					c.add_generic_name_expr("List");
+					c.add_name_expr("List");
 					{
 						auto _5 = c.mark_children();
 						c.add_name_expr("int32");

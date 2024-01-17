@@ -16,9 +16,9 @@ namespace {
 		fail_unreachable();
 	}
 
-	std::string_view variability_specifier_to_string(VariabilitySpecifier spec) {
+	std::string_view permission_specifier_to_string(PermissionSpecifier spec) {
 		switch (spec) {
-			using enum VariabilitySpecifier;
+			using enum PermissionSpecifier;
 			case In: return "in";
 			case Var: return "var";
 			case VarBounded: return "var (bounded)";
@@ -55,17 +55,14 @@ namespace {
 } // namespace
 
 AstToString::AstToString(const Ast& ast, const SourceLock& source) :
-	ast_(ast),
-	edge_(&Body),
-	string_(std::format("AST for {} ({} node{})\n",
-						source.get_path(),
-						ast_.get_node_count(),
-						ast_.get_node_count() == 1 ? "" : "s")) {
+	cursor_(ast),
+	edge_(&BODY),
+	string_(std::format("AST for {} ({} node{})\n", source.get_path(), ast.num_nodes(), ast.num_nodes() == 1 ? "" : "s")) {
 	prefixes_.emplace();
 }
 
 std::string AstToString::make_string() {
-	ast_.visit(*this);
+	cursor_.visit_all(*this);
 	return std::move(string_);
 }
 
@@ -80,7 +77,7 @@ void AstToString::pop_level() {
 }
 
 void AstToString::set_tail(bool at_tail) {
-	edge_ = at_tail ? &Tail : &Body;
+	edge_ = at_tail ? &TAIL : &BODY;
 }
 
 void AstToString::add_line(std::string_view text) {
@@ -100,39 +97,37 @@ void AstToString::add_tail_line(std::string_view text) {
 	add_line(text);
 }
 
-void AstToString::visit(AstId node) {
-	ast_.visit_node(*this, node);
-}
-
-void AstToString::visit_body(AstId node) {
+void AstToString::visit_child_at_body() {
 	set_tail(false);
-	visit(node);
+	visit_child();
 }
 
-void AstToString::visit_tail(AstId node) {
+void AstToString::visit_child_at_tail() {
 	set_tail(true);
-	visit(node);
+	visit_child();
 }
 
-void AstToString::visit_optional(OptionalAstId node) {
-	if (node.is_null()) {
-		return;
+void AstToString::visit_child() {
+	cursor_.visit_child(*this);
+}
+
+void AstToString::visit_child_if(bool condition) {
+	if (condition) {
+		push_level();
+		visit_child_at_tail();
+		pop_level();
 	}
-
-	push_level();
-	visit_tail(node.get());
-	pop_level();
 }
 
-void AstToString::visit_each_in(const auto& list) {
-	for (size_t i = 0; i != list.size(); ++i) {
-		set_tail(i == list.size() - 1);
-		visit(list[i]);
+void AstToString::visit_children(uint16_t n) {
+	while (n > 0) {
+		set_tail(--n == 0);
+		cursor_.visit_child(*this);
 	}
 }
 
 void AstToString::visit(const AstRoot& root) {
-	visit_each_in(root.definitions);
+	visit_children(root.num_definitions);
 }
 
 void AstToString::visit(const AstStructDefinition& struct_def) {
@@ -149,38 +144,37 @@ void AstToString::visit(const AstEnumDefinition& enum_def) {
 	pop_level();
 }
 
-void AstToString::visit(const AstFunctionDefinition& function_def) {
-	add_line(std::format("function `{}`", function_def.name));
+void AstToString::visit(const AstFunctionDefinition& func_def) {
+	add_line(std::format("function `{}`", func_def.name));
 	push_level();
 
 	add_body_line("parameters");
 	push_level();
-	visit_each_in(function_def.parameters);
+	visit_children(func_def.num_parameters);
 	pop_level();
 
 	add_body_line("outputs");
 	push_level();
-	visit_each_in(function_def.outputs);
+	visit_children(func_def.num_outputs);
 	pop_level();
 
 	add_tail_line("statements");
 	push_level();
-	visit_each_in(function_def.statements);
+	visit_children(func_def.num_statements);
 	pop_level();
 
 	pop_level();
 }
 
-void AstToString::visit(const AstFunctionParameter& parameter) {
-	add_line(std::format("{} parameter `{}`", parameter_specifier_to_string(parameter.specifier), parameter.name));
+void AstToString::visit(const AstFunctionParameter& param) {
+	auto specifier = parameter_specifier_to_string(param.specifier);
+	add_line(std::format("{} parameter `{}`", specifier, param.name));
 	push_level();
 
-	bool has_default_argument = !parameter.default_argument.is_null();
-	set_tail(!has_default_argument);
-	visit(parameter.type);
-
-	if (has_default_argument) {
-		visit_tail(parameter.default_argument.get());
+	set_tail(!param.has_default_argument);
+	visit_child(); // visit type
+	if (param.has_default_argument) {
+		visit_child_at_tail();
 	}
 
 	pop_level();
@@ -194,35 +188,35 @@ void AstToString::visit(const AstFunctionOutput& output) {
 	}
 
 	push_level();
-	visit_tail(output.type);
+	visit_child_at_tail();
 	pop_level();
 }
 
-void AstToString::visit(const AstBlockStatement& block) {
+void AstToString::visit(const AstBlockStatement& block_stmt) {
 	add_line("block");
+
 	push_level();
-	visit_each_in(block.statements);
+	visit_children(block_stmt.num_statements);
 	pop_level();
 }
 
 void AstToString::visit(const AstBindingStatement& binding) {
-	add_line(std::format("{} binding `{}`", binding_specifier_to_string(binding.specifier), binding.name));
+	auto specifier = binding_specifier_to_string(binding.specifier);
+	add_line(std::format("{} binding `{}`", specifier, binding.name));
 	push_level();
 
-	bool has_type = !binding.type.is_null();
-	bool has_init = !binding.initializer.is_null();
-	if (has_type) {
-		set_tail(!has_init);
+	if (binding.has_type) {
+		set_tail(!binding.has_initializer);
 		add_line("type");
 		push_level();
-		visit_tail(binding.type.get());
+		visit_child_at_tail();
 		pop_level();
 	}
 
-	if (has_init) {
+	if (binding.has_initializer) {
 		add_tail_line("initializer");
 		push_level();
-		visit_tail(binding.initializer.get());
+		visit_child_at_tail();
 		pop_level();
 	}
 
@@ -235,21 +229,19 @@ void AstToString::visit(const AstIfExpr& if_stmt) {
 
 	add_body_line("condition");
 	push_level();
-	visit_tail(if_stmt.condition);
+	visit_child_at_tail();
 	pop_level();
 
-	bool has_else = !if_stmt.else_expression.is_null();
-
-	set_tail(!has_else);
+	set_tail(!if_stmt.has_else);
 	add_line("then");
 	push_level();
-	visit_tail(if_stmt.then_expression);
+	visit_child();
 	pop_level();
 
-	if (has_else) {
+	if (if_stmt.has_else) {
 		add_tail_line("else");
 		push_level();
-		visit_tail(if_stmt.else_expression.get());
+		visit_child();
 		pop_level();
 	}
 
@@ -260,8 +252,12 @@ void AstToString::visit(const AstWhileLoop& while_loop) {
 	add_line("while");
 	push_level();
 
-	visit_body(while_loop.condition);
-	visit_tail(while_loop.statement);
+	visit_child_at_body();
+
+	add_tail_line("statements");
+	push_level();
+	visit_children(while_loop.num_statements);
+	pop_level();
 
 	pop_level();
 }
@@ -270,82 +266,74 @@ void AstToString::visit(const AstForLoop& for_loop) {
 	add_line("for");
 	push_level();
 
-	visit_body(for_loop.binding);
-	visit_body(for_loop.range_expression);
-	visit_tail(for_loop.statement);
+	visit_child_at_body(); // binding
+	visit_child_at_body(); // range
 
-	pop_level();
-}
-
-void AstToString::visit(const AstNameExpr& name) {
-	add_line(std::format("name `{}`", name.name));
-}
-
-void AstToString::visit(const AstGenericNameExpr& generic_name) {
-	add_line(std::format("generic name `{}`", generic_name.name));
+	add_tail_line("statements");
 	push_level();
-	visit_each_in(generic_name.arguments);
+	visit_children(for_loop.num_statements);
 	pop_level();
+
+	pop_level();
+}
+
+void AstToString::visit(const AstNameExpr& name_expr) {
+	add_line(std::format("name `{}`", name_expr.name));
+
+	if (name_expr.num_generic_args > 0) {
+		add_tail_line("generic arguments");
+		push_level();
+		visit_children(name_expr.num_generic_args);
+		pop_level();
+	}
 }
 
 void AstToString::visit(const AstMemberExpr& member_expr) {
 	add_line(std::format("member `{}`", member_expr.member));
-	push_level();
 
-	visit_body(member_expr.target);
-
-	pop_level();
+	if (member_expr.num_generic_args > 0) {
+		add_tail_line("generic arguments");
+		push_level();
+		visit_children(member_expr.num_generic_args);
+		pop_level();
+	}
 }
 
-void AstToString::visit(const AstGenericMemberExpr& generic_member) {
-	add_line(std::format("generic member `{}`", generic_member.member));
-	push_level();
-
-	visit_body(generic_member.target);
-
-	add_tail_line("arguments");
-	push_level();
-	visit_each_in(generic_member.arguments);
-	pop_level();
-
-	pop_level();
-}
-
-void AstToString::visit(const AstGroupExpr& group) {
-	if (group.arguments.size() == 1) {
-		visit(group.arguments[0]);
+void AstToString::visit(const AstGroupExpr& group_expr) {
+	if (group_expr.num_args == 1) {
+		visit_child();
 		return;
 	}
 
 	add_line("group expression");
 	push_level();
-	visit_each_in(group.arguments);
+	visit_children(group_expr.num_args);
 	pop_level();
 }
 
-void AstToString::visit(const AstCallExpr& call) {
+void AstToString::visit(const AstCallExpr& call_expr) {
 	add_line("call expression");
 	push_level();
 
-	visit_body(call.callee);
+	visit_child_at_body();
 
 	add_tail_line("arguments");
 	push_level();
-	visit_each_in(call.arguments);
+	visit_children(call_expr.num_args);
 	pop_level();
 
 	pop_level();
 }
 
-void AstToString::visit(const AstIndexExpr& index) {
+void AstToString::visit(const AstIndexExpr& index_expr) {
 	add_line("index expression");
 	push_level();
 
-	visit_body(index.target);
+	visit_child_at_body();
 
 	add_tail_line("arguments");
 	push_level();
-	visit_each_in(index.arguments);
+	visit_children(index_expr.num_args);
 	pop_level();
 
 	pop_level();
@@ -355,79 +343,86 @@ void AstToString::visit(const AstArrayLiteralExpr& array_literal) {
 	add_line("array literal");
 
 	push_level();
-	visit_each_in(array_literal.elements);
+	visit_children(array_literal.num_elements);
 	pop_level();
 }
 
-void AstToString::visit(const AstUnaryExpr& unary_expression) {
-	add_line(std::format("`{}`", unary_operator_to_string(unary_expression.op)));
+void AstToString::visit(const AstUnaryExpr& unary_expr) {
+	auto op = unary_operator_to_string(unary_expr.op);
+	add_line(std::format("`{}`", op));
 	push_level();
 
-	visit_tail(unary_expression.operand);
+	visit_child_at_tail();
 
 	pop_level();
 }
 
-void AstToString::visit(const AstBinaryExpr& binary_expression) {
-	add_line(std::format("`{}`", binary_operator_to_string(binary_expression.op)));
+void AstToString::visit(const AstBinaryExpr& binary_expr) {
+	auto op = binary_operator_to_string(binary_expr.op);
+	add_line(std::format("`{}`", op));
 	push_level();
 
-	visit_body(binary_expression.left);
-	visit_tail(binary_expression.right);
+	visit_child_at_body();
+	visit_child_at_tail();
 
 	pop_level();
 }
 
-void AstToString::visit(const AstReturnExpr& return_expression) {
+void AstToString::visit(const AstReturnExpr& return_expr) {
 	add_line("return");
 
 	push_level();
-	visit_each_in(return_expression.return_values);
+	visit_children(return_expr.num_expressions);
 	pop_level();
 }
 
-void AstToString::visit(const AstThrowExpr& throw_expression) {
+void AstToString::visit(const AstThrowExpr& throw_expr) {
 	add_line("throw");
-	visit_optional(throw_expression.expression);
+	visit_child_if(throw_expr.has_expression);
 }
 
-void AstToString::visit(const AstBreakExpr& break_expression) {
+void AstToString::visit(const AstBreakExpr& break_expr) {
 	add_line("break");
-	visit_optional(break_expression.label);
+	visit_child_if(break_expr.has_label);
 }
 
-void AstToString::visit(const AstContinueExpr& continue_expression) {
+void AstToString::visit(const AstContinueExpr& continue_expr) {
 	add_line("continue");
-	visit_optional(continue_expression.label);
+	visit_child_if(continue_expr.has_label);
 }
 
 void AstToString::visit(const AstNumericLiteralExpr& numeric_literal) {
-	add_line(std::format("{} literal `{}`", numeric_literal_kind_to_string(numeric_literal.kind), " ---TODO--- ")); // TODO: add
-																													// number
+	auto kind = numeric_literal_kind_to_string(numeric_literal.kind);
+	add_line(std::format("{} literal `{}`", kind, " ---TODO--- ")); // TODO: add number
 }
 
 void AstToString::visit(const AstStringLiteralExpr& string_literal) {
 	add_line(std::format("string literal `{}`", string_literal.value));
 }
 
-void AstToString::visit(const AstVariabilityExpr& variability) {
-	add_line(std::format("variability `{}`", variability_specifier_to_string(variability.specifier)));
+void AstToString::visit(const AstPermissionExpr& permission) {
+	auto specifier = permission_specifier_to_string(permission.specifier);
+	add_line(std::format("permission `{}`", specifier));
+
 	push_level();
-	visit_each_in(variability.arguments);
+	visit_children(permission.num_args);
 	pop_level();
 }
 
-void AstToString::visit(const AstPointerTypeExpr& pointer_type) {
+void AstToString::visit(const AstPointerTypeExpr& ptr_type) {
 	add_line("pointer type");
 	push_level();
 
-	set_tail(false);
-	visit(pointer_type.variability);
+	if (ptr_type.has_permission) {
+		add_body_line("permission");
+		push_level();
+		visit_child_at_tail();
+		pop_level();
+	}
 
 	add_tail_line("type");
-
 	push_level();
-	visit_tail(pointer_type.type);
+	visit_child_at_tail();
 	pop_level();
 
 	pop_level();
@@ -437,35 +432,33 @@ void AstToString::visit(const AstArrayTypeExpr& array_type) {
 	add_line("array type");
 	push_level();
 
-	if (auto bound = array_type.bound) {
-		add_body_line("count");
-
+	if (array_type.has_bound) {
+		add_body_line("bound");
 		push_level();
-		visit_tail(bound.get());
+		visit_child_at_tail();
 		pop_level();
 	}
 
 	add_tail_line("element type");
-
 	push_level();
-	visit_tail(array_type.element_type);
+	visit_child_at_tail();
 	pop_level();
 
 	pop_level();
 }
 
-void AstToString::visit(const AstFunctionTypeExpr& function_type) {
+void AstToString::visit(const AstFunctionTypeExpr& func_type) {
 	add_line("function type");
 	push_level();
 
 	add_body_line("parameters");
 	push_level();
-	visit_each_in(function_type.parameters);
+	visit_children(func_type.num_parameters);
 	pop_level();
 
-	add_tail_line("return values");
+	add_tail_line("outputs");
 	push_level();
-	visit_each_in(function_type.outputs);
+	visit_children(func_type.num_outputs);
 	pop_level();
 
 	pop_level();

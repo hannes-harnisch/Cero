@@ -8,6 +8,10 @@ uint32_t TokenStream::num_tokens() const {
 	return num_tokens_;
 }
 
+bool TokenStream::has_errors() const {
+	return has_errors_;
+}
+
 std::span<const TokenStream::Unit> TokenStream::raw() const {
 	return {stream_};
 }
@@ -28,8 +32,10 @@ std::string TokenStream::to_string(const SourceLock& source) const {
 	return str;
 }
 
-TokenStream::TokenStream() :
-	num_tokens_(0) {
+TokenStream::TokenStream(const SourceLock& source) :
+	num_tokens_(0),
+	has_errors_(false) {
+	stream_.reserve(source.get_length()); // TODO: find heuristic for this
 }
 
 void TokenStream::add_header(TokenHeader header) {

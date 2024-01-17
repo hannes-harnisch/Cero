@@ -1,7 +1,7 @@
 #pragma once
 
 #include "cero/io/Source.hpp"
-#include "cero/syntax/Ast.hpp"
+#include "cero/syntax/AstCursor.hpp"
 #include "cero/syntax/AstVisitor.hpp"
 
 namespace cero {
@@ -10,6 +10,7 @@ class AstToString : public AstVisitor {
 public:
 	AstToString(const Ast& ast, const SourceLock& source);
 
+	// May only be called once on a given instance.
 	std::string make_string();
 
 private:
@@ -18,10 +19,10 @@ private:
 		std::string_view prefix;
 	};
 
-	static constexpr Edge Body {"├── ", "│   "};
-	static constexpr Edge Tail {"└── ", "    "};
+	static constexpr Edge BODY {"├── ", "│   "};
+	static constexpr Edge TAIL {"└── ", "    "};
 
-	const Ast& ast_;
+	AstCursor cursor_;
 	std::stack<std::string> prefixes_;
 	const Edge* edge_;
 	std::string string_;
@@ -34,43 +35,41 @@ private:
 	void add_body_line(std::string_view text);
 	void add_tail_line(std::string_view text);
 
-	void visit(AstId node);
-	void visit_body(AstId node);
-	void visit_tail(AstId node);
-	void visit_optional(OptionalAstId node);
-	void visit_each_in(const auto& list);
+	void visit_child_at_body();
+	void visit_child_at_tail();
+	void visit_child();
+	void visit_child_if(bool condition);
+	void visit_children(uint16_t n);
 
-	void visit(const AstRoot&) override;
-	void visit(const AstStructDefinition&) override;
-	void visit(const AstEnumDefinition&) override;
-	void visit(const AstFunctionDefinition&) override;
-	void visit(const AstFunctionParameter&) override;
-	void visit(const AstFunctionOutput&) override;
-	void visit(const AstBlockStatement&) override;
-	void visit(const AstBindingStatement&) override;
-	void visit(const AstIfExpr&) override;
-	void visit(const AstWhileLoop&) override;
-	void visit(const AstForLoop&) override;
-	void visit(const AstNameExpr&) override;
-	void visit(const AstGenericNameExpr&) override;
-	void visit(const AstMemberExpr&) override;
-	void visit(const AstGenericMemberExpr&) override;
-	void visit(const AstGroupExpr&) override;
-	void visit(const AstCallExpr&) override;
-	void visit(const AstIndexExpr&) override;
-	void visit(const AstArrayLiteralExpr&) override;
-	void visit(const AstUnaryExpr&) override;
-	void visit(const AstBinaryExpr&) override;
-	void visit(const AstReturnExpr&) override;
-	void visit(const AstThrowExpr&) override;
-	void visit(const AstBreakExpr&) override;
-	void visit(const AstContinueExpr&) override;
-	void visit(const AstNumericLiteralExpr&) override;
-	void visit(const AstStringLiteralExpr&) override;
-	void visit(const AstVariabilityExpr&) override;
-	void visit(const AstPointerTypeExpr&) override;
-	void visit(const AstArrayTypeExpr&) override;
-	void visit(const AstFunctionTypeExpr&) override;
+	void visit(const AstRoot& root) override;
+	void visit(const AstStructDefinition& struct_def) override;
+	void visit(const AstEnumDefinition& enum_def) override;
+	void visit(const AstFunctionDefinition& func_def) override;
+	void visit(const AstFunctionParameter& param) override;
+	void visit(const AstFunctionOutput& output) override;
+	void visit(const AstBlockStatement& block_stmt) override;
+	void visit(const AstBindingStatement& binding) override;
+	void visit(const AstIfExpr& if_stmt) override;
+	void visit(const AstWhileLoop& while_loop) override;
+	void visit(const AstForLoop& for_loop) override;
+	void visit(const AstNameExpr& name_expr) override;
+	void visit(const AstMemberExpr& member_expr) override;
+	void visit(const AstGroupExpr& group_expr) override;
+	void visit(const AstCallExpr& call_expr) override;
+	void visit(const AstIndexExpr& index_expr) override;
+	void visit(const AstArrayLiteralExpr& array_literal) override;
+	void visit(const AstUnaryExpr& unary_expr) override;
+	void visit(const AstBinaryExpr& binary_expr) override;
+	void visit(const AstReturnExpr& return_expr) override;
+	void visit(const AstThrowExpr& throw_expr) override;
+	void visit(const AstBreakExpr& break_expr) override;
+	void visit(const AstContinueExpr& continue_expr) override;
+	void visit(const AstNumericLiteralExpr& numeric_literal) override;
+	void visit(const AstStringLiteralExpr& string_literal) override;
+	void visit(const AstPermissionExpr& permission) override;
+	void visit(const AstPointerTypeExpr& ptr_type) override;
+	void visit(const AstArrayTypeExpr& array_type) override;
+	void visit(const AstFunctionTypeExpr& func_type) override;
 };
 
 } // namespace cero

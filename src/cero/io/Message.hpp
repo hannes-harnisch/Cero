@@ -40,7 +40,7 @@ enum class Message : uint8_t {
 	ExpectClosingParen,
 	ExpectBracketAfterIndex,
 	ExpectBracketAfterArrayBound,
-	ExpectBraceAfterVariability,
+	ExpectBraceAfterPermission,
 	ExpectArrowAfterFuncTypeParams,
 	FuncTypeDefaultArgument,
 	AmbiguousOperatorMixing,

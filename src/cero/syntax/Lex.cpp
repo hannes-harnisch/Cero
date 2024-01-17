@@ -8,48 +8,54 @@ namespace cero {
 
 namespace {
 
-	constexpr uint64_t u64_encode(std::string_view lexeme) {
-		struct Bytes {
-			unsigned char array[sizeof(uint64_t)] = {};
-		};
-
-		Bytes bytes;
-		std::copy_n(lexeme.begin(), std::min(lexeme.length(), sizeof(uint64_t)), bytes.array);
-		return std::bit_cast<uint64_t>(bytes);
-	}
-
 	TokenKind identify_keyword(std::string_view lexeme) {
 		using enum TokenKind;
+		switch (lexeme.length()) {
+			case 2:
+				if (lexeme == "do") return Do;
+				if (lexeme == "if") return If;
+				if (lexeme == "in") return In;
+				break;
 
-		if (lexeme.length() > sizeof(uint64_t)) {
-			return Name;
-		}
+			case 3:
+				if (lexeme == "for") return For;
+				if (lexeme == "let") return Let;
+				if (lexeme == "try") return Try;
+				if (lexeme == "var") return Var;
+				break;
 
-		switch (u64_encode(lexeme)) {
-			case u64_encode("break"): return Break;
-			case u64_encode("catch"): return Catch;
-			case u64_encode("const"): return Const;
-			case u64_encode("continue"): return Continue;
-			case u64_encode("do"): return Do;
-			case u64_encode("else"): return Else;
-			case u64_encode("enum"): return Enum;
-			case u64_encode("extern"): return Extern;
-			case u64_encode("for"): return For;
-			case u64_encode("if"): return If;
-			case u64_encode("in"): return In;
-			case u64_encode("let"): return Let;
-			case u64_encode("private"): return Private;
-			case u64_encode("public"): return Public;
-			case u64_encode("restrict"): return Restrict;
-			case u64_encode("return"): return Return;
-			case u64_encode("static"): return Static;
-			case u64_encode("struct"): return Struct;
-			case u64_encode("switch"): return Switch;
-			case u64_encode("throw"): return Throw;
-			case u64_encode("try"): return Try;
-			case u64_encode("use"): return Use;
-			case u64_encode("var"): return Var;
-			case u64_encode("while"): return While;
+			case 4:
+				if (lexeme == "else") return Else;
+				if (lexeme == "enum") return Enum;
+				break;
+
+			case 5:
+				if (lexeme == "break") return Break;
+				if (lexeme == "catch") return Catch;
+				if (lexeme == "const") return Const;
+				if (lexeme == "throw") return Throw;
+				if (lexeme == "while") return While;
+				break;
+
+			case 6:
+				if (lexeme == "public") return Public;
+				if (lexeme == "return") return Return;
+				if (lexeme == "static") return Static;
+				if (lexeme == "struct") return Struct;
+				if (lexeme == "switch") return Switch;
+				break;
+
+			case 7:
+				if (lexeme == "private") return Private;
+				break;
+
+			case 8:
+				if (lexeme == "continue") return Continue;
+				break;
+
+			case 9:
+				if (lexeme == "unchecked") return Unchecked;
+				break;
 		}
 		return Name;
 	}
@@ -61,7 +67,8 @@ public:
 	Lexer(const SourceLock& source, Reporter& reporter) :
 		source_(source),
 		reporter_(reporter),
-		cursor_(source) {
+		cursor_(source),
+		stream_(source) {
 	}
 
 	TokenStream lex() {

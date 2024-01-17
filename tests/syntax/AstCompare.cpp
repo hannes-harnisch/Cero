@@ -13,7 +13,7 @@ AstChildScope::AstChildScope(uint32_t& level) :
 }
 
 AstCompare::AstCompare(const cero::Ast& ast) :
-	ast_(ast),
+	cursor_(ast),
 	current_level_(0) {
 }
 
@@ -24,7 +24,7 @@ AstCompare::~AstCompare() {
 
 void AstCompare::compare() {
 	CHECK(current_level_ == 0); // scopes were improperly closed if this isn't 0
-	ast_.visit(*this);
+	cursor_.visit_all(*this);
 }
 
 AstChildScope AstCompare::mark_children() {
@@ -37,8 +37,6 @@ void AstCompare::add_root() {
 
 void AstCompare::visit(const cero::AstRoot& root) {
 	expect(cero::AstNodeKind::Root);
-
-	ast_.visit_nodes(*this, root.definitions);
 }
 
 void AstCompare::add_struct_definition(cero::AccessSpecifier access, std::string_view name) {
@@ -92,48 +90,39 @@ void AstCompare::add_function_output(std::string_view name) {
 	data_.emplace(name);
 }
 
-void AstCompare::visit(const cero::AstFunctionDefinition& function_def) {
+void AstCompare::visit(const cero::AstFunctionDefinition& func_def) {
 	expect(cero::AstNodeKind::FunctionDefinition);
 
 	auto access = pop<cero::AccessSpecifier>();
-	CHECK(access == function_def.access);
+	CHECK(access == func_def.access);
 
 	auto name = pop<std::string_view>();
-	CHECK(name == function_def.name);
+	CHECK(name == func_def.name);
 
-	for (auto& param : function_def.parameters) {
-		visit(param);
-	}
-
-	for (auto& output : function_def.outputs) {
-		visit(output);
-	}
-
-	visit_children(function_def.statements);
+	cursor_.visit_children(func_def.num_parameters, *this);
+	cursor_.visit_children(func_def.num_outputs, *this);
+	visit_children(func_def.num_statements);
 }
 
-void AstCompare::visit(const cero::AstFunctionParameter& function_param) {
+void AstCompare::visit(const cero::AstFunctionParameter& param) {
 	expect(cero::AstNodeKind::FunctionParameter);
 
 	auto specifier = pop<cero::ParameterSpecifier>();
-	CHECK(specifier == function_param.specifier);
+	CHECK(specifier == param.specifier);
 
 	auto param_name = pop<std::string_view>();
-	CHECK(param_name == function_param.name);
+	CHECK(param_name == param.name);
 
-	visit_child(function_param.type);
-
-	if (auto default_arg = function_param.default_argument) {
-		visit_child(default_arg.get());
-	}
+	visit_child(); // type
+	visit_child_if(param.has_default_argument);
 }
 
-void AstCompare::visit(const cero::AstFunctionOutput& function_output) {
+void AstCompare::visit(const cero::AstFunctionOutput& output) {
 	expect(cero::AstNodeKind::FunctionOutput);
 	auto output_name = pop<std::string_view>();
-	CHECK(output_name == function_output.name);
+	CHECK(output_name == output.name);
 
-	visit_child(function_output.type);
+	visit_child(); // type
 }
 
 void AstCompare::add_block_statement() {
@@ -143,7 +132,7 @@ void AstCompare::add_block_statement() {
 void AstCompare::visit(const cero::AstBlockStatement& block_stmt) {
 	expect(cero::AstNodeKind::BlockStatement);
 
-	visit_children(block_stmt.statements);
+	visit_children(block_stmt.num_statements);
 }
 
 void AstCompare::add_binding_statement(cero::BindingSpecifier specifier, std::string_view name) {
@@ -153,33 +142,25 @@ void AstCompare::add_binding_statement(cero::BindingSpecifier specifier, std::st
 	data_.emplace(name);
 }
 
-void AstCompare::visit(const cero::AstBindingStatement& binding_stmt) {
+void AstCompare::visit(const cero::AstBindingStatement& binding) {
 	expect(cero::AstNodeKind::BindingStatement);
 
 	auto specifier = pop<cero::BindingSpecifier>();
-	CHECK(specifier == binding_stmt.specifier);
+	CHECK(specifier == binding.specifier);
 
 	auto param_name = pop<std::string_view>();
-	CHECK(param_name == binding_stmt.name);
+	CHECK(param_name == binding.name);
 
-	if (auto type = binding_stmt.type) {
-		visit_child(type.get());
-	}
-
-	if (auto init = binding_stmt.initializer) {
-		visit_child(init.get());
-	}
+	visit_child_if(binding.has_type);
+	visit_child_if(binding.has_initializer);
 }
 
 void AstCompare::visit(const cero::AstIfExpr& if_stmt) {
 	expect(cero::AstNodeKind::IfExpr);
 
-	visit_child(if_stmt.condition);
-	visit_child(if_stmt.then_expression);
-
-	if (auto else_expr = if_stmt.else_expression) {
-		visit_child(else_expr.get());
-	}
+	visit_child();					  // condition
+	visit_child();					  // then-statement
+	visit_child_if(if_stmt.has_else); // else-statement
 }
 
 void AstCompare::add_while_loop() {
@@ -189,16 +170,16 @@ void AstCompare::add_while_loop() {
 void AstCompare::visit(const cero::AstWhileLoop& while_loop) {
 	expect(cero::AstNodeKind::WhileLoop);
 
-	visit_child(while_loop.condition);
-	visit_child(while_loop.statement);
+	visit_child();
+	visit_children(while_loop.num_statements);
 }
 
 void AstCompare::visit(const cero::AstForLoop& for_loop) {
 	expect(cero::AstNodeKind::ForLoop);
 
-	visit_child(for_loop.binding);
-	visit_child(for_loop.range_expression);
-	visit_child(for_loop.statement);
+	visit_child();
+	visit_child();
+	visit_children(for_loop.num_statements);
 }
 
 void AstCompare::add_name_expr(std::string_view name) {
@@ -211,20 +192,8 @@ void AstCompare::visit(const cero::AstNameExpr& name_expr) {
 
 	auto name = pop<std::string_view>();
 	CHECK(name == name_expr.name);
-}
 
-void AstCompare::add_generic_name_expr(std::string_view name) {
-	record(cero::AstNodeKind::GenericNameExpr);
-	data_.emplace(name);
-}
-
-void AstCompare::visit(const cero::AstGenericNameExpr& generic_name) {
-	expect(cero::AstNodeKind::GenericNameExpr);
-
-	auto name = pop<std::string_view>();
-	CHECK(name == generic_name.name);
-
-	visit_children(generic_name.arguments);
+	visit_children(name_expr.num_generic_args);
 }
 
 void AstCompare::add_member_expr(std::string_view name) {
@@ -238,26 +207,18 @@ void AstCompare::visit(const cero::AstMemberExpr& member_expr) {
 	auto name = pop<std::string_view>();
 	CHECK(name == member_expr.member);
 
-	visit_child(member_expr.target);
-}
-
-void AstCompare::visit(const cero::AstGenericMemberExpr& generic_member) {
-	expect(cero::AstNodeKind::GenericMemberExpr);
-
-	auto name = pop<std::string_view>();
-	CHECK(name == generic_member.member);
-
-	visit_child(generic_member.target);
+	visit_child();
+	visit_children(member_expr.num_generic_args);
 }
 
 void AstCompare::add_group_expr() {
 	record(cero::AstNodeKind::GroupExpr);
 }
 
-void AstCompare::visit(const cero::AstGroupExpr& group) {
+void AstCompare::visit(const cero::AstGroupExpr& group_expr) {
 	expect(cero::AstNodeKind::GroupExpr);
 
-	visit_children(group.arguments);
+	visit_children(group_expr.num_args);
 }
 
 void AstCompare::add_call_expr() {
@@ -267,21 +228,21 @@ void AstCompare::add_call_expr() {
 void AstCompare::visit(const cero::AstCallExpr& call_expr) {
 	expect(cero::AstNodeKind::CallExpr);
 
-	visit_child(call_expr.callee);
-	visit_children(call_expr.arguments);
+	visit_child();
+	visit_children(call_expr.num_args);
 }
 
 void AstCompare::visit(const cero::AstIndexExpr& index_expr) {
 	expect(cero::AstNodeKind::IndexExpr);
 
-	visit_child(index_expr.target);
-	visit_children(index_expr.arguments);
+	visit_child();
+	visit_children(index_expr.num_args);
 }
 
 void AstCompare::visit(const cero::AstArrayLiteralExpr& array_literal) {
 	expect(cero::AstNodeKind::ArrayLiteralExpr);
 
-	visit_children(array_literal.elements);
+	visit_children(array_literal.num_elements);
 }
 
 void AstCompare::add_unary_expr(cero::UnaryOperator op) {
@@ -295,7 +256,7 @@ void AstCompare::visit(const cero::AstUnaryExpr& unary_expr) {
 	auto op = pop<cero::UnaryOperator>();
 	CHECK(op == unary_expr.op);
 
-	visit_child(unary_expr.operand);
+	visit_child();
 }
 
 void AstCompare::add_binary_expr(cero::BinaryOperator op) {
@@ -309,8 +270,8 @@ void AstCompare::visit(const cero::AstBinaryExpr& binary_expr) {
 	auto op = pop<cero::BinaryOperator>();
 	CHECK(op == binary_expr.op);
 
-	visit_child(binary_expr.left);
-	visit_child(binary_expr.right);
+	visit_child();
+	visit_child();
 }
 
 void AstCompare::add_return_expr() {
@@ -320,31 +281,25 @@ void AstCompare::add_return_expr() {
 void AstCompare::visit(const cero::AstReturnExpr& return_expr) {
 	expect(cero::AstNodeKind::ReturnExpr);
 
-	visit_children(return_expr.return_values);
+	visit_children(return_expr.num_expressions);
 }
 
 void AstCompare::visit(const cero::AstThrowExpr& throw_expr) {
 	expect(cero::AstNodeKind::ThrowExpr);
 
-	if (auto expr = throw_expr.expression) {
-		visit_child(expr.get());
-	}
+	visit_child_if(throw_expr.has_expression);
 }
 
 void AstCompare::visit(const cero::AstBreakExpr& break_expr) {
 	expect(cero::AstNodeKind::BreakExpr);
 
-	if (auto label = break_expr.label) {
-		visit_child(label.get());
-	}
+	visit_child_if(break_expr.has_label);
 }
 
 void AstCompare::visit(const cero::AstContinueExpr& continue_expr) {
 	expect(cero::AstNodeKind::ContinueExpr);
 
-	if (auto label = continue_expr.label) {
-		visit_child(label.get());
-	}
+	visit_child_if(continue_expr.has_label);
 }
 
 void AstCompare::add_numeric_literal_expr(cero::NumericLiteralKind kind) {
@@ -366,66 +321,51 @@ void AstCompare::visit(const cero::AstStringLiteralExpr& string_literal) {
 	CHECK(value == string_literal.value);
 }
 
-void AstCompare::visit(const cero::AstVariabilityExpr& variability) {
-	expect(cero::AstNodeKind::VariabilityExpr);
+void AstCompare::visit(const cero::AstPermissionExpr& permission) {
+	expect(cero::AstNodeKind::PermissionExpr);
 
-	auto specifier = pop<cero::VariabilitySpecifier>();
-	CHECK(specifier == variability.specifier);
+	auto specifier = pop<cero::PermissionSpecifier>();
+	CHECK(specifier == permission.specifier);
 
-	visit_children(variability.arguments);
+	visit_children(permission.num_args);
 }
 
-void AstCompare::visit(const cero::AstPointerTypeExpr& pointer_type) {
+void AstCompare::visit(const cero::AstPointerTypeExpr& ptr_type) {
 	expect(cero::AstNodeKind::PointerTypeExpr);
 
-	auto specifier = pop<cero::VariabilitySpecifier>();
-	CHECK(specifier == pointer_type.variability.specifier);
-
-	visit_children(pointer_type.variability.arguments);
-
-	visit_child(pointer_type.type);
+	visit_child_if(ptr_type.has_permission);
+	visit_child();
 }
 
 void AstCompare::visit(const cero::AstArrayTypeExpr& array_type) {
 	expect(cero::AstNodeKind::ArrayTypeExpr);
 
-	if (auto bound = array_type.bound) {
-		visit_child(bound.get());
-	}
-
-	visit_child(array_type.element_type);
+	visit_child_if(array_type.has_bound);
+	visit_child();
 }
 
-void AstCompare::visit(const cero::AstFunctionTypeExpr& function_type) {
+void AstCompare::visit(const cero::AstFunctionTypeExpr& func_type) {
 	expect(cero::AstNodeKind::FunctionTypeExpr);
 
-	for (auto& param : function_type.parameters) {
-		auto specifier = pop<cero::ParameterSpecifier>();
-		CHECK(specifier == param.specifier);
-
-		auto param_name = pop<std::string_view>();
-		CHECK(param_name == param.name);
-
-		visit_child(param.type);
-	}
-
-	for (auto& output : function_type.outputs) {
-		auto output_name = pop<std::string_view>();
-		CHECK(output_name == output.name);
-
-		visit_child(output.type);
-	}
+	visit_children(func_type.num_parameters);
+	visit_children(func_type.num_outputs);
 }
 
-void AstCompare::visit_child(cero::AstId id) {
+void AstCompare::visit_child() {
 	++current_level_;
-	ast_.visit_node(*this, id);
+	cursor_.visit_child(*this);
 	--current_level_;
 }
 
-void AstCompare::visit_children(cero::AstIdSet ids) {
+void AstCompare::visit_child_if(bool condition) {
+	if (condition) {
+		visit_child();
+	}
+}
+
+void AstCompare::visit_children(uint16_t n) {
 	++current_level_;
-	ast_.visit_nodes(*this, ids);
+	cursor_.visit_children(n, *this);
 	--current_level_;
 }
 

@@ -75,29 +75,24 @@ fibonacci(var uint32 n) -> uint32
 				c.add_numeric_literal_expr(cero::NumericLiteralKind::Decimal);
 			}
 
-			c.add_block_statement();
+			c.add_binding_statement(cero::BindingSpecifier::Let, "temp");
 			{
 				auto _3 = c.mark_children();
+				c.add_name_expr("next");
+			}
 
-				c.add_binding_statement(cero::BindingSpecifier::Let, "temp");
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("next");
-				}
+			c.add_binary_expr(cero::BinaryOperator::Assign);
+			{
+				auto _3 = c.mark_children();
+				c.add_name_expr("next");
+				c.add_name_expr("result");
+			}
 
-				c.add_binary_expr(cero::BinaryOperator::Assign);
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("next");
-					c.add_name_expr("result");
-				}
-
-				c.add_binary_expr(cero::BinaryOperator::AddAssign);
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("result");
-					c.add_name_expr("temp");
-				}
+			c.add_binary_expr(cero::BinaryOperator::AddAssign);
+			{
+				auto _3 = c.mark_children();
+				c.add_name_expr("result");
+				c.add_name_expr("temp");
 			}
 		}
 

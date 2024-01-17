@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <any>
+#include <array>
 #include <bit>
 #include <compare>
 #include <concepts>

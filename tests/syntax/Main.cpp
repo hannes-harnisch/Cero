@@ -1,7 +1,11 @@
+#include <cero/driver/Environment.hpp>
+
 #define DOCTEST_CONFIG_IMPLEMENT
 #include <doctest/doctest.h>
 
 int main(int argc, char* argv[]) {
+	cero::initialize_environment();
+
 	doctest::Context context;
 	context.applyCommandLine(argc, argv);
 	return context.run();

@@ -1,6 +1,7 @@
 #include "Run.hpp"
 
 #include "cero/driver/BuildCommand.hpp"
+#include "cero/driver/Environment.hpp"
 #include "cero/io/Config.hpp"
 #include "cero/util/Fail.hpp"
 
@@ -31,6 +32,8 @@ namespace {
 } // namespace
 
 bool run(std::span<char*> args) {
+	initialize_environment();
+
 	if (auto config = Config::from(args)) {
 		switch (config->command) {
 			using enum Command;

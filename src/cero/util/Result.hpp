@@ -55,42 +55,42 @@ public:
 	}
 
 	Result& operator=(const Result& other) {
-		if (has_value_) {
-			if (other.has_value_) {
+		if (has_value_ == other.has_value_) {
+			if (has_value_) {
 				value_ = other.value_;
-			} else {
-				value_.~T();
-				new (&error_) E(other.error_);
-			}
-		} else {
-			if (other.has_value_) {
-				error_.~E();
-				new (&value_) T(other.value_);
 			} else {
 				error_ = other.error_;
 			}
+		} else {
+			if (has_value_) {
+				value_.~T();
+				new (&error_) E(other.error_);
+			} else {
+				error_.~E();
+				new (&value_) T(other.value_);
+			}
+			has_value_ = other.has_value_;
 		}
-		has_value_ = other.has_value_;
 		return *this;
 	}
 
 	Result& operator=(Result&& other) noexcept {
-		if (has_value_) {
-			if (other.has_value_) {
+		if (has_value_ == other.has_value_) {
+			if (has_value_) {
 				value_ = std::move(other.value_);
-			} else {
-				value_.~T();
-				new (&error_) E(std::move(other.error_));
-			}
-		} else {
-			if (other.has_value_) {
-				error_.~E();
-				new (&value_) T(std::move(other.value_));
 			} else {
 				error_ = std::move(other.error_);
 			}
+		} else {
+			if (has_value_) {
+				value_.~T();
+				new (&error_) E(std::move(other.error_));
+			} else {
+				error_.~E();
+				new (&value_) T(std::move(other.value_));
+			}
+			has_value_ = other.has_value_;
 		}
-		has_value_ = other.has_value_;
 		return *this;
 	}
 
