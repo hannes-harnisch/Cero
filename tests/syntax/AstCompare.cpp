@@ -35,7 +35,7 @@ void AstCompare::add_root() {
 	record(cero::AstNodeKind::Root);
 }
 
-void AstCompare::visit(const cero::AstRoot& root) {
+void AstCompare::visit(const cero::AstRoot&) {
 	expect(cero::AstNodeKind::Root);
 }
 

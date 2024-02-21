@@ -3,15 +3,13 @@
 #include "cero/io/CodeLocation.hpp"
 #include "cero/io/Message.hpp"
 
-#include <format>
-
 namespace cero {
 
 class Reporter {
 public:
 	template<typename... Args>
 	void report(Message message, CodeLocation location, Args&&... args) {
-		on_report(message, location, std::make_format_args(std::forward<Args>(args)...), sizeof...(Args));
+		on_report(message, location, fmt::make_format_args(args...), sizeof...(Args));
 	}
 
 	bool has_errors() const;
@@ -25,7 +23,7 @@ private:
 
 	virtual void handle_report(Message message, Severity severity, CodeLocation location, std::string message_text) = 0;
 
-	void on_report(Message message, CodeLocation location, std::format_args args, size_t arg_count);
+	void on_report(Message message, CodeLocation location, fmt::format_args args, size_t arg_count);
 };
 
 } // namespace cero

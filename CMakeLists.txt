@@ -13,6 +13,20 @@ set(CMAKE_CXX_STANDARD_LIBRARIES "")
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 set(CMAKE_VS_JUST_MY_CODE_DEBUGGING ON)
 
+include(FetchContent)
+
+FetchContent_Declare(fmt
+  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+  GIT_TAG 10.2.1
+)
+FetchContent_MakeAvailable(fmt)
+
+FetchContent_Declare(doctest
+  GIT_REPOSITORY https://github.com/doctest/doctest.git
+  GIT_TAG v2.4.11
+)
+FetchContent_MakeAvailable(doctest)
+
 if (WIN32)
     add_compile_definitions(CERO_WINDOWS)
 elseif (UNIX)

@@ -17,7 +17,7 @@ namespace {
 
 	void close_file(int file_descriptor) {
 		if (::close(file_descriptor) == -1) {
-			fail_result(std::format("Could not close file (system error {}).", errno));
+			fail_result(fmt::format("Could not close file (system error {}).", errno));
 		}
 	}
 
@@ -55,7 +55,7 @@ Result<FileMapping, std::error_code> FileMapping::from(std::string_view path) {
 FileMapping::~FileMapping() {
 	if (addr_ != nullptr) {
 		if (::munmap(const_cast<void*>(addr_), size_) == -1) {
-			fail_result(std::format("Could not unmap file (system error {}).", errno));
+			fail_result(fmt::format("Could not unmap file (system error {}).", errno));
 		}
 	}
 

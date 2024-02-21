@@ -34,7 +34,7 @@ void Reporter::set_warnings_as_errors(bool value) {
 	warnings_as_errors_ = value;
 }
 
-void Reporter::on_report(Message message, CodeLocation location, std::format_args args, size_t arg_count) {
+void Reporter::on_report(Message message, CodeLocation location, fmt::format_args args, size_t arg_count) {
 	verify_message_arg_count(message, arg_count);
 
 	auto severity = get_message_severity(message);
@@ -47,7 +47,7 @@ void Reporter::on_report(Message message, CodeLocation location, std::format_arg
 	}
 
 	auto format = get_message_format(message);
-	handle_report(message, severity, location, std::vformat(format, args));
+	handle_report(message, severity, location, fmt::vformat(format, args));
 }
 
 } // namespace cero

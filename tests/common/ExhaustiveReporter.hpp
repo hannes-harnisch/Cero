@@ -4,7 +4,6 @@
 #include <cero/io/Message.hpp>
 #include <cero/io/Reporter.hpp>
 
-#include <format>
 #include <queue>
 #include <string>
 #include <string_view>
@@ -18,7 +17,7 @@ public:
 
 	template<typename... Args>
 	void expect(uint32_t line, uint32_t column, cero::Message message, Args&&... args) {
-		on_expect(line, column, message, std::make_format_args(std::forward<Args>(args)...));
+		on_expect(line, column, message, fmt::make_format_args(args...));
 	}
 
 	ExhaustiveReporter(const ExhaustiveReporter&) = delete;
@@ -41,5 +40,5 @@ private:
 					   cero::CodeLocation location,
 					   std::string message_text) override;
 
-	void on_expect(uint32_t line, uint32_t column, cero::Message message, std::format_args args);
+	void on_expect(uint32_t line, uint32_t column, cero::Message message, fmt::format_args args);
 };

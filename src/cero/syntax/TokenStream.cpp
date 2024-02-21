@@ -17,7 +17,7 @@ std::span<const TokenStream::Unit> TokenStream::raw() const {
 }
 
 std::string TokenStream::to_string(const SourceLock& source) const {
-	auto str = std::format("Token stream for {} ({} token{})\n", source.get_path(), num_tokens_, num_tokens_ == 1 ? "" : "s");
+	auto str = fmt::format("Token stream for {} ({} token{})\n", source.get_path(), num_tokens_, num_tokens_ == 1 ? "" : "s");
 
 	TokenCursor cursor(*this);
 	while (auto next = cursor.next()) {
@@ -26,7 +26,7 @@ std::string TokenStream::to_string(const SourceLock& source) const {
 		auto lexeme = token.get_lexeme(source);
 		auto kind_str = token_kind_to_string(token.header.kind);
 		auto location = source.locate(token.header.offset); // yes, this makes this algorithm quadratic, but it's not important
-		str += std::format("\t{} `{}` [{}:{}]\n", kind_str, lexeme, location.line, location.column);
+		str += fmt::format("\t{} `{}` [{}:{}]\n", kind_str, lexeme, location.line, location.column);
 	}
 
 	return str;

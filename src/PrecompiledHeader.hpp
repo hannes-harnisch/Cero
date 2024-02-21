@@ -1,9 +1,13 @@
 #pragma once
 
+#include <fmt/core.h>
+#include <fmt/format.h>
+
 #include <algorithm>
 #include <any>
 #include <array>
 #include <bit>
+#include <charconv>
 #include <compare>
 #include <concepts>
 #include <cstddef>
@@ -11,7 +15,6 @@
 #include <cstdlib>
 #include <deque>
 #include <filesystem>
-#include <format>
 #include <iostream>
 #include <memory>
 #include <optional>

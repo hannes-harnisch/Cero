@@ -29,9 +29,9 @@ void ExhaustiveReporter::handle_report(cero::Message message,
 	}
 }
 
-void ExhaustiveReporter::on_expect(uint32_t line, uint32_t column, cero::Message message, std::format_args args) {
+void ExhaustiveReporter::on_expect(uint32_t line, uint32_t column, cero::Message message, fmt::format_args args) {
 	auto format = cero::get_message_format(message);
-	auto message_text = std::vformat(format, args);
+	auto message_text = fmt::vformat(format, args);
 
 	cero::CodeLocation location {test_name_, line, column};
 	expected_reports_.emplace(message, location, std::move(message_text));

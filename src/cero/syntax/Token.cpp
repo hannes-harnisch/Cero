@@ -233,14 +233,14 @@ namespace {
 std::string Token::to_message_string(const SourceLock& source) const {
 	auto format = get_token_message_format(header.kind);
 	auto lexeme = get_lexeme(source);
-	return std::vformat(format, std::make_format_args(lexeme));
+	return fmt::vformat(format, fmt::make_format_args(lexeme));
 }
 
 std::string Token::to_log_string(const SourceLock& source) const {
 	auto token_kind = token_kind_to_string(header.kind);
 	auto lexeme = get_lexeme(source);
 	auto location = locate_in(source);
-	return std::format("{} `{}` [{}]", token_kind, lexeme, location.to_string());
+	return fmt::format("{} `{}` [{}]", token_kind, lexeme, location.to_string());
 }
 
 CodeLocation Token::locate_in(const SourceLock& source) const {

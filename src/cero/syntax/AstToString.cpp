@@ -57,7 +57,7 @@ namespace {
 AstToString::AstToString(const Ast& ast, const SourceLock& source) :
 	cursor_(ast),
 	edge_(&BODY),
-	string_(std::format("AST for {} ({} node{})\n", source.get_path(), ast.num_nodes(), ast.num_nodes() == 1 ? "" : "s")) {
+	string_(fmt::format("AST for {} ({} node{})\n", source.get_path(), ast.num_nodes(), ast.num_nodes() == 1 ? "" : "s")) {
 	prefixes_.emplace();
 }
 
@@ -131,21 +131,21 @@ void AstToString::visit(const AstRoot& root) {
 }
 
 void AstToString::visit(const AstStructDefinition& struct_def) {
-	add_line(std::format("struct `{}`", struct_def.name));
+	add_line(fmt::format("struct `{}`", struct_def.name));
 	push_level();
 
 	pop_level();
 }
 
 void AstToString::visit(const AstEnumDefinition& enum_def) {
-	add_line(std::format("enum `{}`", enum_def.name));
+	add_line(fmt::format("enum `{}`", enum_def.name));
 	push_level();
 
 	pop_level();
 }
 
 void AstToString::visit(const AstFunctionDefinition& func_def) {
-	add_line(std::format("function `{}`", func_def.name));
+	add_line(fmt::format("function `{}`", func_def.name));
 	push_level();
 
 	add_body_line("parameters");
@@ -168,7 +168,7 @@ void AstToString::visit(const AstFunctionDefinition& func_def) {
 
 void AstToString::visit(const AstFunctionParameter& param) {
 	auto specifier = parameter_specifier_to_string(param.specifier);
-	add_line(std::format("{} parameter `{}`", specifier, param.name));
+	add_line(fmt::format("{} parameter `{}`", specifier, param.name));
 	push_level();
 
 	set_tail(!param.has_default_argument);
@@ -184,7 +184,7 @@ void AstToString::visit(const AstFunctionOutput& output) {
 	if (output.name.empty()) {
 		add_line("output");
 	} else {
-		add_line(std::format("output `{}`", output.name));
+		add_line(fmt::format("output `{}`", output.name));
 	}
 
 	push_level();
@@ -202,7 +202,7 @@ void AstToString::visit(const AstBlockStatement& block_stmt) {
 
 void AstToString::visit(const AstBindingStatement& binding) {
 	auto specifier = binding_specifier_to_string(binding.specifier);
-	add_line(std::format("{} binding `{}`", specifier, binding.name));
+	add_line(fmt::format("{} binding `{}`", specifier, binding.name));
 	push_level();
 
 	if (binding.has_type) {
@@ -278,7 +278,7 @@ void AstToString::visit(const AstForLoop& for_loop) {
 }
 
 void AstToString::visit(const AstNameExpr& name_expr) {
-	add_line(std::format("name `{}`", name_expr.name));
+	add_line(fmt::format("name `{}`", name_expr.name));
 
 	if (name_expr.num_generic_args > 0) {
 		add_tail_line("generic arguments");
@@ -289,7 +289,7 @@ void AstToString::visit(const AstNameExpr& name_expr) {
 }
 
 void AstToString::visit(const AstMemberExpr& member_expr) {
-	add_line(std::format("member `{}`", member_expr.member));
+	add_line(fmt::format("member `{}`", member_expr.member));
 
 	if (member_expr.num_generic_args > 0) {
 		add_tail_line("generic arguments");
@@ -349,7 +349,7 @@ void AstToString::visit(const AstArrayLiteralExpr& array_literal) {
 
 void AstToString::visit(const AstUnaryExpr& unary_expr) {
 	auto op = unary_operator_to_string(unary_expr.op);
-	add_line(std::format("`{}`", op));
+	add_line(fmt::format("`{}`", op));
 	push_level();
 
 	visit_child_at_tail();
@@ -359,7 +359,7 @@ void AstToString::visit(const AstUnaryExpr& unary_expr) {
 
 void AstToString::visit(const AstBinaryExpr& binary_expr) {
 	auto op = binary_operator_to_string(binary_expr.op);
-	add_line(std::format("`{}`", op));
+	add_line(fmt::format("`{}`", op));
 	push_level();
 
 	visit_child_at_body();
@@ -393,16 +393,16 @@ void AstToString::visit(const AstContinueExpr& continue_expr) {
 
 void AstToString::visit(const AstNumericLiteralExpr& numeric_literal) {
 	auto kind = numeric_literal_kind_to_string(numeric_literal.kind);
-	add_line(std::format("{} literal `{}`", kind, " ---TODO--- ")); // TODO: add number
+	add_line(fmt::format("{} literal `{}`", kind, " ---TODO--- ")); // TODO: add number
 }
 
 void AstToString::visit(const AstStringLiteralExpr& string_literal) {
-	add_line(std::format("string literal `{}`", string_literal.value));
+	add_line(fmt::format("string literal `{}`", string_literal.value));
 }
 
 void AstToString::visit(const AstPermissionExpr& permission) {
 	auto specifier = permission_specifier_to_string(permission.specifier);
-	add_line(std::format("permission `{}`", specifier));
+	add_line(fmt::format("permission `{}`", specifier));
 
 	push_level();
 	visit_children(permission.num_args);

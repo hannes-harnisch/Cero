@@ -15,13 +15,13 @@ namespace {
 
 	void close_file(HANDLE file) {
 		if (!::CloseHandle(file)) {
-			fail_result(std::format("Could not close file (system error {}).", ::GetLastError()));
+			fail_result(fmt::format("Could not close file (system error {}).", ::GetLastError()));
 		}
 	}
 
 	void close_mapping(HANDLE mapping) {
 		if (!::CloseHandle(mapping)) {
-			fail_result(std::format("Could not close file mapping (system error {}).", ::GetLastError()));
+			fail_result(fmt::format("Could not close file mapping (system error {}).", ::GetLastError()));
 		}
 	}
 
@@ -70,7 +70,7 @@ Result<FileMapping, std::error_code> FileMapping::from(std::string_view path) {
 FileMapping::~FileMapping() {
 	if (addr_ != nullptr) {
 		if (!::UnmapViewOfFile(addr_)) {
-			fail_result(std::format("Could not unmap file (system error {}).", ::GetLastError()));
+			fail_result(fmt::format("Could not unmap file (system error {}).", ::GetLastError()));
 		}
 	}
 

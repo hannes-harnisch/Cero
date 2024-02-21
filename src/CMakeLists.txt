@@ -11,9 +11,13 @@ endif ()
 
 add_library(Cero ${CERO_SRC})
 target_include_directories(Cero PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(Cero PUBLIC fmt::fmt)
+
+set_target_properties(Cero PROPERTIES
+        PRECOMPILE_HEADERS PrecompiledHeader.hpp)
 
 add_executable(CeroCompiler "Main.cpp")
 target_link_libraries(CeroCompiler PRIVATE Cero)
 
-set_target_properties(Cero PROPERTIES
+set_target_properties(CeroCompiler PROPERTIES
         PRECOMPILE_HEADERS PrecompiledHeader.hpp)
