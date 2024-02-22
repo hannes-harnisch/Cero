@@ -15,12 +15,14 @@ set(CMAKE_VS_JUST_MY_CODE_DEBUGGING ON)
 
 include(FetchContent)
 
+message("Fetching dependency: fmtlib")
 FetchContent_Declare(fmt
   GIT_REPOSITORY https://github.com/fmtlib/fmt.git
   GIT_TAG 10.2.1
 )
 FetchContent_MakeAvailable(fmt)
 
+message("Fetching dependency: doctest")
 FetchContent_Declare(doctest
   GIT_REPOSITORY https://github.com/doctest/doctest.git
   GIT_TAG v2.4.11

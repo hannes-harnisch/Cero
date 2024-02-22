@@ -3,23 +3,22 @@
 namespace cero {
 
 TokenCursor::TokenCursor(const TokenStream& token_stream) :
-	it_(token_stream.raw().begin()),
-	end_(token_stream.raw().end()) {
+	it_(token_stream.raw().begin()) {
 }
 
-std::optional<Token> TokenCursor::next() {
-	if (it_ != end_) {
-		const auto header = it_->header;
+Token TokenCursor::next() {
+	const auto header = it_->header;
+
+	if (header.kind != TokenKind::EndOfFile) {
 		++it_;
-		if (header.is_variable_length()) {
-			const auto length = it_->length;
-			++it_;
-			return Token {header, length};
-		} else {
-			return Token {header, 0};
-		}
+	}
+
+	if (header.is_variable_length()) {
+		const auto length = it_->length;
+		++it_;
+		return Token {header, length};
 	} else {
-		return std::nullopt;
+		return Token {header, 0};
 	}
 }
 
@@ -86,17 +85,13 @@ TokenKind TokenCursor::peek_kind() {
 }
 
 void TokenCursor::advance() {
-	if (it_ != end_) {
+	if (it_->header.kind != TokenKind::EndOfFile) {
 		const auto header = it_->header;
 		++it_;
 		if (header.is_variable_length()) {
 			++it_;
 		}
 	}
-}
-
-bool TokenCursor::valid() const {
-	return it_ != end_;
 }
 
 void TokenCursor::skip_comments() {

@@ -9,6 +9,7 @@
 namespace cero {
 
 enum class TokenKind {
+	// Variable-length tokens
 	Name,
 	LineComment,
 	BlockComment,

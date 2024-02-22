@@ -9,8 +9,8 @@ class TokenCursor {
 public:
 	explicit TokenCursor(const TokenStream& token_stream);
 
-	// Returns the current character and then advances, or returns null if the cursor is at the end.
-	std::optional<Token> next();
+	// Returns the current token and then advances if not at the end.
+	Token next();
 
 	// Returns true and advances if the current token kind equals the expected, otherwise returns false.
 	bool match(TokenKind kind);
@@ -38,15 +38,11 @@ public:
 	// Moves cursor to the next token.
 	void advance();
 
-	// True if the cursor is not at the end.
-	bool valid() const;
-
 	// Advance to the next non-comment token.
 	void skip_comments();
 
 private:
 	std::span<const TokenStream::Unit>::iterator it_;
-	std::span<const TokenStream::Unit>::iterator end_;
 };
 
 } // namespace cero

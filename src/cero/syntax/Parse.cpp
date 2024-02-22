@@ -606,7 +606,7 @@ private:
 	}
 
 	NodeIndex on_name() {
-		auto name = cursor_.next().value().get_lexeme(source_);
+		auto name = cursor_.next().get_lexeme(source_);
 		return parse_name(name);
 	}
 
@@ -675,7 +675,7 @@ private:
 
 	template<AstNumericLiteralExpr (*EVALUATE)(std::string_view)>
 	NodeIndex on_numeric_literal() {
-		auto lexeme = cursor_.next().value().get_lexeme(source_);
+		auto lexeme = cursor_.next().get_lexeme(source_);
 
 		auto literal_begin = next_index();
 		nodes_.push_back(EVALUATE(lexeme));
@@ -683,7 +683,7 @@ private:
 	}
 
 	NodeIndex on_string_literal() {
-		auto lexeme = cursor_.next().value().get_lexeme(source_);
+		auto lexeme = cursor_.next().get_lexeme(source_);
 
 		auto literal_begin = next_index();
 		nodes_.push_back(evaluate_string_literal(lexeme));
@@ -804,7 +804,7 @@ private:
 	void on_binary_operator(NodeIndex left) {
 		static constexpr auto precedence = lookup_precedence_for_associativity(O);
 
-		auto target = cursor_.next().value();
+		auto target = cursor_.next();
 		auto right = parse_subexpression(precedence);
 		validate_associativity(O, left, right, target);
 

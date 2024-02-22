@@ -79,7 +79,7 @@ public:
 			lex_source();
 		}
 
-		stream_.add_header({TokenKind::EndOfFile, cursor_.offset()});
+		stream_.add_header(TokenHeader {TokenKind::EndOfFile, cursor_.offset()});
 		return std::move(stream_);
 	}
 
@@ -230,7 +230,7 @@ private:
 					break;
 			}
 
-			stream_.add_header({kind, begin_offset});
+			stream_.add_header(TokenHeader {kind, begin_offset});
 			if (is_variable_length) {
 				stream_.add_length(cursor_.offset() - begin_offset);
 			}
