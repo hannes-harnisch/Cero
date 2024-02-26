@@ -39,8 +39,8 @@ TokenStream::TokenStream(const SourceLock& source) :
 	stream_.reserve(source.get_length()); // TODO: find heuristic for this
 }
 
-void TokenStream::add_header(TokenHeader header) {
-	stream_.emplace_back(header);
+void TokenStream::add_header(TokenKind kind, uint32_t offset) {
+	stream_.emplace_back(TokenHeader {kind, offset});
 	++num_tokens_;
 }
 

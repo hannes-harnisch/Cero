@@ -30,8 +30,10 @@ std::optional<Config> Config::from(std::span<char*> args) {
 }
 
 bool Config::parse_command(std::string_view arg) {
-	if (arg == "help" || arg == "--help" || arg == "-h") {
+	if (arg == "-h" || arg == "--help") {
 		command = Command::Help;
+	} else if (arg == "-V" || arg == "--version") {
+		command = Command::Version;
 	} else if (arg == "build") {
 		command = Command::Build;
 	} else if (arg == "install") {
@@ -40,10 +42,8 @@ bool Config::parse_command(std::string_view arg) {
 		command = Command::Clean;
 	} else if (arg == "run") {
 		command = Command::Run;
-	} else if (arg == "eval") {
-		command = Command::Eval;
 	} else {
-		std::cout << '\'' << arg << "' is not a valid command. See 'cero help'.\n";
+		fmt::println("'{}' is not a valid command. See 'cero --help'.", arg);
 		return false;
 	}
 
@@ -54,15 +54,18 @@ bool Config::parse_option(std::string_view arg) {
 	if (arg.starts_with("--tab-size=")) {
 		return parse_tab_size(arg);
 	}
+	// check for all other value-based options here in the future
 
-	if (arg == "-Werror") {
+	if (arg == "-v" || arg == "--verbose") {
+		verbose = true;
+	} else if (arg == "-Werror") {
 		warnings_as_errors = true;
-	} else if (arg == "--log-tokens") {
-		log_tokens = true;
-	} else if (arg == "--log-ast_") {
-		log_ast = true;
+	} else if (arg == "--print-tokens") {
+		print_tokens = true;
+	} else if (arg == "--print-ast") {
+		print_ast = true;
 	}
-	// check for all other options here in the future
+	// check for all other boolean options here in the future
 	else {
 		path = arg;
 	}
@@ -79,7 +82,7 @@ bool Config::parse_tab_size(std::string_view arg) {
 		tab_size = tab_size_value;
 		return true;
 	} else {
-		std::cout << "--tab-size must be specified with a value between 0 and 255.\n";
+		fmt::println("--tab-size must be specified with a value between 0 and 255.");
 		return false;
 	}
 }

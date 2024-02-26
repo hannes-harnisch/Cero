@@ -8,22 +8,22 @@
 namespace cero {
 
 enum class Command {
-	None,
 	Help,
+	Version,
 	Build,
 	Install,
 	Clean,
 	Run,
-	Eval,
 };
 
 struct Config {
-	Command command = Command::None;
+	Command command = Command::Help;
 	std::string_view path;
 	uint8_t tab_size = DefaultTabSize;
+	bool verbose = false;
 	bool warnings_as_errors = false;
-	bool log_tokens = false;
-	bool log_ast = false;
+	bool print_tokens = false;
+	bool print_ast = false;
 
 	static std::optional<Config> from(std::span<char*> args);
 

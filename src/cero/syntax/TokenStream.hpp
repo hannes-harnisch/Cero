@@ -30,7 +30,7 @@ private:
 
 	explicit TokenStream(const SourceLock& source);
 
-	void add_header(TokenHeader header);
+	void add_header(TokenKind kind, uint32_t offset);
 	void add_length(uint32_t length);
 
 	friend class Lexer;

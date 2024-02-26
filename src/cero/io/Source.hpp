@@ -14,8 +14,8 @@ namespace cero {
 // integer while having 8 bits left over for other metadata.
 constexpr inline size_t SourceOffsetBits = 24;
 
-// Maximum allowed byte size of a Cero source file (16 MiB), derived from the number of bits needed to represent an header.
-constexpr inline size_t MaxSourceLength = 1 << SourceOffsetBits;
+// Maximum allowed byte size of a Cero source file (16 MiB), derived from the number of bits needed to represent a token offset.
+constexpr inline size_t MaxSourceLength = (1 << SourceOffsetBits) - 1;
 
 class SourceLock {
 public:

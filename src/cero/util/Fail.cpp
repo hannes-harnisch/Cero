@@ -5,30 +5,30 @@ namespace cero {
 namespace {
 
 	[[noreturn]] void fail(std::source_location location) {
-		std::cout << "\tFile:\t\t" << location.file_name() << '\n';
-		std::cout << "\tFunction:\t" << location.function_name() << '\n';
+		fmt::println("\tFile:     {}", location.file_name());
+		fmt::println("\tFunction: {}", location.function_name());
 		std::abort();
 	}
 
 } // namespace
 
 void to_do(std::source_location location) {
-	std::cout << "Not yet implemented.\n";
+	fmt::println("Not yet implemented.");
 	fail(location);
 }
 
 void fail_unreachable(std::source_location location) {
-	std::cout << "The compiler reached code that should be unreachable.\n";
+	fmt::println("The compiler reached code that should be unreachable.");
 	fail(location);
 }
 
 void fail_assert(std::string_view info, std::source_location location) {
-	std::cout << "Assertion failed: " << info << '\n';
+	fmt::println("Assertion failed: {}", info);
 	fail(location);
 }
 
 void fail_result(std::string_view info, std::source_location location) {
-	std::cout << "Result failed: " << info << '\n';
+	fmt::println("Result failed: {}", info);
 	fail(location);
 }
 

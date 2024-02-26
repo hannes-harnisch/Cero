@@ -27,13 +27,13 @@ void build_source(const Source& source, const Config& config, Reporter& reporter
 
 	auto& src_lock = lock_result.value();
 	auto token_stream = lex(src_lock, reporter);
-	if (config.log_tokens) {
-		std::cout << token_stream.to_string(src_lock);
+	if (config.print_tokens) {
+		fmt::println("{}", token_stream.to_string(src_lock));
 	}
 
 	auto ast = parse(token_stream, src_lock, reporter);
-	if (config.log_ast) {
-		std::cout << ast.to_string(src_lock);
+	if (config.print_ast) {
+		fmt::println("{}", ast.to_string(src_lock));
 	}
 }
 

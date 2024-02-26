@@ -10,6 +10,28 @@ namespace cero {
 namespace {
 
 	bool run_help_command() {
+		static constexpr auto help = R"_____(
+Cero compiler, version {}
+
+usage: cero [COMMAND] [OPTIONS]
+
+commands:
+    build               Build the current package
+    run                 Build and run the current package
+    clean               Remove all build artifacts for the current package
+    install             Build and install the current package
+
+options:
+    -h, --help          Show this message
+    -v, --verbose       Give verbose output
+    -V, --version       Show version and build info for the compiler
+)_____";
+
+		fmt::println(help, "0.0.1");
+		return true;
+	}
+
+	bool run_version_command() {
 		to_do();
 	}
 
@@ -25,10 +47,6 @@ namespace {
 		to_do();
 	}
 
-	bool run_eval_command() {
-		to_do();
-	}
-
 } // namespace
 
 bool run(std::span<char*> args) {
@@ -37,13 +55,12 @@ bool run(std::span<char*> args) {
 	if (auto config = Config::from(args)) {
 		switch (config->command) {
 			using enum Command;
-			case None:
 			case Help: return run_help_command();
+			case Version: return run_version_command();
 			case Build: return run_build_command(*config);
 			case Install: return run_install_command();
 			case Clean: return run_clean_command();
 			case Run: return run_run_command();
-			case Eval: return run_eval_command();
 		}
 		fail_unreachable();
 	}

@@ -11,6 +11,19 @@ class SourceCursor {
 public:
 	explicit SourceCursor(const SourceLock& source);
 
+	struct Position {
+		char character;
+		uint32_t offset;
+
+		explicit operator bool() const {
+			return offset != UINT32_MAX;
+		}
+	};
+
+	// Returns the current character and offset and then advances, or returns nullopt and the source length if the cursor is at
+	// the end.
+	Position next_position();
+
 	// Returns the current character and then advances, or returns null if the cursor is at the end.
 	std::optional<char> next();
 

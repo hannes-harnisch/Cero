@@ -8,6 +8,14 @@ SourceCursor::SourceCursor(const SourceLock& source) :
 	offset_(0) {
 }
 
+SourceCursor::Position SourceCursor::next_position() {
+	if (it_ != end_) {
+		return {*it_++, offset_++};
+	} else {
+		return {'\0', UINT32_MAX};
+	}
+}
+
 std::optional<char> SourceCursor::next() {
 	if (it_ != end_) {
 		++offset_;
