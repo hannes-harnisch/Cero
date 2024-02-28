@@ -23,9 +23,13 @@ private:
 	static constexpr Edge TAIL {"└── ", "    "};
 
 	AstCursor cursor_;
+	const SourceLock& source_;
 	std::stack<std::string> prefixes_;
 	const Edge* edge_;
 	std::string string_;
+
+	template<typename T>
+	std::string locate(const T& t) const;
 
 	void push_level();
 	void pop_level();

@@ -28,7 +28,7 @@ enum class Message : uint8_t {
 	ExpectParenAfterOutputs,
 	ExpectBraceBeforeFuncBody,
 	ExpectNameAfterLet,
-	ExpectNameAfterDeclType,
+	ExpectNameAfterDeclarationType,
 	ExpectExpr,
 	ExpectSemicolon,
 	ExpectNameAfterDot,

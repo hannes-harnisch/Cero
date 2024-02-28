@@ -6,9 +6,8 @@
 
 CERO_TEST(ParseAdditiveAndMultiplicativeOperators) {
 	auto source = make_test_source(R"_____(
-foo(int32 a, int32 b) -> int32
-{
-    let c = a + b;
+foo(int32 a, int32 b) -> int32 {
+	let c = a + b;
 	let d = a + b * c;
 	let e = (d - a) / c;
 	return e ** 2 * b;
@@ -109,9 +108,8 @@ foo(int32 a, int32 b) -> int32
 
 CERO_TEST(ParseAdditiveAndComparisonOperators) {
 	auto source = make_test_source(R"_____(
-bar(int32 a, int32 b, int32 c) -> bool
-{
-    let u = a - b == b + c;
+bar(int32 a, int32 b, int32 c) -> bool {
+	let u = a - b == b + c;
 	let v = b * a != c / a;
 	let w = c + b > b * a;
 	let x = b / a < c - b;
@@ -314,9 +312,8 @@ bar(int32 a, int32 b, int32 c) -> bool
 
 CERO_TEST(ParseComparisonAndLogicalOperators) {
 	auto source = make_test_source(R"_____(
-baz(int32 a, int32 b, int32 c, int32 d) -> bool
-{
-    return a + b == b + c && b + c != c + d && a < c && a > d;
+baz(int32 a, int32 b, int32 c, int32 d) -> bool {
+	return a + b == b + c && b + c != c + d && a < c && a > d;
 }
 )_____");
 

@@ -13,7 +13,7 @@ public:
 
 	struct Position {
 		char character;
-		uint32_t offset;
+		SourceOffset offset;
 
 		explicit operator bool() const {
 			return offset != UINT32_MAX;
@@ -40,12 +40,12 @@ public:
 	bool valid() const;
 
 	// Current offset from the beginning of the source text.
-	uint32_t offset() const;
+	SourceOffset offset() const;
 
 private:
 	std::string_view::iterator it_;
 	std::string_view::iterator end_;
-	uint32_t offset_;
+	SourceOffset offset_;
 };
 
 } // namespace cero

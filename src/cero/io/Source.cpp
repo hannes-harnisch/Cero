@@ -14,7 +14,7 @@ std::string_view SourceLock::get_path() const {
 	return path_;
 }
 
-CodeLocation SourceLock::locate(uint32_t offset) const {
+CodeLocation SourceLock::locate(SourceOffset offset) const {
 	auto range = text_.substr(0, offset);
 
 	auto line = static_cast<uint32_t>(std::count(range.begin(), range.end(), '\n') + 1);
@@ -64,7 +64,7 @@ std::string_view Source::get_path() const {
 Result<SourceLock, std::error_code> Source::lock() const {
 	if (text_.data() == nullptr) {
 		return FileMapping::from(path_).transform(
-			[&](FileMapping file_mapping) { return SourceLock(std::move(file_mapping), path_, tab_size_); });
+			[&](FileMapping&& file_mapping) -> SourceLock { return SourceLock(std::move(file_mapping), path_, tab_size_); });
 	} else {
 		return SourceLock(text_, path_, tab_size_);
 	}

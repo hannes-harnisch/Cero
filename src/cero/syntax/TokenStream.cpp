@@ -24,11 +24,10 @@ std::string TokenStream::to_string(const SourceLock& source) const {
 	do {
 		token = cursor.next();
 
-		auto lexeme = token.get_lexeme(source);
-		auto kind_str = token_kind_to_string(token.header.kind);
-		auto location = source.locate(token.header.offset); // yes, this makes this algorithm quadratic, but it's not important
-		str += fmt::format("\t{} `{}` [{}:{}]\n", kind_str, lexeme, location.line, location.column);
-	} while (token.header.kind != TokenKind::EndOfFile);
+		// This loop is technically quadratic since Token::to_log_string will search the source for the code location
+		// repeatedly, but it really doesn't matter.
+		str += fmt::format("\t{}\n", token.to_log_string(source));
+	} while (token.kind != TokenKind::EndOfFile);
 
 	return str;
 }
@@ -39,7 +38,7 @@ TokenStream::TokenStream(const SourceLock& source) :
 	stream_.reserve(source.get_length()); // TODO: find heuristic for this
 }
 
-void TokenStream::add_header(TokenKind kind, uint32_t offset) {
+void TokenStream::add_header(TokenKind kind, SourceOffset offset) {
 	stream_.emplace_back(TokenHeader {kind, offset});
 	++num_tokens_;
 }

@@ -15,8 +15,9 @@ foo "bar" 'baz' 123 456;
 
 	ExhaustiveReporter r;
 	auto stream = cero::lex(source, r);
+	auto str = stream.to_string(source);
 
-	CHECK(stream.to_string(source) == R"_____(Token stream for TokenStringForBracketsLiterals (21 tokens)
+	CHECK(str == R"_____(Token stream for TokenStringForBracketsLiterals (21 tokens)
 	LeftParen `(` [2:1]
 	RightParen `)` [2:2]
 	LeftBracket `[` [2:4]
@@ -49,8 +50,9 @@ CERO_TEST(TokenStringForOperators) {
 
 	ExhaustiveReporter r;
 	auto stream = cero::lex(source, r);
+	auto str = stream.to_string(source);
 
-	CHECK(stream.to_string(source) == R"_____(Token stream for TokenStringForOperators (16 tokens)
+	CHECK(str == R"_____(Token stream for TokenStringForOperators (16 tokens)
 	Plus `+` [2:1]
 	Minus `-` [2:3]
 	Star `*` [2:5]
@@ -72,13 +74,11 @@ CERO_TEST(TokenStringForOperators) {
 
 CERO_TEST(TokenStringForKeywords) {
 	auto source = make_test_source(R"_____(
-struct S
-{
-	enum E
-	{}
+struct S {
+	enum E {
+	}
 
-	f() -> int32
-	{
+	f() -> int32 {
 		return 0;
 	}
 }
@@ -86,26 +86,27 @@ struct S
 
 	ExhaustiveReporter r;
 	auto stream = cero::lex(source, r);
+	auto str = stream.to_string(source);
 
-	CHECK(stream.to_string(source) == R"_____(Token stream for TokenStringForKeywords (19 tokens)
+	CHECK(str == R"_____(Token stream for TokenStringForKeywords (19 tokens)
 	Struct `struct` [2:1]
 	Name `S` [2:8]
-	LeftBrace `{` [3:1]
-	Enum `enum` [4:5]
-	Name `E` [4:10]
-	LeftBrace `{` [5:5]
-	RightBrace `}` [5:6]
-	Name `f` [7:5]
-	LeftParen `(` [7:6]
-	RightParen `)` [7:7]
-	ThinArrow `->` [7:9]
-	Name `int32` [7:12]
-	LeftBrace `{` [8:5]
-	Return `return` [9:9]
-	DecIntLiteral `0` [9:16]
-	Semicolon `;` [9:17]
-	RightBrace `}` [10:5]
-	RightBrace `}` [11:1]
-	EndOfFile `` [12:1]
+	LeftBrace `{` [2:10]
+	Enum `enum` [3:5]
+	Name `E` [3:10]
+	LeftBrace `{` [3:12]
+	RightBrace `}` [4:5]
+	Name `f` [6:5]
+	LeftParen `(` [6:6]
+	RightParen `)` [6:7]
+	ThinArrow `->` [6:9]
+	Name `int32` [6:12]
+	LeftBrace `{` [6:18]
+	Return `return` [7:9]
+	DecIntLiteral `0` [7:16]
+	Semicolon `;` [7:17]
+	RightBrace `}` [8:5]
+	RightBrace `}` [9:1]
+	EndOfFile `` [10:1]
 )_____");
 }

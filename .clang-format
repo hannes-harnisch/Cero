@@ -18,7 +18,7 @@ AllowShortBlocksOnASingleLine: Never
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
-AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
 AllowShortLambdasOnASingleLine: Inline
 AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterReturnType: None
@@ -89,7 +89,7 @@ IndentPPDirectives: BeforeHash
 IndentRequiresClause: false
 IndentWidth: 4
 IndentWrappedFunctionNames: false
-InsertBraces: false
+InsertBraces: true
 InsertNewlineAtEOF: true
 InsertTrailingCommas: None
 JavaImportGroups: [ ]

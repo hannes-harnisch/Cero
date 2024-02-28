@@ -202,9 +202,9 @@ bool TokenHeader::is_variable_length() const {
 
 std::string_view Token::get_lexeme(const SourceLock& source) const {
 	if (length == 0) {
-		return get_fixed_length_lexeme(header.kind);
+		return get_fixed_length_lexeme(kind);
 	} else {
-		return source.get_text().substr(header.offset, length);
+		return source.get_text().substr(offset, length);
 	}
 }
 
@@ -231,20 +231,20 @@ namespace {
 } // namespace
 
 std::string Token::to_message_string(const SourceLock& source) const {
-	auto format = get_token_message_format(header.kind);
+	auto format = get_token_message_format(kind);
 	auto lexeme = get_lexeme(source);
 	return fmt::vformat(format, fmt::make_format_args(lexeme));
 }
 
 std::string Token::to_log_string(const SourceLock& source) const {
-	auto token_kind = token_kind_to_string(header.kind);
+	auto token_kind = token_kind_to_string(kind);
 	auto lexeme = get_lexeme(source);
-	auto location = locate_in(source);
-	return fmt::format("{} `{}` [{}]", token_kind, lexeme, location.to_string());
+	auto location = source.locate(offset);
+	return fmt::format("{} `{}` {}", token_kind, lexeme, location.to_short_string());
 }
 
 CodeLocation Token::locate_in(const SourceLock& source) const {
-	return source.locate(header.offset);
+	return source.locate(offset);
 }
 
 } // namespace cero

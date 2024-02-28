@@ -54,7 +54,7 @@ bool SourceCursor::valid() const {
 	return it_ != end_;
 }
 
-uint32_t SourceCursor::offset() const {
+SourceOffset SourceCursor::offset() const {
 	return offset_;
 }
 

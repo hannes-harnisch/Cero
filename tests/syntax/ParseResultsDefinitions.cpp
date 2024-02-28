@@ -6,8 +6,8 @@
 
 CERO_TEST(ParseEmptyFunction) {
 	auto source = make_test_source(R"_____(
-main()
-{}
+main() {
+}
 )_____");
 
 	ExhaustiveReporter r;

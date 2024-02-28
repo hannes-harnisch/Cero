@@ -4,27 +4,27 @@
 CERO_TEST(SourceTooLarge) {
 	ExhaustiveReporter r;
 	r.expect(0, 0, cero::Message::SourceInputTooLarge, cero::MaxSourceLength);
-	build_test_source(r, std::string(16779000, ' '));
+	build_test_source(r, std::string(cero::MaxSourceLength + 1, ' '));
 }
 
 CERO_TEST(IllegalChar) {
 	ExhaustiveReporter r;
 	r.expect(5, 1, cero::Message::UnexpectedCharacter, 0x7);
 	build_test_source(r, R"_____(
-main()
-{}
+main() {
+}
 
-() {}
+() {
+}
 )_____");
 }
 
 CERO_TEST(MissingClosingQuote) {
 	ExhaustiveReporter r;
-	r.expect(4, 28, cero::Message::MissingClosingQuote);
-	r.expect(6, 17, cero::Message::MissingClosingQuote);
+	r.expect(3, 28, cero::Message::MissingClosingQuote);
+	r.expect(5, 17, cero::Message::MissingClosingQuote);
 	build_test_source(r, R"_____(
-foo()
-{
+foo() {
 	let string = "Oh no...;
 	;
 	let ch = 'x;
@@ -35,7 +35,7 @@ foo()
 
 CERO_TEST(UnterminatedBlockComment) {
 	ExhaustiveReporter r;
-	r.expect(2, 3, cero::Message::UnterminatedBlockComment);
+	r.expect(2, 1, cero::Message::UnterminatedBlockComment);
 	build_test_source(r, R"_____(
 /* abc
 )_____");

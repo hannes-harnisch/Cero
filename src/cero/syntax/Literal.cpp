@@ -2,32 +2,27 @@
 
 namespace cero {
 
-AstNumericLiteralExpr evaluate_dec_int_literal(std::string_view) {
-	return {{0}, NumericLiteralKind::Decimal};
+void evaluate_dec_int_literal(std::string_view) {
 }
 
-AstNumericLiteralExpr evaluate_hex_int_literal(std::string_view) {
-	return {{0}, NumericLiteralKind::Hexadecimal};
+void evaluate_hex_int_literal(std::string_view) {
 }
 
-AstNumericLiteralExpr evaluate_bin_int_literal(std::string_view) {
-	return {{0}, NumericLiteralKind::Binary};
+void evaluate_bin_int_literal(std::string_view) {
 }
 
-AstNumericLiteralExpr evaluate_oct_int_literal(std::string_view) {
-	return {{0}, NumericLiteralKind::Octal};
+void evaluate_oct_int_literal(std::string_view) {
 }
 
-AstNumericLiteralExpr evaluate_float_literal(std::string_view) {
-	return {{0}, NumericLiteralKind::Float};
+void evaluate_float_literal(std::string_view) {
 }
 
-AstNumericLiteralExpr evaluate_char_literal(std::string_view) {
-	return {{0}, NumericLiteralKind::Character};
+void evaluate_char_literal(std::string_view) {
 }
 
-AstStringLiteralExpr evaluate_string_literal(std::string_view lexeme) {
-	return {{0}, std::string(lexeme)}; // TODO: escape sequences
+std::string evaluate_string_literal(std::string_view lexeme) {
+	// TODO: escape sequences
+	return std::string(lexeme);
 }
 
 } // namespace cero

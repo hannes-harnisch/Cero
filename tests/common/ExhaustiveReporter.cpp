@@ -9,6 +9,7 @@ ExhaustiveReporter::ExhaustiveReporter() :
 }
 
 ExhaustiveReporter::~ExhaustiveReporter() {
+	// If this fails, not all expected reports were seen.
 	CHECK(expected_reports_.empty());
 }
 

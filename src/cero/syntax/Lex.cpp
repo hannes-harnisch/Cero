@@ -142,14 +142,14 @@ private:
 		}
 	}
 
-	void lex_word(uint32_t begin_offset) {
+	void lex_word(SourceOffset offset) {
 		eat_word_token_rest();
-		auto length = cursor_.offset() - begin_offset;
+		auto length = cursor_.offset() - offset;
 
-		auto lexeme = source_.get_text().substr(begin_offset, length);
+		auto lexeme = source_.get_text().substr(offset, length);
 		auto kind = identify_keyword(lexeme);
 
-		stream_.add_header(kind, begin_offset);
+		stream_.add_header(kind, offset);
 		if (kind == TokenKind::Name) {
 			stream_.add_length(length);
 		}
@@ -172,7 +172,7 @@ private:
 	}
 
 	template<bool (*UTF8_PREDICATE)(uint32_t encoded)>
-	bool check_multibyte_utf8_value(char next, uint32_t begin_offset) {
+	bool check_multibyte_utf8_value(char next, SourceOffset offset) {
 		const auto leading_byte = static_cast<uint8_t>(next);
 		const auto leading_ones = static_cast<uint8_t>(std::countl_one(leading_byte));
 
@@ -190,17 +190,17 @@ private:
 		}
 
 		if (!valid) {
-			report(Message::UnexpectedCharacter, begin_offset, encoding);
+			report(Message::UnexpectedCharacter, offset, encoding);
 		}
 		return valid;
 	}
 
-	void add_variable_length_token(TokenKind kind, uint32_t begin_offset) {
-		stream_.add_header(kind, begin_offset);
-		stream_.add_length(cursor_.offset() - begin_offset);
+	void add_variable_length_token(TokenKind kind, SourceOffset offset) {
+		stream_.add_header(kind, offset);
+		stream_.add_length(cursor_.offset() - offset);
 	}
 
-	void lex_zero(uint32_t offset) {
+	void lex_zero(SourceOffset offset) {
 		auto backup = cursor_;
 		switch (cursor_.next().value_or('\0')) {
 			case 'x':
@@ -222,7 +222,7 @@ private:
 		lex_number(offset);
 	}
 
-	void lex_number(uint32_t offset) {
+	void lex_number(SourceOffset offset) {
 		eat_number_literal<is_dec_digit>();
 		auto cursor_at_token_end = cursor_;
 
@@ -289,7 +289,7 @@ private:
 		return matched;
 	}
 
-	void lex_dot(uint32_t offset) {
+	void lex_dot(SourceOffset offset) {
 		if (cursor_.match('.')) {
 			if (cursor_.match('.')) {
 				stream_.add_header(TokenKind::Ellipsis, offset);
@@ -305,7 +305,7 @@ private:
 		}
 	}
 
-	void lex_colon(uint32_t offset) {
+	void lex_colon(SourceOffset offset) {
 		if (cursor_.match(':')) {
 			stream_.add_header(TokenKind::ColonColon, offset);
 		} else {
@@ -313,7 +313,7 @@ private:
 		}
 	}
 
-	void lex_left_angle(uint32_t offset) {
+	void lex_left_angle(SourceOffset offset) {
 		if (cursor_.match('<')) {
 			if (cursor_.match('=')) {
 				stream_.add_header(TokenKind::LeftAngleAngleEquals, offset);
@@ -327,7 +327,7 @@ private:
 		}
 	}
 
-	void lex_right_angle(uint32_t offset) {
+	void lex_right_angle(SourceOffset offset) {
 		if (cursor_.match('>')) {
 			if (cursor_.match('=')) {
 				stream_.add_header(TokenKind::RightAngleAngleEquals, offset);
@@ -342,7 +342,7 @@ private:
 		}
 	}
 
-	void lex_equal(uint32_t offset) {
+	void lex_equal(SourceOffset offset) {
 		if (cursor_.match('=')) {
 			stream_.add_header(TokenKind::EqualsEquals, offset);
 		} else if (cursor_.match('>')) {
@@ -352,7 +352,7 @@ private:
 		}
 	}
 
-	void lex_plus(uint32_t offset) {
+	void lex_plus(SourceOffset offset) {
 		if (cursor_.match('+')) {
 			stream_.add_header(TokenKind::PlusPlus, offset);
 		} else if (cursor_.match('=')) {
@@ -362,7 +362,7 @@ private:
 		}
 	}
 
-	void lex_minus(uint32_t offset) {
+	void lex_minus(SourceOffset offset) {
 		if (cursor_.match('>')) {
 			stream_.add_header(TokenKind::ThinArrow, offset);
 		} else if (cursor_.match('-')) {
@@ -374,7 +374,7 @@ private:
 		}
 	}
 
-	void lex_star(uint32_t offset) {
+	void lex_star(SourceOffset offset) {
 		if (cursor_.match('*')) {
 			if (cursor_.match('=')) {
 				stream_.add_header(TokenKind::StarStarEquals, offset);
@@ -388,12 +388,12 @@ private:
 		}
 	}
 
-	void lex_slash(uint32_t offset) {
+	void lex_slash(SourceOffset offset) {
 		if (cursor_.match('/')) {
 			eat_line_comment();
 			add_variable_length_token(TokenKind::LineComment, offset);
 		} else if (cursor_.match('*')) {
-			eat_block_comment();
+			eat_block_comment(offset);
 			add_variable_length_token(TokenKind::BlockComment, offset);
 		} else if (cursor_.match('=')) {
 			stream_.add_header(TokenKind::SlashEquals, offset);
@@ -411,9 +411,7 @@ private:
 		}
 	}
 
-	void eat_block_comment() {
-		auto comment_begin = cursor_.offset();
-
+	void eat_block_comment(SourceOffset offset) {
 		uint32_t unclosed_count = 1;
 		while (cursor_.valid()) {
 			if (cursor_.match('*')) {
@@ -430,11 +428,11 @@ private:
 		}
 
 		if (unclosed_count != 0) {
-			report(Message::UnterminatedBlockComment, comment_begin);
+			report(Message::UnterminatedBlockComment, offset);
 		}
 	}
 
-	void lex_percent(uint32_t offset) {
+	void lex_percent(SourceOffset offset) {
 		if (cursor_.match('=')) {
 			stream_.add_header(TokenKind::PercentEquals, offset);
 		} else {
@@ -442,7 +440,7 @@ private:
 		}
 	}
 
-	void lex_bang(uint32_t offset) {
+	void lex_bang(SourceOffset offset) {
 		if (cursor_.match('=')) {
 			stream_.add_header(TokenKind::BangEquals, offset);
 		} else {
@@ -450,7 +448,7 @@ private:
 		}
 	}
 
-	void lex_ampersand(uint32_t offset) {
+	void lex_ampersand(SourceOffset offset) {
 		if (cursor_.match('&')) {
 			stream_.add_header(TokenKind::AmpersandAmpersand, offset);
 		} else if (cursor_.match('=')) {
@@ -460,7 +458,7 @@ private:
 		}
 	}
 
-	void lex_pipe(uint32_t offset) {
+	void lex_pipe(SourceOffset offset) {
 		if (cursor_.match('|')) {
 			stream_.add_header(TokenKind::PipePipe, offset);
 		} else if (cursor_.match('=')) {
@@ -470,7 +468,7 @@ private:
 		}
 	}
 
-	void lex_tilde(uint32_t offset) {
+	void lex_tilde(SourceOffset offset) {
 		if (cursor_.match('=')) {
 			stream_.add_header(TokenKind::TildeEquals, offset);
 		} else {
@@ -478,7 +476,7 @@ private:
 		}
 	}
 
-	void lex_quoted_sequence(TokenKind kind, uint32_t offset, char quote) {
+	void lex_quoted_sequence(TokenKind kind, SourceOffset offset, char quote) {
 		bool ignore_quote = false;
 		while (auto next = cursor_.peek()) {
 			const char c = *next;
@@ -501,22 +499,22 @@ private:
 		add_variable_length_token(kind, offset);
 	}
 
-	void lex_unicode_name(char next, uint32_t begin_offset) {
-		if (check_multibyte_utf8_value<is_utf8_xid_start>(next, begin_offset)) {
+	void lex_unicode_name(char next, SourceOffset offset) {
+		if (check_multibyte_utf8_value<is_utf8_xid_start>(next, offset)) {
 			eat_word_token_rest();
 		}
-		add_variable_length_token(TokenKind::Name, begin_offset);
+		add_variable_length_token(TokenKind::Name, offset);
 	}
 
 	template<typename... Args>
-	void report(Message message, uint32_t begin_offset, Args&&... args) const {
-		auto location = source_.locate(begin_offset);
+	void report(Message message, SourceOffset offset, Args&&... args) const {
+		auto location = source_.locate(offset);
 		reporter_.report(message, location, std::forward<Args>(args)...);
 	}
 
 	static TokenKind identify_keyword(std::string_view lexeme) {
 		using enum TokenKind;
-		switch (lexeme.length()) {
+		switch (lexeme.length()) { // clang-format off
 			case 2:
 				if (lexeme == "do") return Do;
 				if (lexeme == "if") return If;
@@ -562,7 +560,7 @@ private:
 			case 9:
 				if (lexeme == "unchecked") return Unchecked;
 				break;
-		}
+		} // clang-format on
 		return Name;
 	}
 };

@@ -11,6 +11,7 @@ struct CodeLocation {
 	uint32_t column = 0;
 
 	std::string to_string() const;
+	std::string to_short_string() const;
 
 	bool operator==(const CodeLocation&) const = default;
 };

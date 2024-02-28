@@ -11,7 +11,7 @@ void check_token_kinds(const cero::TokenStream& token_stream, std::initializer_l
 
 	cero::TokenCursor c(token_stream);
 	for (auto kind : kinds) {
-		CHECK(kind == c.next().header.kind);
+		CHECK(kind == c.next().kind);
 	}
 }
 
@@ -174,7 +174,10 @@ CERO_TEST(LexLineComments) {
 
 	cero::TokenCursor c(tokens);
 	CHECK(c.next().get_lexeme(source) == "//");
+
+	// If you get a test failure here, your editor may have removed the trailing space on line 3 of the test source above.
 	CHECK(c.next().get_lexeme(source) == "// ");
+
 	CHECK(c.next().get_lexeme(source) == "// abc");
 	CHECK(c.next().get_lexeme(source) == "// //");
 }

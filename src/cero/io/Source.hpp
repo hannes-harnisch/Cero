@@ -10,12 +10,16 @@
 
 namespace cero {
 
-// Number of bits required to represent any header into Cero source code. Chosen so we can put any source header into a 32-bit
-// integer while having 8 bits left over for other metadata.
+// Number of bits required to represent any offset into a Cero source file. Chosen such that we can put any source header into a
+// 32-bit integer while having 8 bits left over for other metadata.
 constexpr inline size_t SourceOffsetBits = 24;
 
-// Maximum allowed byte size of a Cero source file (16 MiB), derived from the number of bits needed to represent a token offset.
-constexpr inline size_t MaxSourceLength = (1 << SourceOffsetBits) - 1;
+// Recommended type to use for values and bit fields representing offsets into a source file.
+using SourceOffset = uint32_t;
+
+// Maximum allowed byte size of a Cero source file (16 MiB), derived from the number of bits needed to represent the source
+// offset of any valid token including the end-of-file token, whose offset equals the source length.
+constexpr inline SourceOffset MaxSourceLength = (1 << SourceOffsetBits) - 1;
 
 class SourceLock {
 public:
@@ -25,7 +29,7 @@ public:
 
 	std::string_view get_path() const;
 
-	CodeLocation locate(uint32_t offset) const;
+	CodeLocation locate(SourceOffset offset) const;
 
 private:
 	std::optional<FileMapping> mapping_;
@@ -43,7 +47,7 @@ class Source {
 public:
 	static Source from_file(std::string_view path, const Config& config);
 
-	// Exists primarily for testing purposes, so as to not have to read in a file for every test source.
+	// Exists primarily for testing purposes, to not have to read in a file for every test source.
 	static Source from_text(std::string_view path, std::string_view text, const Config& config);
 
 	std::string_view get_path() const;

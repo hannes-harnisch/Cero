@@ -30,7 +30,7 @@ std::string_view get_message_format(Message message) {
 		case ExpectParenAfterOutputs: return "expected `)` after function outputs, but found {}";
 		case ExpectBraceBeforeFuncBody: return "expected `{{` before function body, but found {}";
 		case ExpectNameAfterLet: return "expected a name after `let` specifier, but found {}";
-		case ExpectNameAfterDeclType: return "expected a name after type in declaration, but found {}";
+		case ExpectNameAfterDeclarationType: return "expected a name after type in declaration, but found {}";
 		case ExpectExpr: return "expected expression, but found {}";
 		case ExpectSemicolon: return "expected a `;`, but found {}";
 		case ExpectNameAfterDot: return "expected a member name after `.`, but found {}";

@@ -11,20 +11,19 @@ Token TokenCursor::next() {
 
 	if (header.kind != TokenKind::EndOfFile) {
 		++it_;
+		if (header.is_variable_length()) {
+			const auto length = it_->length;
+			++it_;
+			return Token {header, length};
+		}
 	}
 
-	if (header.is_variable_length()) {
-		const auto length = it_->length;
-		++it_;
-		return Token {header, length};
-	} else {
-		return Token {header, 0};
-	}
+	return Token {header, 0};
 }
 
 bool TokenCursor::match(TokenKind kind) {
 	auto token = peek();
-	if (token.header.kind == kind) {
+	if (token.kind == kind) {
 		advance();
 		return true;
 	}
@@ -33,7 +32,7 @@ bool TokenCursor::match(TokenKind kind) {
 
 std::optional<Token> TokenCursor::match_token(TokenKind kind) {
 	auto token = peek();
-	if (token.header.kind == kind) {
+	if (token.kind == kind) {
 		advance();
 		return token;
 	}
@@ -42,15 +41,11 @@ std::optional<Token> TokenCursor::match_token(TokenKind kind) {
 
 std::optional<Token> TokenCursor::match_name() {
 	auto token = peek();
-	if (token.header.kind == TokenKind::Name) {
+	if (token.kind == TokenKind::Name) {
 		advance();
 		return token;
 	}
 	return std::nullopt;
-}
-
-TokenKind TokenCursor::current_kind() const {
-	return it_->header.kind;
 }
 
 Token TokenCursor::current() const {
@@ -63,6 +58,14 @@ Token TokenCursor::current() const {
 		length = 0;
 	}
 	return {header, length};
+}
+
+TokenKind TokenCursor::current_kind() const {
+	return it_->header.kind;
+}
+
+SourceOffset TokenCursor::current_offset() const {
+	return it_->header.offset;
 }
 
 Token TokenCursor::peek() {
@@ -84,6 +87,11 @@ TokenKind TokenCursor::peek_kind() {
 	return it_->header.kind;
 }
 
+SourceOffset TokenCursor::peek_offset() {
+	skip_comments();
+	return it_->header.offset;
+}
+
 void TokenCursor::advance() {
 	if (it_->header.kind != TokenKind::EndOfFile) {
 		const auto header = it_->header;
@@ -97,7 +105,7 @@ void TokenCursor::advance() {
 void TokenCursor::skip_comments() {
 	auto kind = it_->header.kind;
 	while (kind == TokenKind::LineComment || kind == TokenKind::BlockComment) {
-		advance();
+		it_ += 2;
 		kind = it_->header.kind;
 	}
 }

@@ -45,17 +45,17 @@ enum class AstNodeKind {
 
 template<AstNodeKind K>
 struct AstNodeHeader {
-	AstNodeKind kind : 8;
-	unsigned offset : SourceOffsetBits;
+	AstNodeKind kind : 8 = K;
+	SourceOffset offset : SourceOffsetBits = 0;
 
-	AstNodeHeader() :
-		kind(K),
-		offset(0) {
+	AstNodeHeader() = default;
+
+	AstNodeHeader(SourceOffset offset) :
+		offset(offset & 0x00ffffffu) {
 	}
 
-	AstNodeHeader(uint32_t offset) :
-		kind(K),
-		offset(offset & 0x00ffffffu) {
+	CodeLocation locate_in(const SourceLock& source) const {
+		return source.locate(offset);
 	}
 };
 
@@ -79,7 +79,7 @@ struct AstStructDefinition {
 	AccessSpecifier access = {};
 	StringId name;
 
-	uint32_t num_children() const {
+	static uint32_t num_children() {
 		return 0;
 	}
 };
@@ -89,7 +89,7 @@ struct AstEnumDefinition {
 	AccessSpecifier access = {};
 	StringId name;
 
-	uint32_t num_children() const {
+	static uint32_t num_children() {
 		return 0;
 	}
 };
@@ -128,7 +128,7 @@ struct AstFunctionOutput {
 	AstNodeHeader<AstNodeKind::FunctionOutput> header;
 	StringId name;
 
-	uint32_t num_children() const {
+	static uint32_t num_children() {
 		return 1;
 	}
 };
@@ -262,7 +262,7 @@ struct AstUnaryExpr {
 	AstNodeHeader<AstNodeKind::UnaryExpr> header;
 	UnaryOperator op = {};
 
-	uint32_t num_children() const {
+	static uint32_t num_children() {
 		return 1;
 	}
 };
@@ -307,7 +307,7 @@ struct AstBinaryExpr {
 	AstNodeHeader<AstNodeKind::BinaryExpr> header;
 	BinaryOperator op = {};
 
-	uint32_t num_children() const {
+	static uint32_t num_children() {
 		return 2;
 	}
 };
@@ -361,7 +361,7 @@ struct AstNumericLiteralExpr {
 	AstNodeHeader<AstNodeKind::NumericLiteralExpr> header;
 	NumericLiteralKind kind = {};
 
-	uint32_t num_children() const {
+	static uint32_t num_children() {
 		return 0;
 	}
 };
@@ -370,7 +370,7 @@ struct AstStringLiteralExpr {
 	AstNodeHeader<AstNodeKind::StringLiteralExpr> header;
 	std::string value;
 
-	uint32_t num_children() const {
+	static uint32_t num_children() {
 		return 0;
 	}
 };
@@ -398,7 +398,7 @@ struct AstPointerTypeExpr {
 	AstNodeHeader<AstNodeKind::PointerTypeExpr> header;
 	bool has_permission = false;
 
-	uint32_t num_children() const {
+	static uint32_t num_children() {
 		return 2;
 	}
 };

@@ -112,15 +112,14 @@ std::string_view get_fixed_length_lexeme(TokenKind kind);
 
 struct TokenHeader {
 	TokenKind kind : 8 = {};
-	unsigned offset : SourceOffsetBits = 0;
+	SourceOffset offset : SourceOffsetBits = 0;
 
 	bool is_variable_length() const;
 };
 
 static_assert(sizeof(TokenHeader) == 4);
 
-struct Token {
-	TokenHeader header;
+struct Token : TokenHeader {
 	uint32_t length = 0; // will be 0 if the token kind is a fixed-length kind
 
 	std::string_view get_lexeme(const SourceLock& source) const;
