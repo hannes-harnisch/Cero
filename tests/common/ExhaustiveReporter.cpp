@@ -13,6 +13,14 @@ ExhaustiveReporter::~ExhaustiveReporter() {
 	CHECK(expected_reports_.empty());
 }
 
+void ExhaustiveReporter::expect(uint32_t line, uint32_t column, cero::Message message, cero::ReportArgs args) {
+	auto format = cero::get_message_format(message);
+	auto message_text = fmt::vformat(format, args.store);
+
+	cero::CodeLocation location {test_name_, line, column};
+	expected_reports_.emplace(message, location, std::move(message_text));
+}
+
 void ExhaustiveReporter::handle_report(cero::Message message,
 									   cero::Severity,
 									   cero::CodeLocation location,
@@ -28,12 +36,4 @@ void ExhaustiveReporter::handle_report(cero::Message message,
 	if (report_matches) {
 		expected_reports_.pop();
 	}
-}
-
-void ExhaustiveReporter::on_expect(uint32_t line, uint32_t column, cero::Message message, fmt::format_args args) {
-	auto format = cero::get_message_format(message);
-	auto message_text = fmt::vformat(format, args);
-
-	cero::CodeLocation location {test_name_, line, column};
-	expected_reports_.emplace(message, location, std::move(message_text));
 }

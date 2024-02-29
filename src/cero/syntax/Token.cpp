@@ -97,23 +97,6 @@ std::string_view token_kind_to_string(TokenKind kind) {
 	fail_unreachable();
 }
 
-bool is_variable_length_token(TokenKind kind) {
-	switch (kind) {
-		using enum TokenKind;
-		case Name:
-		case LineComment:
-		case BlockComment:
-		case DecIntLiteral:
-		case HexIntLiteral:
-		case BinIntLiteral:
-		case OctIntLiteral:
-		case FloatLiteral:
-		case CharLiteral:
-		case StringLiteral: return true;
-		default: return false;
-	}
-}
-
 std::string_view get_fixed_length_lexeme(TokenKind kind) {
 	switch (kind) {
 		using enum TokenKind;
@@ -196,11 +179,99 @@ std::string_view get_fixed_length_lexeme(TokenKind kind) {
 	}
 }
 
-bool TokenHeader::is_variable_length() const {
-	return is_variable_length_token(kind);
+bool is_variable_length_token(TokenKind kind) {
+	switch (kind) {
+		using enum TokenKind;
+		case Name:
+		case LineComment:
+		case BlockComment:
+		case DecIntLiteral:
+		case HexIntLiteral:
+		case BinIntLiteral:
+		case OctIntLiteral:
+		case FloatLiteral:
+		case CharLiteral:
+		case StringLiteral: return true;
+		case Dot:
+		case Comma:
+		case Colon:
+		case Semicolon:
+		case LeftBrace:
+		case RightBrace:
+		case LeftParen:
+		case RightParen:
+		case LeftBracket:
+		case RightBracket:
+		case LeftAngle:
+		case RightAngle:
+		case Equals:
+		case Plus:
+		case Minus:
+		case Star:
+		case Slash:
+		case Percent:
+		case Bang:
+		case Ampersand:
+		case Pipe:
+		case Tilde:
+		case Caret:
+		case QuestionMark:
+		case At:
+		case Dollar:
+		case Hash:
+		case ThinArrow:
+		case ThickArrow:
+		case ColonColon:
+		case PlusPlus:
+		case MinusMinus:
+		case AmpersandAmpersand:
+		case PipePipe:
+		case EqualsEquals:
+		case BangEquals:
+		case LeftAngleEquals:
+		case RightAngleEquals:
+		case StarStar:
+		case LeftAngleAngle:
+		case PlusEquals:
+		case MinusEquals:
+		case StarEquals:
+		case SlashEquals:
+		case PercentEquals:
+		case AmpersandEquals:
+		case PipeEquals:
+		case TildeEquals:
+		case Ellipsis:
+		case StarStarEquals:
+		case LeftAngleAngleEquals:
+		case RightAngleAngleEquals:
+		case Break:
+		case Catch:
+		case Const:
+		case Continue:
+		case Do:
+		case Else:
+		case Enum:
+		case For:
+		case If:
+		case In:
+		case Let:
+		case Private:
+		case Public:
+		case Return:
+		case Static:
+		case Struct:
+		case Switch:
+		case Throw:
+		case Try:
+		case Unchecked:
+		case Var:
+		case While:
+		case EndOfFile: return false;
+	}
+	return false;
 }
 
-std::string_view Token::get_lexeme(const SourceLock& source) const {
+std::string_view Token::get_lexeme(const LockedSource& source) const {
 	if (length == 0) {
 		return get_fixed_length_lexeme(kind);
 	} else {
@@ -230,20 +301,20 @@ namespace {
 
 } // namespace
 
-std::string Token::to_message_string(const SourceLock& source) const {
+std::string Token::to_message_string(const LockedSource& source) const {
 	auto format = get_token_message_format(kind);
 	auto lexeme = get_lexeme(source);
 	return fmt::vformat(format, fmt::make_format_args(lexeme));
 }
 
-std::string Token::to_log_string(const SourceLock& source) const {
+std::string Token::to_log_string(const LockedSource& source) const {
 	auto token_kind = token_kind_to_string(kind);
 	auto lexeme = get_lexeme(source);
 	auto location = source.locate(offset);
 	return fmt::format("{} `{}` {}", token_kind, lexeme, location.to_short_string());
 }
 
-CodeLocation Token::locate_in(const SourceLock& source) const {
+CodeLocation Token::locate_in(const LockedSource& source) const {
 	return source.locate(offset);
 }
 

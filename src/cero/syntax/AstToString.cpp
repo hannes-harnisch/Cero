@@ -54,7 +54,7 @@ namespace {
 
 } // namespace
 
-AstToString::AstToString(const Ast& ast, const SourceLock& source) :
+AstToString::AstToString(const Ast& ast, const LockedSource& source) :
 	cursor_(ast),
 	source_(source),
 	edge_(&BODY),
@@ -125,7 +125,7 @@ void AstToString::visit_child_if(bool condition) {
 	}
 }
 
-void AstToString::visit_children(uint16_t n) {
+void AstToString::visit_children(uint32_t n) {
 	while (n > 0) {
 		set_tail(--n == 0);
 		cursor_.visit_child(*this);

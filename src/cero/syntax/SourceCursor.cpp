@@ -2,7 +2,7 @@
 
 namespace cero {
 
-SourceCursor::SourceCursor(const SourceLock& source) :
+SourceCursor::SourceCursor(const LockedSource& source) :
 	it_(source.get_text().begin()),
 	end_(source.get_text().end()),
 	offset_(0) {

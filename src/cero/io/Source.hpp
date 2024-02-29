@@ -21,7 +21,7 @@ using SourceOffset = uint32_t;
 // offset of any valid token including the end-of-file token, whose offset equals the source length.
 constexpr inline SourceOffset MaxSourceLength = (1 << SourceOffsetBits) - 1;
 
-class SourceLock {
+class LockedSource {
 public:
 	std::string_view get_text() const;
 
@@ -37,8 +37,8 @@ private:
 	std::string_view path_;
 	uint8_t tab_size_;
 
-	explicit SourceLock(std::string_view text, std::string_view path, uint8_t tab_size);
-	explicit SourceLock(FileMapping mapping, std::string_view path, uint8_t tab_size);
+	explicit LockedSource(std::string_view text, std::string_view path, uint8_t tab_size);
+	explicit LockedSource(FileMapping mapping, std::string_view path, uint8_t tab_size);
 
 	friend class Source;
 };
@@ -52,7 +52,7 @@ public:
 
 	std::string_view get_path() const;
 
-	Result<SourceLock, std::error_code> lock() const;
+	Result<LockedSource, std::error_code> lock() const;
 
 private:
 	std::string_view path_;

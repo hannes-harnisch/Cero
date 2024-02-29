@@ -43,7 +43,7 @@ Result<FileMapping, std::error_code> FileMapping::from(std::string_view path) {
 
 	HANDLE mapping = INVALID_HANDLE_VALUE;
 	const void* addr = "";
-	size_t size = static_cast<size_t>(file_size.QuadPart);
+	const size_t size = static_cast<size_t>(file_size.QuadPart);
 	if (size != 0) {
 		mapping = ::CreateFileMappingW(file, nullptr, PAGE_READONLY, 0, 0, nullptr);
 		if (mapping == nullptr) {

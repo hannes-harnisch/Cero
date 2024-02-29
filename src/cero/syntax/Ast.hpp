@@ -18,7 +18,7 @@ public:
 
 	std::span<const AstNode> raw() const;
 
-	std::string to_string(const SourceLock& source) const;
+	std::string to_string(const LockedSource& source) const;
 
 private:
 	std::vector<AstNode> nodes_;

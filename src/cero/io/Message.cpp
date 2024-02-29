@@ -18,7 +18,7 @@ std::string_view get_message_format(Message message) {
 		using enum Message;
 		case FileNotFound: return "file not found";
 		case CouldNotOpenFile: return "could not open file (system error {})";
-		case SourceInputTooLarge: return "source input is too large, limit is {} bytes";
+		case SourceInputTooLarge: return "source input is too large, maximum allowed is {} bytes";
 		case UnexpectedCharacter: return "unexpected character `0x{:x}`";
 		case MissingClosingQuote: return "missing closing quote";
 		case UnterminatedBlockComment: return "block comment must be closed with `*/`";

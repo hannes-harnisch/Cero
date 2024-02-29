@@ -16,7 +16,7 @@ std::span<const TokenStream::Unit> TokenStream::raw() const {
 	return {stream_};
 }
 
-std::string TokenStream::to_string(const SourceLock& source) const {
+std::string TokenStream::to_string(const LockedSource& source) const {
 	auto str = fmt::format("Token stream for {} ({} token{})\n", source.get_path(), num_tokens_, num_tokens_ == 1 ? "" : "s");
 
 	TokenCursor cursor(*this);
@@ -32,14 +32,14 @@ std::string TokenStream::to_string(const SourceLock& source) const {
 	return str;
 }
 
-TokenStream::TokenStream(const SourceLock& source) :
+TokenStream::TokenStream(const LockedSource& source) :
 	num_tokens_(0),
 	has_errors_(false) {
 	stream_.reserve(source.get_length()); // TODO: find heuristic for this
 }
 
 void TokenStream::add_header(TokenKind kind, SourceOffset offset) {
-	stream_.emplace_back(TokenHeader {kind, offset});
+	stream_.emplace_back(TokenHeader {kind, offset & 0x00ffffffu});
 	++num_tokens_;
 }
 

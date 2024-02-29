@@ -7,10 +7,11 @@ namespace cero {
 namespace {
 
 	void verify_message_arg_count(Message message, size_t arg_count) {
-		size_t count = 0;
+		auto format = get_message_format(message);
 
+		size_t count = 0;
 		bool open = false;
-		for (char c : get_message_format(message)) {
+		for (char c : format) {
 			if (c == '{') {
 				open = true;
 			} else if (c == '}' && open) {
@@ -20,22 +21,27 @@ namespace {
 		}
 
 		if (count != arg_count) {
-			fail_assert("Unexpected number of message arguments.");
+			fail_assert("Incorrect number of message arguments.");
 		}
 	}
 
 } // namespace
 
-bool Reporter::has_errors() const {
-	return has_error_reports_;
+void ReportArgs::store_args(fmt::format_args args) {
+	store.reserve(count, 0);
+
+	int i = 0;
+	while (auto arg = args.get(i++)) {
+		arg.visit([&]<typename T>(const T& value) {
+			if constexpr (fmt::is_formattable<T>::value) {
+				store.push_back(value);
+			}
+		});
+	}
 }
 
-void Reporter::set_warnings_as_errors(bool value) {
-	warnings_as_errors_ = value;
-}
-
-void Reporter::on_report(Message message, CodeLocation location, fmt::format_args args, size_t arg_count) {
-	verify_message_arg_count(message, arg_count);
+void Reporter::report(Message message, CodeLocation location, ReportArgs args) {
+	verify_message_arg_count(message, args.count);
 
 	auto severity = get_message_severity(message);
 	if (warnings_as_errors_ && severity == Severity::Warning) {
@@ -47,7 +53,15 @@ void Reporter::on_report(Message message, CodeLocation location, fmt::format_arg
 	}
 
 	auto format = get_message_format(message);
-	handle_report(message, severity, location, fmt::vformat(format, args));
+	handle_report(message, severity, location, fmt::vformat(format, args.store));
+}
+
+bool Reporter::has_errors() const {
+	return has_error_reports_;
+}
+
+void Reporter::set_warnings_as_errors(bool value) {
+	warnings_as_errors_ = value;
 }
 
 } // namespace cero

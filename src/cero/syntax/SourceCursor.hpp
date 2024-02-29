@@ -9,7 +9,7 @@ namespace cero {
 
 class SourceCursor {
 public:
-	explicit SourceCursor(const SourceLock& source);
+	explicit SourceCursor(const LockedSource& source);
 
 	struct Position {
 		char character;

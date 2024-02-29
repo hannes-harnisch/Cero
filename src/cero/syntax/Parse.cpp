@@ -61,7 +61,7 @@ consteval Precedence lookup_precedence_for_associativity(BinaryOperator op) {
 
 class Parser {
 public:
-	Parser(const TokenStream& token_stream, const SourceLock& source, Reporter& reporter) :
+	Parser(const TokenStream& token_stream, const LockedSource& source, Reporter& reporter) :
 		source_(source),
 		reporter_(reporter),
 		cursor_(token_stream) {
@@ -87,7 +87,7 @@ public:
 
 private:
 	std::vector<AstNode> nodes_;
-	const SourceLock& source_;
+	const LockedSource& source_;
 	Reporter& reporter_;
 	TokenCursor cursor_;
 	bool is_looking_ahead_ = false;
@@ -256,11 +256,11 @@ private:
 		output = AstFunctionOutput(offset, name);
 	}
 
-	uint16_t parse_block() {
+	uint32_t parse_block() {
 		const uint32_t saved_angles = std::exchange(open_angles_, 0);
 		const bool saved_binding_allowed = std::exchange(is_binding_allowed_, true);
 
-		uint16_t num_statements = 0;
+		uint32_t num_statements = 0;
 		while (!cursor_.match(TokenKind::RightBrace)) {
 			try {
 				parse_statement();
@@ -537,7 +537,7 @@ private:
 		if (auto colon = cursor_.match_token(TokenKind::Colon)) {
 			auto next = cursor_.peek();
 			if (next.kind == TokenKind::LeftBrace) {
-				report(Message::UnnecessaryColonBeforeBlock, colon->locate_in(source_));
+				report(Message::UnnecessaryColonBeforeBlock, colon->locate_in(source_), {});
 			}
 		} else {
 			auto next = cursor_.peek();
@@ -844,7 +844,7 @@ private:
 			auto location = operator_token.locate_in(source_);
 			auto left_str = binary_operator_to_string(left);
 			auto right_str = binary_operator_to_string(right);
-			report(Message::AmbiguousOperatorMixing, location, left_str, right_str);
+			report(Message::AmbiguousOperatorMixing, location, ReportArgs(left_str, right_str));
 		}
 	}
 
@@ -892,7 +892,7 @@ private:
 	void validate_unary_binary_associativity(UnaryOperator left, BinaryOperator right, Token operator_token) {
 		if (left == UnaryOperator::Negate && right == BinaryOperator::Power) {
 			auto location = operator_token.locate_in(source_);
-			report(Message::AmbiguousOperatorMixing, location, "-", "**");
+			report(Message::AmbiguousOperatorMixing, location, ReportArgs("-", "**"));
 		}
 	}
 
@@ -1067,7 +1067,7 @@ private:
 
 		if (auto equal = cursor_.match_token(TokenKind::Equals)) {
 			auto location = equal->locate_in(source_);
-			report(Message::FuncTypeDefaultArgument, location);
+			report(Message::FuncTypeDefaultArgument, location, {});
 			throw ParseError();
 		}
 
@@ -1103,45 +1103,39 @@ private:
 	}
 
 	void expect(TokenKind kind, Message message) {
-		auto token = cursor_.peek();
-		if (token.kind == kind) {
-			cursor_.advance();
-		} else {
-			report_expectation(message, token);
+		if (!cursor_.match(kind)) {
+			report_expectation(message, cursor_.peek());
 			throw ParseError();
 		}
 	}
 
 	std::string_view expect_name(Message message) {
-		auto token = cursor_.peek();
-		if (token.kind == TokenKind::Name) {
-			cursor_.advance();
-			return token.get_lexeme(source_);
+		if (auto name_token = cursor_.match_name()) {
+			return name_token->get_lexeme(source_);
+		} else {
+			report_expectation(message, cursor_.peek());
+			return {};
 		}
-
-		report_expectation(message, token);
-		return {};
 	}
 
 	void report_expectation(Message message, Token unexpected) {
 		auto location = unexpected.locate_in(source_);
-		report(message, location, unexpected.to_message_string(source_));
+		report(message, location, ReportArgs(unexpected.to_message_string(source_)));
 	}
 
-	template<typename... Args>
-	void report(Message message, CodeLocation location, Args&&... args) {
+	void report(Message message, CodeLocation location, ReportArgs args) {
 		if (!is_looking_ahead_) {
-			reporter_.report(message, location, std::forward<Args>(args)...);
+			reporter_.report(message, location, std::move(args));
 		}
 	}
 };
 
-Ast parse(const SourceLock& source, Reporter& reporter) {
+Ast parse(const LockedSource& source, Reporter& reporter) {
 	auto token_stream = lex(source, reporter);
 	return parse(token_stream, source, reporter);
 }
 
-Ast parse(const TokenStream& token_stream, const SourceLock& source, Reporter& reporter) {
+Ast parse(const TokenStream& token_stream, const LockedSource& source, Reporter& reporter) {
 	Parser parser(token_stream, source, reporter);
 	return parser.parse();
 }

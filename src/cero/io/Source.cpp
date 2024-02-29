@@ -2,24 +2,24 @@
 
 namespace cero {
 
-std::string_view SourceLock::get_text() const {
+std::string_view LockedSource::get_text() const {
 	return text_;
 }
 
-size_t SourceLock::get_length() const {
+size_t LockedSource::get_length() const {
 	return text_.length();
 }
 
-std::string_view SourceLock::get_path() const {
+std::string_view LockedSource::get_path() const {
 	return path_;
 }
 
-CodeLocation SourceLock::locate(SourceOffset offset) const {
+CodeLocation LockedSource::locate(SourceOffset offset) const {
 	auto range = text_.substr(0, offset);
 
-	auto line = static_cast<uint32_t>(std::count(range.begin(), range.end(), '\n') + 1);
+	const auto line = static_cast<uint32_t>(std::count(range.begin(), range.end(), '\n') + 1);
 
-	size_t line_index = range.find_last_of('\n');
+	const size_t line_index = range.find_last_of('\n');
 	if (line_index != std::string_view::npos) {
 		range = range.substr(line_index + 1);
 	}
@@ -35,14 +35,14 @@ CodeLocation SourceLock::locate(SourceOffset offset) const {
 	return {path_, line, column};
 }
 
-SourceLock::SourceLock(std::string_view text, std::string_view path, uint8_t tab_size) :
+LockedSource::LockedSource(std::string_view text, std::string_view path, uint8_t tab_size) :
 	mapping_(std::nullopt),
 	text_(text),
 	path_(path),
 	tab_size_(tab_size) {
 }
 
-SourceLock::SourceLock(FileMapping mapping, std::string_view path, uint8_t tab_size) :
+LockedSource::LockedSource(FileMapping mapping, std::string_view path, uint8_t tab_size) :
 	mapping_(std::move(mapping)),
 	text_(mapping_->get_text()),
 	path_(path),
@@ -61,12 +61,13 @@ std::string_view Source::get_path() const {
 	return path_;
 }
 
-Result<SourceLock, std::error_code> Source::lock() const {
+Result<LockedSource, std::error_code> Source::lock() const {
 	if (text_.data() == nullptr) {
-		return FileMapping::from(path_).transform(
-			[&](FileMapping&& file_mapping) -> SourceLock { return SourceLock(std::move(file_mapping), path_, tab_size_); });
+		return FileMapping::from(path_).map([&](FileMapping&& file_mapping) -> LockedSource {
+			return LockedSource(std::move(file_mapping), path_, tab_size_);
+		});
 	} else {
-		return SourceLock(text_, path_, tab_size_);
+		return LockedSource(text_, path_, tab_size_);
 	}
 }
 

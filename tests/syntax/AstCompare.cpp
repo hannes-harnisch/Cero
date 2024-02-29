@@ -363,7 +363,7 @@ void AstCompare::visit_child_if(bool condition) {
 	}
 }
 
-void AstCompare::visit_children(uint16_t n) {
+void AstCompare::visit_children(uint32_t n) {
 	++current_level_;
 	cursor_.visit_children(n, *this);
 	--current_level_;

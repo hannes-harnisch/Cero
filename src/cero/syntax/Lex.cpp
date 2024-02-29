@@ -8,7 +8,7 @@ namespace cero {
 
 class Lexer {
 public:
-	Lexer(const SourceLock& source, Reporter& reporter) :
+	Lexer(const LockedSource& source, Reporter& reporter) :
 		source_(source),
 		reporter_(reporter),
 		cursor_(source),
@@ -18,7 +18,7 @@ public:
 	TokenStream lex() {
 		if (source_.get_length() > MaxSourceLength) {
 			const CodeLocation blank {source_.get_path(), 0, 0};
-			reporter_.report(Message::SourceInputTooLarge, blank, MaxSourceLength);
+			reporter_.report(Message::SourceInputTooLarge, blank, ReportArgs(MaxSourceLength));
 		} else {
 			lex_source();
 		}
@@ -28,7 +28,7 @@ public:
 	}
 
 private:
-	const SourceLock& source_;
+	const LockedSource& source_;
 	Reporter& reporter_;
 	SourceCursor cursor_;
 	TokenStream stream_;
@@ -190,7 +190,7 @@ private:
 		}
 
 		if (!valid) {
-			report(Message::UnexpectedCharacter, offset, encoding);
+			report(Message::UnexpectedCharacter, offset, ReportArgs(encoding));
 		}
 		return valid;
 	}
@@ -428,7 +428,7 @@ private:
 		}
 
 		if (unclosed_count != 0) {
-			report(Message::UnterminatedBlockComment, offset);
+			report(Message::UnterminatedBlockComment, offset, {});
 		}
 	}
 
@@ -481,7 +481,7 @@ private:
 		while (auto next = cursor_.peek()) {
 			const char c = *next;
 			if (c == '\n') {
-				report(Message::MissingClosingQuote, cursor_.offset());
+				report(Message::MissingClosingQuote, cursor_.offset(), {});
 				break;
 			}
 
@@ -506,10 +506,9 @@ private:
 		add_variable_length_token(TokenKind::Name, offset);
 	}
 
-	template<typename... Args>
-	void report(Message message, SourceOffset offset, Args&&... args) const {
+	void report(Message message, SourceOffset offset, ReportArgs args) const {
 		auto location = source_.locate(offset);
-		reporter_.report(message, location, std::forward<Args>(args)...);
+		reporter_.report(message, location, std::move(args));
 	}
 
 	static TokenKind identify_keyword(std::string_view lexeme) {
@@ -565,7 +564,7 @@ private:
 	}
 };
 
-TokenStream lex(const SourceLock& source, Reporter& reporter) {
+TokenStream lex(const LockedSource& source, Reporter& reporter) {
 	Lexer lexer(source, reporter);
 	return lexer.lex();
 }

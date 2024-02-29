@@ -50,14 +50,11 @@ std::optional<Token> TokenCursor::match_name() {
 
 Token TokenCursor::current() const {
 	auto header = it_->header;
-
-	uint32_t length;
 	if (header.is_variable_length()) {
-		length = it_[1].length;
+		return {header, it_[1].length};
 	} else {
-		length = 0;
+		return {header, 0};
 	}
-	return {header, length};
 }
 
 TokenKind TokenCursor::current_kind() const {

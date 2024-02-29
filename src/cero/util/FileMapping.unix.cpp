@@ -36,7 +36,7 @@ Result<FileMapping, std::error_code> FileMapping::from(std::string_view path) {
 	}
 
 	const void* addr = "";
-	size_t size = static_cast<size_t>(file_stats.st_size);
+	const size_t size = static_cast<size_t>(file_stats.st_size);
 	if (size != 0) {
 		addr = ::mmap(nullptr, size, PROT_READ, MAP_PRIVATE, file, 0);
 		if (addr == MAP_FAILED) {

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "cero/util/Fail.hpp"
-
 namespace cero {
 
 // Simple implementation of a monadic result type, holding either a success value T or an error E.
@@ -102,78 +100,82 @@ public:
 		return has_value_;
 	}
 
-	T& value() & noexcept {
+	T* value() noexcept {
+		if (has_value_) {
+			return &value_;
+		} else {
+			return nullptr;
+		}
+	}
+
+	const T* value() const noexcept {
+		if (has_value_) {
+			return &value_;
+		} else {
+			return nullptr;
+		}
+	}
+
+	E* error() noexcept {
+		if (has_value_) {
+			return nullptr;
+		} else {
+			return &error_;
+		}
+	}
+
+	const E* error() const noexcept {
+		if (has_value_) {
+			return nullptr;
+		} else {
+			return &error_;
+		}
+	}
+
+	T& or_throw() & {
 		if (has_value_) {
 			return value_;
 		}
 		on_value_access_fail();
 	}
 
-	const T& value() const& noexcept {
+	const T& or_throw() const& {
 		if (has_value_) {
 			return value_;
 		}
 		on_value_access_fail();
 	}
 
-	T&& value() && noexcept {
+	T&& or_throw() && {
 		if (has_value_) {
 			return std::move(value_);
 		}
 		on_value_access_fail();
 	}
 
-	E& error() & noexcept {
+	E& error_or_throw() & {
 		if (has_value_) {
 			on_error_access_fail();
 		}
 		return error_;
 	}
 
-	const E& error() const& noexcept {
+	const E& error_or_throw() const& {
 		if (has_value_) {
 			on_error_access_fail();
 		}
 		return error_;
 	}
 
-	E&& error() && noexcept {
+	E&& error_or_throw() && {
 		if (has_value_) {
 			on_error_access_fail();
 		}
 		return std::move(error_);
 	}
 
-	T* get() noexcept {
-		if (has_value_) {
-			return &value_;
-		}
-		return nullptr;
-	}
-
-	const T* get() const noexcept {
-		if (has_value_) {
-			return &value_;
-		}
-		return nullptr;
-	}
-
-	E* get_error() noexcept {
-		if (has_value_) {
-			return nullptr;
-		}
-		return &error_;
-	}
-
-	const E* get_error() const noexcept {
-		if (has_value_) {
-			return nullptr;
-		}
-		return &error_;
-	}
-
 	template<typename Fn>
-	Result<std::invoke_result_t<Fn, T>, E> transform(Fn&& fn) & {
+	Result<std::invoke_result_t<Fn, T>, E> map(Fn&& fn) & {
 		if (has_value_) {
 			return std::forward<Fn>(fn)(value_);
 		} else {
@@ -182,7 +184,7 @@ public:
 	}
 
 	template<typename Fn>
-	Result<std::invoke_result_t<Fn, T>, E> transform(Fn&& fn) const& {
+	Result<std::invoke_result_t<Fn, T>, E> map(Fn&& fn) const& {
 		if (has_value_) {
 			return std::forward<Fn>(fn)(value_);
 		} else {
@@ -191,7 +193,7 @@ public:
 	}
 
 	template<typename Fn>
-	Result<std::invoke_result_t<Fn, T>, E> transform(Fn&& fn) && {
+	Result<std::invoke_result_t<Fn, T>, E> map(Fn&& fn) && {
 		if (has_value_) {
 			return std::forward<Fn>(fn)(std::move(value_));
 		} else {
@@ -200,7 +202,7 @@ public:
 	}
 
 	template<typename Fn>
-	Result<T, std::invoke_result_t<Fn, E>> transform_error(Fn&& fn) & {
+	Result<T, std::invoke_result_t<Fn, E>> map_error(Fn&& fn) & {
 		if (has_value_) {
 			return value_;
 		} else {
@@ -209,7 +211,7 @@ public:
 	}
 
 	template<typename Fn>
-	Result<T, std::invoke_result_t<Fn, E>> transform_error(Fn&& fn) const& {
+	Result<T, std::invoke_result_t<Fn, E>> map_error(Fn&& fn) const& {
 		if (has_value_) {
 			return value_;
 		} else {
@@ -218,7 +220,7 @@ public:
 	}
 
 	template<typename Fn>
-	Result<T, std::invoke_result_t<Fn, E>> transform_error(Fn&& fn) && {
+	Result<T, std::invoke_result_t<Fn, E>> map_error(Fn&& fn) && {
 		if (has_value_) {
 			return std::move(value_);
 		} else {
@@ -235,11 +237,11 @@ private:
 	};
 
 	[[noreturn]] static void on_value_access_fail() {
-		fail_assert("tried to access success value of an error result");
+		throw std::runtime_error("tried to access success value of an error result");
 	}
 
 	[[noreturn]] static void on_error_access_fail() {
-		fail_assert("tried to access error value of a successful result");
+		throw std::runtime_error("tried to access error value of a successful result");
 	}
 };
 

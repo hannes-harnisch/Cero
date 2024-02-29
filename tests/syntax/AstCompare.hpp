@@ -84,7 +84,7 @@ private:
 
 	void visit_child();
 	void visit_child_if(bool condition);
-	void visit_children(uint16_t n);
+	void visit_children(uint32_t n);
 
 	void record(cero::AstNodeKind type);
 	void expect(cero::AstNodeKind type);

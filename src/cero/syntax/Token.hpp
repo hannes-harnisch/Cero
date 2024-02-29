@@ -8,7 +8,7 @@
 
 namespace cero {
 
-enum class TokenKind {
+enum class TokenKind : unsigned {
 	// Variable-length tokens
 	Name,
 	LineComment,
@@ -107,14 +107,17 @@ enum class TokenKind {
 };
 
 std::string_view token_kind_to_string(TokenKind kind);
-bool is_variable_length_token(TokenKind kind);
 std::string_view get_fixed_length_lexeme(TokenKind kind);
+
+bool is_variable_length_token(TokenKind kind);
 
 struct TokenHeader {
 	TokenKind kind : 8 = {};
 	SourceOffset offset : SourceOffsetBits = 0;
 
-	bool is_variable_length() const;
+	bool is_variable_length() const {
+		return is_variable_length_token(kind);
+	}
 };
 
 static_assert(sizeof(TokenHeader) == 4);
@@ -122,10 +125,10 @@ static_assert(sizeof(TokenHeader) == 4);
 struct Token : TokenHeader {
 	uint32_t length = 0; // will be 0 if the token kind is a fixed-length kind
 
-	std::string_view get_lexeme(const SourceLock& source) const;
-	std::string to_message_string(const SourceLock& source) const;
-	std::string to_log_string(const SourceLock& source) const;
-	CodeLocation locate_in(const SourceLock& source) const;
+	std::string_view get_lexeme(const LockedSource& source) const;
+	std::string to_message_string(const LockedSource& source) const;
+	std::string to_log_string(const LockedSource& source) const;
+	CodeLocation locate_in(const LockedSource& source) const;
 };
 
 static_assert(sizeof(Token) == 8);

@@ -6,6 +6,6 @@
 
 namespace cero {
 
-TokenStream lex(const SourceLock& source, Reporter& reporter);
+TokenStream lex(const LockedSource& source, Reporter& reporter);
 
 }

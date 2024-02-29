@@ -8,7 +8,7 @@ namespace cero {
 
 class AstToString : public AstVisitor {
 public:
-	AstToString(const Ast& ast, const SourceLock& source);
+	AstToString(const Ast& ast, const LockedSource& source);
 
 	// May only be called once on a given instance.
 	std::string make_string();
@@ -23,7 +23,7 @@ private:
 	static constexpr Edge TAIL {"└── ", "    "};
 
 	AstCursor cursor_;
-	const SourceLock& source_;
+	const LockedSource& source_;
 	std::stack<std::string> prefixes_;
 	const Edge* edge_;
 	std::string string_;
@@ -43,7 +43,7 @@ private:
 	void visit_child_at_tail();
 	void visit_child();
 	void visit_child_if(bool condition);
-	void visit_children(uint16_t n);
+	void visit_children(uint32_t n);
 
 	void visit(const AstRoot& root) override;
 	void visit(const AstStructDefinition& struct_def) override;

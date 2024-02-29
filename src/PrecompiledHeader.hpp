@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fmt/args.h>
 #include <fmt/core.h>
 #include <fmt/format.h>
 
@@ -22,6 +23,7 @@
 #include <source_location>
 #include <span>
 #include <stack>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <system_error>

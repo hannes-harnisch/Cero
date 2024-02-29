@@ -18,7 +18,7 @@ include(FetchContent)
 message("Fetching dependency: fmtlib")
 FetchContent_Declare(fmt
   GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-  GIT_TAG 10.2.1
+  GIT_TAG master
 )
 FetchContent_MakeAvailable(fmt)
 
@@ -38,7 +38,7 @@ endif ()
 if (MSVC)
     add_compile_options(/W4)
 else ()
-    add_compile_options(-Wall -Wextra -Wpedantic)
+    add_compile_options(-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion)
 endif ()
 
 add_subdirectory(src)

@@ -15,13 +15,10 @@ public:
 
 	~ExhaustiveReporter() override;
 
-	template<typename... Args>
-	void expect(uint32_t line, uint32_t column, cero::Message message, Args&&... args) {
-		on_expect(line, column, message, fmt::make_format_args(args...));
-	}
-
 	ExhaustiveReporter(const ExhaustiveReporter&) = delete;
 	ExhaustiveReporter& operator=(const ExhaustiveReporter&) = delete;
+
+	void expect(uint32_t line, uint32_t column, cero::Message message, cero::ReportArgs args);
 
 private:
 	struct Report {
@@ -39,6 +36,4 @@ private:
 					   cero::Severity severity,
 					   cero::CodeLocation location,
 					   std::string message_text) override;
-
-	void on_expect(uint32_t line, uint32_t column, cero::Message message, fmt::format_args args);
 };

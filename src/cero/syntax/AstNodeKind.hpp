@@ -50,11 +50,11 @@ struct AstNodeHeader {
 
 	AstNodeHeader() = default;
 
-	AstNodeHeader(SourceOffset offset) :
-		offset(offset & 0x00ffffffu) {
+	AstNodeHeader(SourceOffset source_offset) :
+		offset(source_offset & 0x00ffffffu) {
 	}
 
-	CodeLocation locate_in(const SourceLock& source) const {
+	CodeLocation locate_in(const LockedSource& source) const {
 		return source.locate(offset);
 	}
 };
@@ -100,7 +100,7 @@ struct AstFunctionDefinition {
 	StringId name;
 	uint16_t num_parameters = 0;
 	uint16_t num_outputs = 0;
-	uint16_t num_statements = 0;
+	uint32_t num_statements = 0;
 
 	uint32_t num_children() const {
 		return num_parameters + num_outputs + num_statements;
@@ -135,7 +135,7 @@ struct AstFunctionOutput {
 
 struct AstBlockStatement {
 	AstNodeHeader<AstNodeKind::BlockStatement> header;
-	uint16_t num_statements = 0;
+	uint32_t num_statements = 0;
 
 	uint32_t num_children() const {
 		return num_statements;
@@ -158,7 +158,7 @@ struct AstBindingStatement {
 	bool has_initializer = false;
 
 	uint32_t num_children() const {
-		return (has_type ? 1 : 0) + (has_initializer ? 1 : 0);
+		return (has_type ? 1u : 0u) + (has_initializer ? 1 : 0);
 	}
 };
 
@@ -173,7 +173,7 @@ struct AstIfExpr {
 
 struct AstWhileLoop {
 	AstNodeHeader<AstNodeKind::WhileLoop> header;
-	uint16_t num_statements = 0;
+	uint32_t num_statements = 0;
 
 	uint32_t num_children() const {
 		return 1 + num_statements;
@@ -182,7 +182,7 @@ struct AstWhileLoop {
 
 struct AstForLoop {
 	AstNodeHeader<AstNodeKind::ForLoop> header;
-	uint16_t num_statements = 0;
+	uint32_t num_statements = 0;
 
 	uint32_t num_children() const {
 		return 2 + num_statements;

@@ -7,7 +7,7 @@
 
 #include <string_view>
 
-cero::SourceLock make_test_source(std::string_view source_text, const cero::Config& config = cero::Config());
+cero::LockedSource make_test_source(std::string_view source_text, const cero::Config& config = cero::Config());
 
 void build_test_source(cero::Reporter& reporter, std::string_view source_text);
 
