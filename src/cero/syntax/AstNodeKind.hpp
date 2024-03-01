@@ -19,6 +19,7 @@ using StringId = std::string_view;
 	CERO_AST_NODE_KIND(WhileLoop)                                                                                              \
 	CERO_AST_NODE_KIND(ForLoop)                                                                                                \
 	CERO_AST_NODE_KIND(NameExpr)                                                                                               \
+	CERO_AST_NODE_KIND(GenericNameExpr)                                                                                               \
 	CERO_AST_NODE_KIND(MemberExpr)                                                                                             \
 	CERO_AST_NODE_KIND(GroupExpr)                                                                                              \
 	CERO_AST_NODE_KIND(CallExpr)                                                                                               \
@@ -191,6 +192,15 @@ struct AstForLoop {
 
 struct AstNameExpr {
 	AstNodeHeader<AstNodeKind::NameExpr> header;
+	StringId name;
+
+	static uint32_t num_children() {
+		return 0;
+	}
+};
+
+struct AstGenericNameExpr {
+	AstNodeHeader<AstNodeKind::GenericNameExpr> header;
 	StringId name;
 	uint16_t num_generic_args = 0;
 

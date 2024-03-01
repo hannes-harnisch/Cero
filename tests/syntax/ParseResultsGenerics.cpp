@@ -4,6 +4,8 @@
 
 #include <cero/syntax/Parse.hpp>
 
+namespace tests {
+
 CERO_TEST(ParseGenericReturnType) {
 	auto source = make_test_source(R"_____(
 a() -> List<List<int32> > {
@@ -35,161 +37,87 @@ f() -> List<List<List<int32>>> {
 	auto ast = cero::parse(source, r);
 
 	AstCompare c(ast);
-	c.add_root();
-
-	c.add_function_definition(cero::AccessSpecifier::None, "a");
-	c.add_function_output("");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("List");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("int32");
-			}
-		}
-	}
-	{
-		auto _1 = c.mark_children();
-		c.add_return_expr();
-		{
-			auto _2 = c.mark_children();
-			c.add_group_expr();
-		}
-	}
-
-	c.add_function_definition(cero::AccessSpecifier::None, "b");
-	c.add_function_output("");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("List");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("int32");
-			}
-		}
-	}
-	{
-		auto _1 = c.mark_children();
-		c.add_return_expr();
-		{
-			auto _2 = c.mark_children();
-			c.add_group_expr();
-		}
-	}
-
-	c.add_function_definition(cero::AccessSpecifier::None, "c");
-	c.add_function_output("");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("List");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("List");
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("int32");
-				}
-			}
-		}
-	}
-	{
-		auto _1 = c.mark_children();
-		c.add_return_expr();
-		{
-			auto _2 = c.mark_children();
-			c.add_group_expr();
-		}
-	}
-
-	c.add_function_definition(cero::AccessSpecifier::None, "d");
-	c.add_function_output("");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("List");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("List");
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("int32");
-				}
-			}
-		}
-	}
-	{
-		auto _1 = c.mark_children();
-		c.add_return_expr();
-		{
-			auto _2 = c.mark_children();
-			c.add_group_expr();
-		}
-	}
-
-	c.add_function_definition(cero::AccessSpecifier::None, "e");
-	c.add_function_output("");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("List");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("List");
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("int32");
-				}
-			}
-		}
-	}
-	{
-		auto _1 = c.mark_children();
-		c.add_return_expr();
-		{
-			auto _2 = c.mark_children();
-			c.add_group_expr();
-		}
-	}
-
-	c.add_function_definition(cero::AccessSpecifier::None, "f");
-	c.add_function_output("");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("List");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("List");
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("int32");
-				}
-			}
-		}
-	}
-	{
-		auto _1 = c.mark_children();
-		c.add_return_expr();
-		{
-			auto _2 = c.mark_children();
-			c.add_group_expr();
-		}
-	}
+	c.root();
+	c.function_definition(cero::AccessSpecifier::None, "a", [&] {
+		c.function_output("", [&] {
+			c.generic_name_expr("List", [&] {
+				c.generic_name_expr("List", [&] {
+					c.name_expr("int32");
+				});
+			});
+		});
+		c.return_expr([&] {
+			c.group_expr([] {});
+		});
+	});
+	c.function_definition(cero::AccessSpecifier::None, "b", [&] {
+		c.function_output("", [&] {
+			c.generic_name_expr("List", [&] {
+				c.generic_name_expr("List", [&] {
+					c.name_expr("int32");
+				});
+			});
+		});
+		c.return_expr([&] {
+			c.group_expr([] {});
+		});
+	});
+	c.function_definition(cero::AccessSpecifier::None, "c", [&] {
+		c.function_output("", [&] {
+			c.generic_name_expr("List", [&] {
+				c.generic_name_expr("List", [&] {
+					c.generic_name_expr("List", [&] {
+						c.name_expr("int32");
+					});
+				});
+			});
+		});
+		c.return_expr([&] {
+			c.group_expr([] {});
+		});
+	});
+	c.function_definition(cero::AccessSpecifier::None, "d", [&] {
+		c.function_output("", [&] {
+			c.generic_name_expr("List", [&] {
+				c.generic_name_expr("List", [&] {
+					c.generic_name_expr("List", [&] {
+						c.name_expr("int32");
+					});
+				});
+			});
+		});
+		c.return_expr([&] {
+			c.group_expr([] {});
+		});
+	});
+	c.function_definition(cero::AccessSpecifier::None, "e", [&] {
+		c.function_output("", [&] {
+			c.generic_name_expr("List", [&] {
+				c.generic_name_expr("List", [&] {
+					c.generic_name_expr("List", [&] {
+						c.name_expr("int32");
+					});
+				});
+			});
+		});
+		c.return_expr([&] {
+			c.group_expr([] {});
+		});
+	});
+	c.function_definition(cero::AccessSpecifier::None, "f", [&] {
+		c.function_output("", [&] {
+			c.generic_name_expr("List", [&] {
+				c.generic_name_expr("List", [&] {
+					c.generic_name_expr("List", [&] {
+						c.name_expr("int32");
+					});
+				});
+			});
+		});
+		c.return_expr([&] {
+			c.group_expr([] {});
+		});
+	});
 
 	c.compare();
 }
@@ -206,51 +134,32 @@ oof(int32 a, int32 b) -> bool
 	auto ast = cero::parse(source, r);
 
 	AstCompare c(ast);
-	c.add_root();
-
-	c.add_function_definition(cero::AccessSpecifier::None, "oof");
-	c.add_function_parameter(cero::ParameterSpecifier::None, "a");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("int32");
-	}
-	c.add_function_parameter(cero::ParameterSpecifier::None, "b");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("int32");
-	}
-	c.add_function_output("");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("bool");
-	}
-	{
-		auto _1 = c.mark_children();
-		c.add_return_expr();
-		{
-			auto _2 = c.mark_children();
-			c.add_binary_expr(cero::BinaryOperator::Less);
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("a");
-				c.add_binary_expr(cero::BinaryOperator::RightShift);
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("b");
-					c.add_group_expr();
-					{
-						auto _5 = c.mark_children();
-						c.add_binary_expr(cero::BinaryOperator::Subtract);
-						{
-							auto _6 = c.mark_children();
-							c.add_numeric_literal_expr(cero::NumericLiteralKind::Decimal);
-							c.add_numeric_literal_expr(cero::NumericLiteralKind::Decimal);
-						}
-					}
-				}
-			}
-		}
-	}
+	c.root();
+	c.function_definition(cero::AccessSpecifier::None, "oof", [&] {
+		c.function_parameter(cero::ParameterSpecifier::None, "a", [&] {
+			c.name_expr("int32");
+		});
+		c.function_parameter(cero::ParameterSpecifier::None, "b", [&] {
+			c.name_expr("int32");
+		});
+		c.function_output("", [&] {
+			c.name_expr("bool");
+		});
+		c.return_expr([&] {
+			c.binary_expr(cero::BinaryOperator::Less, [&] {
+				c.name_expr("a");
+				c.binary_expr(cero::BinaryOperator::RightShift, [&] {
+					c.name_expr("b");
+					c.group_expr([&] {
+						c.binary_expr(cero::BinaryOperator::Subtract, [&] {
+							c.numeric_literal_expr(cero::NumericLiteralKind::Decimal);
+							c.numeric_literal_expr(cero::NumericLiteralKind::Decimal);
+						});
+					});
+				});
+			});
+		});
+	});
 
 	c.compare();
 }
@@ -266,42 +175,27 @@ ouch(float32 e) -> float64 {
 	auto ast = cero::parse(source, r);
 
 	AstCompare c(ast);
-	c.add_root();
-
-	c.add_function_definition(cero::AccessSpecifier::None, "ouch");
-	c.add_function_parameter(cero::ParameterSpecifier::None, "e");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("float32");
-	}
-	c.add_function_output("");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("float64");
-	}
-	{
-		auto _1 = c.mark_children();
-		c.add_return_expr();
-		{
-			auto _2 = c.mark_children();
-			c.add_call_expr();
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("a");
-				c.add_call_expr();
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("b");
-					{
-						auto _5 = c.mark_children();
-						c.add_name_expr("c");
-						c.add_name_expr("d");
-					}
-					c.add_name_expr("e");
-				}
-			}
-		}
-	}
+	c.root();
+	c.function_definition(cero::AccessSpecifier::None, "ouch", [&] {
+		c.function_parameter(cero::ParameterSpecifier::None, "e", [&] {
+			c.name_expr("float32");
+		});
+		c.function_output("", [&] {
+			c.name_expr("float64");
+		});
+		c.return_expr([&] {
+			c.call_expr([&] {
+				c.name_expr("a");
+				c.call_expr([&] {
+					c.generic_name_expr("b", [&] {
+						c.name_expr("c");
+						c.name_expr("d");
+					});
+					c.name_expr("e");
+				});
+			});
+		});
+	});
 
 	c.compare();
 }
@@ -317,43 +211,28 @@ ouch(float32 e) -> float64 {
 	auto ast = cero::parse(source, r);
 
 	AstCompare c(ast);
-	c.add_root();
-
-	c.add_function_definition(cero::AccessSpecifier::None, "ouch");
-	c.add_function_parameter(cero::ParameterSpecifier::None, "e");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("float32");
-	}
-	c.add_function_output("");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("float64");
-	}
-	{
-		auto _1 = c.mark_children();
-		c.add_return_expr();
-		{
-			auto _2 = c.mark_children();
-			c.add_call_expr();
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("a");
-				c.add_binary_expr(cero::BinaryOperator::Less);
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("b");
-					c.add_name_expr("c");
-				}
-				c.add_binary_expr(cero::BinaryOperator::Greater);
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("d");
-					c.add_name_expr("e");
-				}
-			}
-		}
-	}
+	c.root();
+	c.function_definition(cero::AccessSpecifier::None, "ouch", [&] {
+		c.function_parameter(cero::ParameterSpecifier::None, "e", [&] {
+			c.name_expr("float32");
+		});
+		c.function_output("", [&] {
+			c.name_expr("float64");
+		});
+		c.return_expr([&] {
+			c.call_expr([&] {
+				c.name_expr("a");
+				c.binary_expr(cero::BinaryOperator::Less, [&] {
+					c.name_expr("b");
+					c.name_expr("c");
+				});
+				c.binary_expr(cero::BinaryOperator::Greater, [&] {
+					c.name_expr("d");
+					c.name_expr("e");
+				});
+			});
+		});
+	});
 
 	c.compare();
 }
@@ -373,63 +252,37 @@ meow() -> A<(D >> E)> {
 	auto ast = cero::parse(source, r);
 
 	AstCompare c(ast);
-	c.add_root();
-
-	c.add_function_definition(cero::AccessSpecifier::None, "woof");
-	c.add_function_output("");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("A");
-		{
-			auto _2 = c.mark_children();
-			c.add_group_expr();
-			{
-				auto _3 = c.mark_children();
-				c.add_binary_expr(cero::BinaryOperator::Greater);
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("B");
-					c.add_name_expr("C");
-				}
-			}
-		}
-	}
-	{
-		auto _1 = c.mark_children();
-		c.add_return_expr();
-		{
-			auto _2 = c.mark_children();
-			c.add_group_expr();
-		}
-	}
-
-	c.add_function_definition(cero::AccessSpecifier::None, "meow");
-	c.add_function_output("");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("A");
-		{
-			auto _2 = c.mark_children();
-			c.add_group_expr();
-			{
-				auto _3 = c.mark_children();
-				c.add_binary_expr(cero::BinaryOperator::RightShift);
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("D");
-					c.add_name_expr("E");
-				}
-			}
-		}
-	}
-	{
-		auto _1 = c.mark_children();
-		c.add_return_expr();
-		{
-			auto _2 = c.mark_children();
-			c.add_group_expr();
-		}
-	}
+	c.root();
+	c.function_definition(cero::AccessSpecifier::None, "woof", [&] {
+		c.function_output("", [&] {
+			c.generic_name_expr("A", [&] {
+				c.group_expr([&] {
+					c.binary_expr(cero::BinaryOperator::Greater, [&] {
+						c.name_expr("B");
+						c.name_expr("C");
+					});
+				});
+			});
+		});
+		c.return_expr([&] {
+			c.group_expr([] {});
+		});
+	});
+	c.function_definition(cero::AccessSpecifier::None, "meow", [&] {
+		c.function_output("", [&] {
+			c.generic_name_expr("A", [&] {
+				c.group_expr([&] {
+					c.binary_expr(cero::BinaryOperator::RightShift, [&] {
+						c.name_expr("D");
+						c.name_expr("E");
+					});
+				});
+			});
+		});
+		c.return_expr([&] {
+			c.group_expr([] {});
+		});
+	});
 
 	c.compare();
 }
@@ -450,112 +303,64 @@ moo(List<int32> _a,
 	auto ast = cero::parse(source, r);
 
 	AstCompare c(ast);
-	c.add_root();
-
-	c.add_function_definition(cero::AccessSpecifier::None, "moo");
-	c.add_function_parameter(cero::ParameterSpecifier::None, "_a");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("List");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("int32");
-		}
-	}
-	c.add_function_parameter(cero::ParameterSpecifier::None, "_b");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("List");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("int32");
-			}
-		}
-	}
-	c.add_function_parameter(cero::ParameterSpecifier::None, "_c");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("List");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("int32");
-			}
-		}
-	}
-	c.add_function_parameter(cero::ParameterSpecifier::None, "_d");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("List");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("List");
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("int32");
-				}
-			}
-		}
-	}
-	c.add_function_parameter(cero::ParameterSpecifier::None, "_e");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("List");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("List");
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("int32");
-				}
-			}
-		}
-	}
-	c.add_function_parameter(cero::ParameterSpecifier::None, "_f");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("List");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("List");
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("int32");
-				}
-			}
-		}
-	}
-	c.add_function_parameter(cero::ParameterSpecifier::None, "_g");
-	{
-		auto _1 = c.mark_children();
-		c.add_name_expr("List");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("List");
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("int32");
-				}
-			}
-		}
-	}
+	c.root();
+	c.function_definition(cero::AccessSpecifier::None, "moo", [&] {
+		c.function_parameter(cero::ParameterSpecifier::None, "_a", [&] {
+			c.generic_name_expr("List", [&] {
+				c.name_expr("int32");
+			});
+		});
+		c.function_parameter(cero::ParameterSpecifier::None, "_b", [&] {
+			c.generic_name_expr("List", [&] {
+				c.generic_name_expr("List", [&] {
+					c.name_expr("int32");
+				});
+			});
+		});
+		c.function_parameter(cero::ParameterSpecifier::None, "_c", [&] {
+			c.generic_name_expr("List", [&] {
+				c.generic_name_expr("List", [&] {
+					c.name_expr("int32");
+				});
+			});
+		});
+		c.function_parameter(cero::ParameterSpecifier::None, "_d", [&] {
+			c.generic_name_expr("List", [&] {
+				c.generic_name_expr("List", [&] {
+					c.generic_name_expr("List", [&] {
+						c.name_expr("int32");
+					});
+				});
+			});
+		});
+		c.function_parameter(cero::ParameterSpecifier::None, "_e", [&] {
+			c.generic_name_expr("List", [&] {
+				c.generic_name_expr("List", [&] {
+					c.generic_name_expr("List", [&] {
+						c.name_expr("int32");
+					});
+				});
+			});
+		});
+		c.function_parameter(cero::ParameterSpecifier::None, "_f", [&] {
+			c.generic_name_expr("List", [&] {
+				c.generic_name_expr("List", [&] {
+					c.generic_name_expr("List", [&] {
+						c.name_expr("int32");
+					});
+				});
+			});
+		});
+		c.function_parameter(cero::ParameterSpecifier::None, "_g", [&] {
+			c.generic_name_expr("List", [&] {
+				c.generic_name_expr("List", [&] {
+					c.generic_name_expr("List", [&] {
+						c.name_expr("int32");
+					});
+				});
+			});
+		});
+	});
 
 	c.compare();
 }
@@ -577,129 +382,73 @@ bark() {
 	auto ast = cero::parse(source, r);
 
 	AstCompare c(ast);
-	c.add_root();
-
-	c.add_function_definition(cero::AccessSpecifier::None, "bark");
-	{
-		auto _1 = c.mark_children();
-
-		c.add_binding_statement(cero::BindingSpecifier::Let, "_a");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("int32");
-			}
-			c.add_group_expr();
-		}
-
-		c.add_binding_statement(cero::BindingSpecifier::Let, "_b");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("List");
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("int32");
-				}
-			}
-			c.add_group_expr();
-		}
-
-		c.add_binding_statement(cero::BindingSpecifier::Let, "_c");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("List");
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("int32");
-				}
-			}
-			c.add_group_expr();
-		}
-
-		c.add_binding_statement(cero::BindingSpecifier::Let, "_d");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("List");
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("List");
-					{
-						auto _5 = c.mark_children();
-						c.add_name_expr("int32");
-					}
-				}
-			}
-			c.add_group_expr();
-		}
-
-		c.add_binding_statement(cero::BindingSpecifier::Let, "_e");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("List");
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("List");
-					{
-						auto _5 = c.mark_children();
-						c.add_name_expr("int32");
-					}
-				}
-			}
-			c.add_group_expr();
-		}
-
-		c.add_binding_statement(cero::BindingSpecifier::Let, "_f");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("List");
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("List");
-					{
-						auto _5 = c.mark_children();
-						c.add_name_expr("int32");
-					}
-				}
-			}
-			c.add_group_expr();
-		}
-
-		c.add_binding_statement(cero::BindingSpecifier::Let, "_g");
-		{
-			auto _2 = c.mark_children();
-			c.add_name_expr("List");
-			{
-				auto _3 = c.mark_children();
-				c.add_name_expr("List");
-				{
-					auto _4 = c.mark_children();
-					c.add_name_expr("List");
-					{
-						auto _5 = c.mark_children();
-						c.add_name_expr("int32");
-					}
-				}
-			}
-			c.add_group_expr();
-		}
-	}
+	c.root();
+	c.function_definition(cero::AccessSpecifier::None, "bark", [&] {
+		c.binding_statement(cero::BindingSpecifier::Let, "_a", [&] {
+			c.generic_name_expr("List", [&] {
+				c.name_expr("int32");
+			});
+			c.group_expr([] {});
+		});
+		c.binding_statement(cero::BindingSpecifier::Let, "_b", [&] {
+			c.generic_name_expr("List", [&] {
+				c.generic_name_expr("List", [&] {
+					c.name_expr("int32");
+				});
+			});
+			c.group_expr([] {});
+		});
+		c.binding_statement(cero::BindingSpecifier::Let, "_c", [&] {
+			c.generic_name_expr("List", [&] {
+				c.generic_name_expr("List", [&] {
+					c.name_expr("int32");
+				});
+			});
+			c.group_expr([] {});
+		});
+		c.binding_statement(cero::BindingSpecifier::Let, "_d", [&] {
+			c.generic_name_expr("List", [&] {
+				c.generic_name_expr("List", [&] {
+					c.generic_name_expr("List", [&] {
+						c.name_expr("int32");
+					});
+				});
+			});
+			c.group_expr([] {});
+		});
+		c.binding_statement(cero::BindingSpecifier::Let, "_e", [&] {
+			c.generic_name_expr("List", [&] {
+				c.generic_name_expr("List", [&] {
+					c.generic_name_expr("List", [&] {
+						c.name_expr("int32");
+					});
+				});
+			});
+			c.group_expr([] {});
+		});
+		c.binding_statement(cero::BindingSpecifier::Let, "_f", [&] {
+			c.generic_name_expr("List", [&] {
+				c.generic_name_expr("List", [&] {
+					c.generic_name_expr("List", [&] {
+						c.name_expr("int32");
+					});
+				});
+			});
+			c.group_expr([] {});
+		});
+		c.binding_statement(cero::BindingSpecifier::Let, "_g", [&] {
+			c.generic_name_expr("List", [&] {
+				c.generic_name_expr("List", [&] {
+					c.generic_name_expr("List", [&] {
+						c.name_expr("int32");
+					});
+				});
+			});
+			c.group_expr([] {});
+		});
+	});
 
 	c.compare();
 }
+
+} // namespace tests

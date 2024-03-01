@@ -11,6 +11,8 @@ int main(int argc, char* argv[]) {
 	return context.run();
 }
 
+namespace tests {
+
 class TestListener : public doctest::IReporter {
 	std::ostream& out;
 
@@ -64,3 +66,5 @@ REGISTER_LISTENER("test_listener", 1, TestListener);
 const char* get_current_test_name() {
 	return doctest::detail::g_cs->currentTest->m_name;
 }
+
+} // namespace tests

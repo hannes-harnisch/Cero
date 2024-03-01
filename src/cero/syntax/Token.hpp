@@ -109,15 +109,9 @@ enum class TokenKind : unsigned {
 std::string_view token_kind_to_string(TokenKind kind);
 std::string_view get_fixed_length_lexeme(TokenKind kind);
 
-bool is_variable_length_token(TokenKind kind);
-
 struct TokenHeader {
 	TokenKind kind : 8 = {};
 	SourceOffset offset : SourceOffsetBits = 0;
-
-	bool is_variable_length() const {
-		return is_variable_length_token(kind);
-	}
 };
 
 static_assert(sizeof(TokenHeader) == 4);

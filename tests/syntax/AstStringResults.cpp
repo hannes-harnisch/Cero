@@ -3,6 +3,8 @@
 
 #include <cero/syntax/Parse.hpp>
 
+namespace tests {
+
 CERO_TEST(AstStringForEmptyFunction) {
 	auto source = make_test_source(R"_____(
 
@@ -21,7 +23,7 @@ main() {
     ├── outputs
     └── statements
 )_____";
-	CHECK(str == expected);
+	CHECK_EQ(str, expected);
 }
 
 CERO_TEST(AstStringForSimpleFunctionWithParametersAndReturn) {
@@ -51,7 +53,7 @@ a(int32 x, bool _a, bool _b = x) -> float32 {
     │       └── name `float32` [3:37]
     └── statements
 )_____";
-	CHECK(str == expected);
+	CHECK_EQ(str, expected);
 }
 
 CERO_TEST(AstStringForCall) {
@@ -98,7 +100,7 @@ b(int32 i, float64 f) {
                     ├── name `i` [7:13]
                     └── name `i` [7:17]
 )_____";
-	CHECK(str == expected);
+	CHECK_EQ(str, expected);
 }
 
 CERO_TEST(AstStringForFibonacci) {
@@ -158,5 +160,7 @@ fibonacci(var uint32 n) -> uint32 {
         └── return [12:5]
             └── name `result` [12:12]
 )_____";
-	CHECK(str == expected);
+	CHECK_EQ(str, expected);
 }
+
+} // namespace tests

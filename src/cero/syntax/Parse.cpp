@@ -4,8 +4,8 @@
 #include "cero/syntax/Literal.hpp"
 #include "cero/syntax/TokenCursor.hpp"
 #include "cero/util/Algorithm.hpp"
-#include "cero/util/Defer.hpp"
 #include "cero/util/Fail.hpp"
+#include "cero/util/ScopedAssign.hpp"
 
 namespace cero {
 
@@ -257,8 +257,8 @@ private:
 	}
 
 	uint32_t parse_block() {
-		const uint32_t saved_angles = std::exchange(open_angles_, 0);
-		const bool saved_binding_allowed = std::exchange(is_binding_allowed_, true);
+		ScopedAssign _1(open_angles_, 0);
+		ScopedAssign _2(is_binding_allowed_, true);
 
 		uint32_t num_statements = 0;
 		while (!cursor_.match(TokenKind::RightBrace)) {
@@ -272,9 +272,6 @@ private:
 				}
 			}
 		}
-
-		open_angles_ = saved_angles;
-		is_binding_allowed_ = saved_binding_allowed;
 		return num_statements;
 	}
 
@@ -329,9 +326,9 @@ private:
 	void on_trailing_name(SourceOffset offset, NodeIndex prev_expr, Token name_token) {
 		auto kind = nodes_[prev_expr].get_kind();
 
-		static constexpr AstNodeKind type_expr_kinds[] {AstNodeKind::NameExpr, AstNodeKind::MemberExpr,
-														AstNodeKind::ArrayTypeExpr, AstNodeKind::PointerTypeExpr,
-														AstNodeKind::FunctionTypeExpr};
+		static constexpr AstNodeKind type_expr_kinds[] {AstNodeKind::NameExpr,		  AstNodeKind::GenericNameExpr,
+														AstNodeKind::MemberExpr,	  AstNodeKind::ArrayTypeExpr,
+														AstNodeKind::PointerTypeExpr, AstNodeKind::FunctionTypeExpr};
 		if (!contains(type_expr_kinds, kind)) {
 			report_expectation(Message::ExpectSemicolon, name_token); // TODO: report different error: "name cannot appear here"
 			throw ParseError();
@@ -349,18 +346,12 @@ private:
 	}
 
 	NodeIndex parse_expression_or_binding() {
-		const bool saved_is_binding_allowed = std::exchange(is_binding_allowed_, true);
-		Defer _ = [&] {
-			is_binding_allowed_ = saved_is_binding_allowed;
-		};
+		ScopedAssign _(is_binding_allowed_, true);
 		return parse_expression(Precedence::Statement);
 	}
 
 	NodeIndex parse_subexpression(Precedence precedence = Precedence::Statement) {
-		const bool saved_is_binding_allowed = std::exchange(is_binding_allowed_, false);
-		Defer _ = [&] {
-			is_binding_allowed_ = saved_is_binding_allowed;
-		};
+		ScopedAssign _(is_binding_allowed_, false);
 		return parse_expression(precedence);
 	}
 
@@ -625,15 +616,12 @@ private:
 		}
 
 		auto name_begin = next_index();
-		nodes_.push_back(AstNameExpr {offset, name, 0});
+		nodes_.push_back(AstNameExpr {offset, name});
 		return name_begin;
 	}
 
 	NodeIndex parse_generic_name(SourceOffset offset, std::string_view name, TokenCursor name_start) {
-		++open_angles_;
-		Defer _ = [&] {
-			--open_angles_;
-		};
+		ScopedAssign _(open_angles_, open_angles_ + 1);
 
 		const auto name_begin = next_index();
 		uint16_t num_generic_args = 0;
@@ -643,7 +631,7 @@ private:
 			cursor_ = name_start;
 			rescind_lookahead(name_begin);
 			if (fall_back) {
-				nodes_.push_back(AstNameExpr {offset, name, 0});
+				nodes_.push_back(AstNameExpr {offset, name});
 				return name_begin;
 			}
 
@@ -655,15 +643,12 @@ private:
 			cursor_.advance();
 		}
 
-		insert_parent(name_begin, AstNameExpr {offset, name, num_generic_args});
+		insert_parent(name_begin, AstGenericNameExpr {offset, name, num_generic_args});
 		return name_begin;
 	}
 
 	bool should_fall_back_to_name() {
-		const bool saved = std::exchange(is_looking_ahead_, true);
-		Defer _ = [&] {
-			is_looking_ahead_ = saved;
-		};
+		ScopedAssign _(is_looking_ahead_, true);
 
 		do {
 			parse_subexpression();
@@ -681,11 +666,11 @@ private:
 		return true;
 	}
 
-	template<void (*EVALUATE)(std::string_view), NumericLiteralKind KIND>
+	template<void (*LiteralParseFn)(std::string_view), NumericLiteralKind KIND>
 	NodeIndex on_numeric_literal() {
 		auto token = cursor_.next();
 		auto lexeme = token.get_lexeme(source_);
-		EVALUATE(lexeme);
+		LiteralParseFn(lexeme);
 
 		auto literal_begin = next_index();
 		nodes_.push_back(AstNumericLiteralExpr {token.offset, KIND});
@@ -702,10 +687,7 @@ private:
 	}
 
 	NodeIndex on_prefix_left_paren() { // TODO: function type
-		const uint32_t saved = std::exchange(open_angles_, 0);
-		Defer _ = [&] {
-			open_angles_ = saved;
-		};
+		ScopedAssign _(open_angles_, 0);
 
 		auto token = cursor_.next();
 		auto group_begin = next_index();
@@ -730,10 +712,7 @@ private:
 	}
 
 	uint16_t parse_bracketed_arguments() {
-		const uint32_t saved = std::exchange(open_angles_, 0);
-		Defer _ = [&] {
-			open_angles_ = saved;
-		};
+		ScopedAssign _(open_angles_, 0);
 
 		uint16_t num_args = 0;
 		if (!cursor_.match(TokenKind::RightBracket)) {
@@ -911,10 +890,7 @@ private:
 	}
 
 	void on_infix_left_paren(NodeIndex left, SourceOffset offset) {
-		const uint32_t saved = std::exchange(open_angles_, 0);
-		Defer _ = [&] {
-			open_angles_ = saved;
-		};
+		ScopedAssign _(open_angles_, 0);
 
 		cursor_.advance();
 		uint16_t num_args = 0;
@@ -951,10 +927,7 @@ private:
 		auto specifier = PermissionSpecifier::Var;
 		uint16_t num_args = 0;
 		if (cursor_.match(TokenKind::LeftBrace)) {
-			const uint32_t saved = std::exchange(open_angles_, 0);
-			Defer _ = [&] {
-				open_angles_ = saved;
-			};
+			ScopedAssign _(open_angles_, 0);
 
 			specifier = PermissionSpecifier::VarBounded;
 			if (!cursor_.match(TokenKind::RightBrace)) {

@@ -285,13 +285,14 @@ void AstToString::visit(const AstForLoop& for_loop) {
 
 void AstToString::visit(const AstNameExpr& name_expr) {
 	add_line(fmt::format("name `{}` {}", name_expr.name, locate(name_expr)));
+}
 
-	if (name_expr.num_generic_args > 0) {
-		add_tail_line("generic arguments");
-		push_level();
-		visit_children(name_expr.num_generic_args);
-		pop_level();
-	}
+void AstToString::visit(const AstGenericNameExpr& generic_name_expr) {
+	add_line(fmt::format("generic name `{}` {}", generic_name_expr.name, locate(generic_name_expr)));
+
+	push_level();
+	visit_children(generic_name_expr.num_generic_args);
+	pop_level();
 }
 
 void AstToString::visit(const AstMemberExpr& member_expr) {

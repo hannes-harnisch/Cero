@@ -20,6 +20,7 @@ public:
 	virtual void visit(const AstWhileLoop& while_loop) = 0;
 	virtual void visit(const AstForLoop& for_loop) = 0;
 	virtual void visit(const AstNameExpr& name_expr) = 0;
+	virtual void visit(const AstGenericNameExpr& generic_name_expr) = 0;
 	virtual void visit(const AstMemberExpr& member_expr) = 0;
 	virtual void visit(const AstGroupExpr& group_expr) = 0;
 	virtual void visit(const AstCallExpr& call_expr) = 0;

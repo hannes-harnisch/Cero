@@ -37,7 +37,7 @@ Result<FileMapping, std::error_code> FileMapping::from(std::string_view path) {
 
 	const void* addr = "";
 	const size_t size = static_cast<size_t>(file_stats.st_size);
-	if (size != 0) {
+	if (size > 0) {
 		addr = ::mmap(nullptr, size, PROT_READ, MAP_PRIVATE, file, 0);
 		if (addr == MAP_FAILED) {
 			close_file(file);
@@ -53,7 +53,7 @@ Result<FileMapping, std::error_code> FileMapping::from(std::string_view path) {
 }
 
 FileMapping::~FileMapping() {
-	if (addr_ != nullptr) {
+	if (addr_ != nullptr && size_ > 0) {
 		if (::munmap(const_cast<void*>(addr_), size_) == -1) {
 			fail_result(fmt::format("Could not unmap file (system error {}).", errno));
 		}

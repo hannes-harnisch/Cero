@@ -1,6 +1,8 @@
 #include "common/ExhaustiveReporter.hpp"
 #include "common/Test.hpp"
 
+namespace tests {
+
 CERO_TEST(SourceTooLarge) {
 	ExhaustiveReporter r;
 	r.expect(0, 0, cero::Message::SourceInputTooLarge, cero::ReportArgs(cero::MaxSourceLength));
@@ -40,3 +42,5 @@ CERO_TEST(UnterminatedBlockComment) {
 /* abc
 )_____");
 }
+
+} // namespace tests

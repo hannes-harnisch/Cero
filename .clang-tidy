@@ -1,5 +1,4 @@
 Checks: >
-  -bugprone-string-constructor,
   -bugprone-unhandled-self-assignment,
   -cppcoreguidelines-pro-type-member-init,
   -google-explicit-constructor,

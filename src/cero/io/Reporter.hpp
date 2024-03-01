@@ -34,7 +34,7 @@ private:
 	bool has_error_reports_ = false;
 	bool warnings_as_errors_ = false;
 
-	virtual void handle_report(Message message, Severity severity, CodeLocation location, std::string message_text) = 0;
+	virtual void handle_report(Severity severity, CodeLocation location, std::string message_text) = 0;
 };
 
 } // namespace cero

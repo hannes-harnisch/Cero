@@ -1,6 +1,8 @@
 #include "common/ExhaustiveReporter.hpp"
 #include "common/Test.hpp"
 
+namespace tests {
+
 CERO_TEST(ExpectFuncStructEnum) {
 	ExhaustiveReporter r;
 	r.expect(5, 1, cero::Message::ExpectFuncStructEnum, cero::ReportArgs("`(`"));
@@ -413,3 +415,5 @@ f(int32 a, int32 b, int32 c, int32 d) {
 }
 )_____");
 }
+
+} // namespace tests

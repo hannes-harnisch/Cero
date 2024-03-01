@@ -3,6 +3,8 @@
 
 #include <cero/syntax/Lex.hpp>
 
+namespace tests {
+
 CERO_TEST(TokenStringForBracketsLiterals) {
 	auto source = make_test_source(R"_____(
 () [] {} <>
@@ -17,7 +19,7 @@ foo "bar" 'baz' 123 456;
 	auto stream = cero::lex(source, r);
 	auto str = stream.to_string(source);
 
-	CHECK(str == R"_____(Token stream for TokenStringForBracketsLiterals (21 tokens)
+	CHECK_EQ(str, R"_____(Token stream for TokenStringForBracketsLiterals (21 tokens)
 	LeftParen `(` [2:1]
 	RightParen `)` [2:2]
 	LeftBracket `[` [2:4]
@@ -52,7 +54,7 @@ CERO_TEST(TokenStringForOperators) {
 	auto stream = cero::lex(source, r);
 	auto str = stream.to_string(source);
 
-	CHECK(str == R"_____(Token stream for TokenStringForOperators (16 tokens)
+	CHECK_EQ(str, R"_____(Token stream for TokenStringForOperators (16 tokens)
 	Plus `+` [2:1]
 	Minus `-` [2:3]
 	Star `*` [2:5]
@@ -88,7 +90,7 @@ struct S {
 	auto stream = cero::lex(source, r);
 	auto str = stream.to_string(source);
 
-	CHECK(str == R"_____(Token stream for TokenStringForKeywords (19 tokens)
+	CHECK_EQ(str, R"_____(Token stream for TokenStringForKeywords (19 tokens)
 	Struct `struct` [2:1]
 	Name `S` [2:8]
 	LeftBrace `{` [2:10]
@@ -110,3 +112,5 @@ struct S {
 	EndOfFile `` [10:1]
 )_____");
 }
+
+} // namespace tests

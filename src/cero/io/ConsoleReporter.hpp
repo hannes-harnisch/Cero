@@ -10,7 +10,7 @@ public:
 	explicit ConsoleReporter(const Config& config);
 
 private:
-	void handle_report(Message, Severity severity, CodeLocation location, std::string message_text) override;
+	void handle_report(Severity severity, CodeLocation location, std::string message_text) override;
 };
 
 } // namespace cero

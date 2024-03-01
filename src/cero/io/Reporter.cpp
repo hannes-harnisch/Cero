@@ -53,7 +53,7 @@ void Reporter::report(Message message, CodeLocation location, ReportArgs args) {
 	}
 
 	auto format = get_message_format(message);
-	handle_report(message, severity, location, fmt::vformat(format, args.store));
+	handle_report(severity, location, fmt::vformat(format, args.store));
 }
 
 bool Reporter::has_errors() const {

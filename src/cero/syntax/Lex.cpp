@@ -171,7 +171,7 @@ private:
 		}
 	}
 
-	template<bool (*UTF8_PREDICATE)(uint32_t encoded)>
+	template<bool (*Utf8Predicate)(uint32_t encoded)>
 	bool check_multibyte_utf8_value(char next, SourceOffset offset) {
 		const auto leading_byte = static_cast<uint8_t>(next);
 		const auto leading_ones = static_cast<uint8_t>(std::countl_one(leading_byte));
@@ -186,7 +186,7 @@ private:
 				*bytes++ = cursor_.next().value_or('\0');
 			}
 
-			valid = UTF8_PREDICATE(encoding);
+			valid = Utf8Predicate(encoding);
 		}
 
 		if (!valid) {
@@ -252,13 +252,13 @@ private:
 		add_variable_length_token(TokenKind::DecIntLiteral, offset);
 	}
 
-	template<bool (*CHAR_PREDICATE)(char)>
+	template<bool (*CharPredicate)(char)>
 	void eat_number_literal() {
 		auto lookahead = cursor_;
 
 		while (auto next = lookahead.peek()) {
 			const char c = *next;
-			if (CHAR_PREDICATE(c)) {
+			if (CharPredicate(c)) {
 				cursor_ = lookahead;
 				cursor_.advance();
 			} else if (!is_whitespace(c)) {

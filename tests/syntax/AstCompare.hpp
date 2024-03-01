@@ -2,50 +2,44 @@
 
 #include <cero/syntax/AstCursor.hpp>
 #include <cero/syntax/AstVisitor.hpp>
+#include <cero/util/FunctionRef.hpp>
 
 #include <any>
 #include <queue>
 
-class [[nodiscard]] AstChildScope {
-public:
-	~AstChildScope();
-
-private:
-	uint32_t& level_;
-
-	friend class AstCompare;
-	AstChildScope(uint32_t& level);
-};
+namespace tests {
 
 class AstCompare : public cero::AstVisitor {
 public:
+	using ChildScope = cero::FunctionRef<void()>;
+
 	AstCompare(const cero::Ast& ast);
 	~AstCompare() override;
 
+	// Perform the comparison.
 	void compare();
 
-	AstChildScope mark_children();
+	void root();
+	void struct_definition(cero::AccessSpecifier access, std::string_view name, ChildScope cs);
+	void enum_definition(cero::AccessSpecifier access, std::string_view name, ChildScope cs);
+	void function_definition(cero::AccessSpecifier access, std::string_view name, ChildScope cs);
+	void function_parameter(cero::ParameterSpecifier specifier, std::string_view name, ChildScope cs);
+	void function_output(std::string_view name, ChildScope cs);
+	void block_statement(ChildScope cs);
+	void binding_statement(cero::BindingSpecifier specifier, std::string_view name, ChildScope cs);
+	void while_loop(ChildScope cs);
+	void name_expr(std::string_view name);
+	void generic_name_expr(std::string_view name, ChildScope cs);
+	void member_expr(std::string_view name);
+	void group_expr(ChildScope cs);
+	void call_expr(ChildScope cs);
+	void unary_expr(cero::UnaryOperator op, ChildScope cs);
+	void binary_expr(cero::BinaryOperator op, ChildScope cs);
+	void return_expr(ChildScope cs);
+	void numeric_literal_expr(cero::NumericLiteralKind kind);
 
-	void add_root();
-	void add_struct_definition(cero::AccessSpecifier access, std::string_view name);
-	void add_enum_definition(cero::AccessSpecifier access, std::string_view name);
-	void add_function_definition(cero::AccessSpecifier access, std::string_view name);
-	void add_function_parameter(cero::ParameterSpecifier specifier, std::string_view name);
-	void add_function_output(std::string_view name);
-	void add_block_statement();
-	void add_binding_statement(cero::BindingSpecifier specifier, std::string_view name);
-	void add_while_loop();
-	void add_name_expr(std::string_view name);
-	void add_member_expr(std::string_view name);
-	void add_group_expr();
-	void add_call_expr();
-	void add_unary_expr(cero::UnaryOperator op);
-	void add_binary_expr(cero::BinaryOperator op);
-	void add_return_expr();
-	void add_numeric_literal_expr(cero::NumericLiteralKind kind);
-
-	AstCompare(const AstCompare&) = delete;
-	AstCompare& operator=(const AstCompare&) = delete;
+	AstCompare(AstCompare&&) = delete;
+	AstCompare& operator=(AstCompare&&) = delete;
 
 private:
 	cero::AstCursor cursor_;
@@ -64,6 +58,7 @@ private:
 	void visit(const cero::AstWhileLoop& while_loop) override;
 	void visit(const cero::AstForLoop& for_loop) override;
 	void visit(const cero::AstNameExpr& name_expr) override;
+	void visit(const cero::AstGenericNameExpr& generic_name_expr) override;
 	void visit(const cero::AstMemberExpr& member_expr) override;
 	void visit(const cero::AstGroupExpr& group_expr) override;
 	void visit(const cero::AstCallExpr& call_expr) override;
@@ -86,9 +81,12 @@ private:
 	void visit_child_if(bool condition);
 	void visit_children(uint32_t n);
 
-	void record(cero::AstNodeKind type);
 	void expect(cero::AstNodeKind type);
+	void record(cero::AstNodeKind type);
+	void record_children(ChildScope cs);
 
 	template<typename T>
 	T pop();
 };
+
+} // namespace tests

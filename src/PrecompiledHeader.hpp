@@ -16,6 +16,7 @@
 #include <cstdlib>
 #include <deque>
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <queue>
