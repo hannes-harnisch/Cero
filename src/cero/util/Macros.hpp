@@ -17,20 +17,16 @@
 	#define CERO_DEBUG_BREAK() std::raise(SIGTRAP)
 #endif
 
-#define CERO_CONCAT_IMPL(A, B) A##B
-#define CERO_CONCAT(A, B)	   CERO_CONCAT_IMPL(A, B)
-
-#define CERO_STRINGIFY_IMPL(A) #A
-#define CERO_STRINGIFY(A)	   CERO_STRINGIFY_IMPL(A)
-
 #include "Fail.hpp"
 
 #ifndef NDEBUG
 	#define CERO_ASSERT_DEBUG(condition, info)                                                                                 \
 		do {                                                                                                                   \
-			if (!(condition))                                                                                                  \
+			if (!(condition)) {                                                                                                \
+				CERO_DEBUG_BREAK();                                                                                            \
 				fail_assert(info);                                                                                             \
+			}                                                                                                                  \
 		} while (false)
 #else
-	#define CERO_ASSERT_DEBUG(condition, ...)
+	#define CERO_ASSERT_DEBUG(condition, ...) static_cast<void>(condition)
 #endif

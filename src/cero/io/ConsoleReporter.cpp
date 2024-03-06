@@ -2,14 +2,14 @@
 
 namespace cero {
 
-ConsoleReporter::ConsoleReporter(const Config& config) {
+ConsoleReporter::ConsoleReporter(const Configuration& config) {
 	set_warnings_as_errors(config.warnings_as_errors);
 }
 
-void ConsoleReporter::handle_report(Severity severity, CodeLocation location, std::string message_text) {
-	auto location_text = location.to_string();
-	auto severity_text = severity_to_string(severity);
-	fmt::println("{}: {}: {}", location_text, severity_text, message_text);
+void ConsoleReporter::handle_report(MessageLevel message_level, CodeLocation location, std::string message_text) {
+	auto location_str = location.to_string();
+	auto msg_level_str = message_level_to_string(message_level);
+	fmt::println("{}: {}: {}", location_str, msg_level_str, message_text);
 }
 
 } // namespace cero

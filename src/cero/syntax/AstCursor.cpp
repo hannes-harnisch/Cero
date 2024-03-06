@@ -1,6 +1,7 @@
 #include "AstCursor.hpp"
 
 #include "cero/util/Macros.hpp"
+#include "cero/util/ScopedAssign.hpp"
 
 namespace cero {
 
@@ -10,19 +11,17 @@ AstCursor::AstCursor(const Ast& ast) :
 }
 
 void AstCursor::visit_all(AstVisitor& visitor) {
-	const uint32_t old_num = std::exchange(num_children_to_visit_, it_->num_children());
+	ScopedAssign _(num_children_to_visit_, it_->num_children());
 	it_++->visit(visitor);
 
 	while (num_children_to_visit_ > 0) {
 		visit_all(visitor);
 		--num_children_to_visit_;
 	}
-
-	num_children_to_visit_ = old_num;
 }
 
 void AstCursor::visit_child(AstVisitor& visitor) {
-	CERO_ASSERT_DEBUG(num_children_to_visit_ > 0, "Attempted to visit child but current node has no children.");
+	CERO_ASSERT_DEBUG(num_children_to_visit_ > 0, "Attempted to visit child but current node has no children left to visit.");
 
 	if (num_children_to_visit_ > 0) {
 		visit_all(visitor);

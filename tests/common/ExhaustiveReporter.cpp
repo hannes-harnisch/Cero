@@ -15,7 +15,7 @@ ExhaustiveReporter::~ExhaustiveReporter() {
 	CHECK(expected_reports_.empty());
 }
 
-void ExhaustiveReporter::expect(uint32_t line, uint32_t column, cero::Message message, cero::ReportArgs args) {
+void ExhaustiveReporter::expect(uint32_t line, uint32_t column, cero::Message message, cero::MessageArgs args) {
 	auto format = cero::get_message_format(message);
 	auto message_text = fmt::vformat(format, args.store);
 
@@ -23,7 +23,7 @@ void ExhaustiveReporter::expect(uint32_t line, uint32_t column, cero::Message me
 	expected_reports_.emplace(location, std::move(message_text));
 }
 
-void ExhaustiveReporter::handle_report(cero::Severity, cero::CodeLocation location, std::string message_text) {
+void ExhaustiveReporter::handle_report(cero::MessageLevel, cero::CodeLocation location, std::string message_text) {
 	const bool reports_not_exhausted = !expected_reports_.empty();
 	REQUIRE(reports_not_exhausted); // If this fails, every expected report was already seen and an unexpected one was received.
 

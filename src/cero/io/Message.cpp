@@ -4,11 +4,12 @@
 
 namespace cero {
 
-std::string_view severity_to_string(Severity severity) {
-	switch (severity) {
-		case Severity::Error: return "error";
-		case Severity::Warning: return "warning";
-		case Severity::Note: return "note";
+std::string_view message_level_to_string(MessageLevel message_level) {
+	switch (message_level) {
+		case MessageLevel::Error: return "error";
+		case MessageLevel::Warning: return "warning";
+		case MessageLevel::Help: return "help";
+		case MessageLevel::Note: return "note";
 	}
 	fail_unreachable();
 }
@@ -52,12 +53,12 @@ std::string_view get_message_format(Message message) {
 	fail_unreachable();
 }
 
-Severity get_message_severity(Message message) {
+MessageLevel get_default_message_level(Message message) {
 	switch (message) {
 		using enum Message;
 		case UnnecessaryColonBeforeBlock:
-		case UnnecessarySemicolon: return Severity::Warning;
-		default: return Severity::Error;
+		case UnnecessarySemicolon: return MessageLevel::Warning;
+		default: return MessageLevel::Error;
 	}
 }
 

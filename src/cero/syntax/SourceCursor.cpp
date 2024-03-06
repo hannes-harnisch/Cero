@@ -2,7 +2,7 @@
 
 namespace cero {
 
-SourceCursor::SourceCursor(const LockedSource& source) :
+SourceCursor::SourceCursor(const SourceGuard& source) :
 	it_(source.get_text().begin()),
 	end_(source.get_text().end()),
 	offset_(0) {
@@ -56,6 +56,10 @@ bool SourceCursor::valid() const {
 
 SourceOffset SourceCursor::offset() const {
 	return offset_;
+}
+
+SourceOffset SourceCursor::remaining_length() const {
+	return static_cast<SourceOffset>(end_ - it_);
 }
 
 } // namespace cero

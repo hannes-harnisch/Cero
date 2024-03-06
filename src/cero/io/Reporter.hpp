@@ -5,15 +5,15 @@
 
 namespace cero {
 
-struct ReportArgs {
+/// Stores formatting arguments for diagnostic messages.
+struct MessageArgs {
 	fmt::dynamic_format_arg_store<fmt::format_context> store;
 	const size_t count = 0;
 
-	ReportArgs() = default;
+	MessageArgs() = default;
 
-	template<typename... Args>
-	explicit ReportArgs(Args&&... args) :
-		count(sizeof...(Args)) {
+	explicit MessageArgs(auto&&... args) :
+		count(sizeof...(args)) {
 		store_args(fmt::make_format_args(args...));
 	}
 
@@ -21,20 +21,28 @@ private:
 	void store_args(fmt::format_args args);
 };
 
+/// Abstract base for implementing different ways to report diagnostics.
 class Reporter {
 public:
 	virtual ~Reporter() = default;
 
-	void report(Message message, CodeLocation location, ReportArgs args);
+	/// Reports a diagnostic message. If the number of message arguments does not match the expected number for the given
+	/// message, the compiler will terminate itself. This runtime check is preferred over a compile-time check because every
+	/// place a message can be emitted should have a unit test anyway.
+	void report(Message message, CodeLocation location, MessageArgs args);
 
+	/// Whether the reporter has encountered any error reports.
 	bool has_errors() const;
+
+	/// Whether the reporter should consider warning reports as errors.
 	void set_warnings_as_errors(bool value);
 
 private:
 	bool has_error_reports_ = false;
 	bool warnings_as_errors_ = false;
 
-	virtual void handle_report(Severity severity, CodeLocation location, std::string message_text) = 0;
+	/// Will be called by the report method. Override to handle how the report is actually emitted.
+	virtual void handle_report(MessageLevel message_level, CodeLocation location, std::string message_text) = 0;
 };
 
 } // namespace cero

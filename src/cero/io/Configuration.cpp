@@ -1,4 +1,4 @@
-#include "Config.hpp"
+#include "Configuration.hpp"
 
 namespace cero {
 
@@ -11,8 +11,8 @@ namespace {
 
 } // namespace
 
-std::optional<Config> Config::from(std::span<char*> args) {
-	Config config;
+std::optional<Configuration> Configuration::from(std::span<char*> args) {
+	Configuration config;
 
 	if (!args.empty()) {
 		if (!config.parse_command(args[0])) {
@@ -29,7 +29,7 @@ std::optional<Config> Config::from(std::span<char*> args) {
 	return config;
 }
 
-bool Config::parse_command(std::string_view arg) {
+bool Configuration::parse_command(std::string_view arg) {
 	if (arg == "-h" || arg == "--help") {
 		command = Command::Help;
 	} else if (arg == "-V" || arg == "--version") {
@@ -50,7 +50,7 @@ bool Config::parse_command(std::string_view arg) {
 	return true;
 }
 
-bool Config::parse_option(std::string_view arg) {
+bool Configuration::parse_option(std::string_view arg) {
 	if (arg.starts_with("--tab-size=")) {
 		return parse_tab_size(arg);
 	}
@@ -73,7 +73,7 @@ bool Config::parse_option(std::string_view arg) {
 	return true;
 }
 
-bool Config::parse_tab_size(std::string_view arg) {
+bool Configuration::parse_tab_size(std::string_view arg) {
 	auto str = get_arg_value_string(arg);
 
 	uint8_t tab_size_value;

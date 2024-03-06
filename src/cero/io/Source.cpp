@@ -2,20 +2,20 @@
 
 namespace cero {
 
-std::string_view LockedSource::get_text() const {
-	return text_;
+std::string_view SourceGuard::get_text() const {
+	return source_code_;
 }
 
-size_t LockedSource::get_length() const {
-	return text_.length();
+size_t SourceGuard::get_length() const {
+	return source_code_.length();
 }
 
-std::string_view LockedSource::get_path() const {
-	return path_;
+std::string_view SourceGuard::get_name() const {
+	return name_;
 }
 
-CodeLocation LockedSource::locate(SourceOffset offset) const {
-	auto range = text_.substr(0, offset);
+CodeLocation SourceGuard::locate(SourceOffset offset) const {
+	auto range = source_code_.substr(0, offset);
 
 	const auto line = static_cast<uint32_t>(std::count(range.begin(), range.end(), '\n') + 1);
 
@@ -32,48 +32,48 @@ CodeLocation LockedSource::locate(SourceOffset offset) const {
 			++column;
 		}
 	}
-	return {path_, line, column};
+	return {name_, line, column};
 }
 
-LockedSource::LockedSource(std::string_view text, std::string_view path, uint8_t tab_size) :
+SourceGuard::SourceGuard(std::string_view text, std::string_view source_code, uint8_t tab_size) :
 	mapping_(std::nullopt),
-	text_(text),
-	path_(path),
+	source_code_(text),
+	name_(source_code),
 	tab_size_(tab_size) {
 }
 
-LockedSource::LockedSource(FileMapping mapping, std::string_view path, uint8_t tab_size) :
+SourceGuard::SourceGuard(FileMapping mapping, std::string_view source_code, uint8_t tab_size) :
 	mapping_(std::move(mapping)),
-	text_(mapping_->get_text()),
-	path_(path),
+	source_code_(mapping_->get_text()),
+	name_(source_code),
 	tab_size_(tab_size) {
 }
 
-Source Source::from_file(std::string_view path, const Config& config) {
+Source Source::from_file(std::string_view path, const Configuration& config) {
 	return Source(path, {}, config.tab_size);
 }
 
-Source Source::from_text(std::string_view path, std::string_view text, const Config& config) {
-	return Source(path, text, config.tab_size);
+Source Source::from_string(std::string_view name, std::string_view source_code, const Configuration& config) {
+	return Source(name, source_code, config.tab_size);
 }
 
-std::string_view Source::get_path() const {
-	return path_;
-}
-
-Result<LockedSource, std::error_code> Source::lock() const {
-	if (text_.data() == nullptr) {
-		return FileMapping::from(path_).map([&](FileMapping&& file_mapping) -> LockedSource {
-			return LockedSource(std::move(file_mapping), path_, tab_size_);
+Result<SourceGuard, std::error_code> Source::lock() const {
+	if (source_code_.data() == nullptr) {
+		return FileMapping::from(name_).map([&](FileMapping&& file_mapping) -> SourceGuard {
+			return SourceGuard(std::move(file_mapping), name_, tab_size_);
 		});
 	} else {
-		return LockedSource(text_, path_, tab_size_);
+		return SourceGuard(source_code_, name_, tab_size_);
 	}
 }
 
-Source::Source(std::string_view path, std::string_view text, uint8_t tab_size) :
-	path_(path),
-	text_(text),
+std::string_view Source::get_name() const {
+	return name_;
+}
+
+Source::Source(std::string_view name, std::string_view source_code, uint8_t tab_size) :
+	name_(name),
+	source_code_(source_code),
 	tab_size_(tab_size) {
 }
 

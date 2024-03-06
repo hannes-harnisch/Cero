@@ -8,7 +8,7 @@ namespace cero {
 
 class AstToString : public AstVisitor {
 public:
-	AstToString(const Ast& ast, const LockedSource& source);
+	AstToString(const Ast& ast, const SourceGuard& source);
 
 	// May only be called once on a given instance.
 	std::string make_string();
@@ -23,7 +23,7 @@ private:
 	static constexpr Edge TAIL {"└── ", "    "};
 
 	AstCursor cursor_;
-	const LockedSource& source_;
+	const SourceGuard& source_;
 	std::stack<std::string> prefixes_;
 	const Edge* edge_;
 	std::string string_;

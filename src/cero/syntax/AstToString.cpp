@@ -54,11 +54,11 @@ namespace {
 
 } // namespace
 
-AstToString::AstToString(const Ast& ast, const LockedSource& source) :
+AstToString::AstToString(const Ast& ast, const SourceGuard& source) :
 	cursor_(ast),
 	source_(source),
 	edge_(&BODY),
-	string_(fmt::format("AST for {} ({} node{})\n", source.get_path(), ast.num_nodes(), ast.num_nodes() == 1 ? "" : "s")) {
+	string_(fmt::format("AST for {} ({} node{})\n", source.get_name(), ast.num_nodes(), ast.num_nodes() == 1 ? "" : "s")) {
 	prefixes_.emplace();
 }
 

@@ -179,7 +179,7 @@ std::string_view get_fixed_length_lexeme(TokenKind kind) {
 	}
 }
 
-std::string_view Token::get_lexeme(const LockedSource& source) const {
+std::string_view Token::get_lexeme(const SourceGuard& source) const {
 	if (length == 0) {
 		return get_fixed_length_lexeme(kind);
 	} else {
@@ -209,20 +209,20 @@ namespace {
 
 } // namespace
 
-std::string Token::to_message_string(const LockedSource& source) const {
+std::string Token::to_message_string(const SourceGuard& source) const {
 	auto format = get_token_message_format(kind);
 	auto lexeme = get_lexeme(source);
 	return fmt::vformat(format, fmt::make_format_args(lexeme));
 }
 
-std::string Token::to_log_string(const LockedSource& source) const {
+std::string Token::to_log_string(const SourceGuard& source) const {
 	auto token_kind = token_kind_to_string(kind);
 	auto lexeme = get_lexeme(source);
 	auto location = source.locate(offset);
 	return fmt::format("{} `{}` {}", token_kind, lexeme, location.to_short_string());
 }
 
-CodeLocation Token::locate_in(const LockedSource& source) const {
+CodeLocation Token::locate_in(const SourceGuard& source) const {
 	return source.locate(offset);
 }
 

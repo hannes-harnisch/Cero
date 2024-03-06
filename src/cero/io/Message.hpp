@@ -5,14 +5,18 @@
 
 namespace cero {
 
-enum class Severity : uint8_t {
+/// Decides how severe a diagnostic message is, which will influence whether a build is considered successful.
+enum class MessageLevel : uint8_t {
 	Error,
 	Warning,
+	Help,
 	Note,
 };
 
-std::string_view severity_to_string(Severity severity);
+/// Creates a string representation of the message level that is displayed to the user.
+std::string_view message_level_to_string(MessageLevel message_level);
 
+/// A distinct diagnostic message emitted by the compiler.
 enum class Message : uint8_t {
 	FileNotFound,
 	CouldNotOpenFile,
@@ -48,7 +52,10 @@ enum class Message : uint8_t {
 	ExpectNameForEnum,
 };
 
+/// Looks up the format string for a given message.
 std::string_view get_message_format(Message message);
-Severity get_message_severity(Message message);
+
+/// Looks up the default message level for a given message.
+MessageLevel get_default_message_level(Message message);
 
 } // namespace cero

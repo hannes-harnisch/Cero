@@ -5,7 +5,7 @@ namespace tests {
 
 CERO_TEST(ExpectFuncStructEnum) {
 	ExhaustiveReporter r;
-	r.expect(5, 1, cero::Message::ExpectFuncStructEnum, cero::ReportArgs("`(`"));
+	r.expect(5, 1, cero::Message::ExpectFuncStructEnum, cero::MessageArgs("`(`"));
 
 	build_test_source(r, R"_____(
 main() {
@@ -21,7 +21,7 @@ foo() {
 
 CERO_TEST(ExpectParenAfterFuncName) {
 	ExhaustiveReporter r;
-	r.expect(2, 5, cero::Message::ExpectParenAfterFuncName, cero::ReportArgs("`)`"));
+	r.expect(2, 5, cero::Message::ExpectParenAfterFuncName, cero::MessageArgs("`)`"));
 
 	build_test_source(r, R"_____(
 main) {
@@ -31,8 +31,8 @@ main) {
 
 CERO_TEST(MissingParameter) {
 	ExhaustiveReporter r;
-	r.expect(2, 5, cero::Message::ExpectType, cero::ReportArgs("`,`"));
-	r.expect(2, 5, cero::Message::ExpectParamName, cero::ReportArgs("`,`"));
+	r.expect(2, 5, cero::Message::ExpectType, cero::MessageArgs("`,`"));
+	r.expect(2, 5, cero::Message::ExpectParamName, cero::MessageArgs("`,`"));
 
 	build_test_source(r, R"_____(
 foo(, bool x) -> bool {
@@ -43,7 +43,7 @@ foo(, bool x) -> bool {
 
 CERO_TEST(MissingParameterName) {
 	ExhaustiveReporter r;
-	r.expect(2, 9, cero::Message::ExpectParamName, cero::ReportArgs("`,`"));
+	r.expect(2, 9, cero::Message::ExpectParamName, cero::MessageArgs("`,`"));
 
 	build_test_source(r, R"_____(
 foo(bool, bool x) -> bool {
@@ -54,10 +54,10 @@ foo(bool, bool x) -> bool {
 
 CERO_TEST(MissingParameterWithUnexpectedToken) {
 	ExhaustiveReporter r;
-	r.expect(2, 5, cero::Message::ExpectType, cero::ReportArgs("`}`"));
-	r.expect(2, 5, cero::Message::ExpectParamName, cero::ReportArgs("`}`"));
-	r.expect(6, 21, cero::Message::ExpectType, cero::ReportArgs("`%`"));
-	r.expect(6, 21, cero::Message::ExpectParamName, cero::ReportArgs("`%`"));
+	r.expect(2, 5, cero::Message::ExpectType, cero::MessageArgs("`}`"));
+	r.expect(2, 5, cero::Message::ExpectParamName, cero::MessageArgs("`}`"));
+	r.expect(6, 21, cero::Message::ExpectType, cero::MessageArgs("`%`"));
+	r.expect(6, 21, cero::Message::ExpectParamName, cero::MessageArgs("`%`"));
 
 	build_test_source(r, R"_____(
 foo(}, bool x) -> bool {
@@ -72,8 +72,8 @@ private goo(bool x, %) -> bool {
 
 CERO_TEST(MissingParenAfterParameters) {
 	ExhaustiveReporter r;
-	r.expect(2, 20, cero::Message::ExpectParenAfterParams, cero::ReportArgs("`->`"));
-	r.expect(6, 19, cero::Message::ExpectParenAfterParams, cero::ReportArgs("`}`"));
+	r.expect(2, 20, cero::Message::ExpectParenAfterParams, cero::MessageArgs("`->`"));
+	r.expect(6, 19, cero::Message::ExpectParenAfterParams, cero::MessageArgs("`}`"));
 
 	build_test_source(r, R"_____(
 private foo(bool x -> bool {
@@ -88,9 +88,9 @@ private goo(bool x} -> bool {
 
 CERO_TEST(MissingBraceBeforeFuncBody) {
 	ExhaustiveReporter r;
-	r.expect(3, 5, cero::Message::ExpectBraceBeforeFuncBody, cero::ReportArgs("`return`"));
-	r.expect(7, 1, cero::Message::ExpectBraceBeforeFuncBody, cero::ReportArgs("`}`"));
-	r.expect(9, 14, cero::Message::ExpectBraceBeforeFuncBody, cero::ReportArgs("`-`"));
+	r.expect(3, 5, cero::Message::ExpectBraceBeforeFuncBody, cero::MessageArgs("`return`"));
+	r.expect(7, 1, cero::Message::ExpectBraceBeforeFuncBody, cero::MessageArgs("`}`"));
+	r.expect(9, 14, cero::Message::ExpectBraceBeforeFuncBody, cero::MessageArgs("`-`"));
 
 	build_test_source(r, R"_____(
 foo(bool x) -> bool
@@ -107,7 +107,7 @@ public hoo() -< void {
 
 CERO_TEST(MissingNameAfterLet) {
 	ExhaustiveReporter r;
-	r.expect(3, 9, cero::Message::ExpectNameAfterLet, cero::ReportArgs("`=`"));
+	r.expect(3, 9, cero::Message::ExpectNameAfterLet, cero::MessageArgs("`=`"));
 
 	build_test_source(r, R"_____(
 main() {
@@ -119,8 +119,8 @@ main() {
 
 CERO_TEST(MissingNameInDeclaration) {
 	ExhaustiveReporter r;
-	r.expect(4, 19, cero::Message::ExpectNameAfterDeclarationType, cero::ReportArgs("`=`"));
-	r.expect(6, 19, cero::Message::ExpectNameAfterDeclarationType, cero::ReportArgs("`=`"));
+	r.expect(4, 19, cero::Message::ExpectNameAfterDeclarationType, cero::MessageArgs("`=`"));
+	r.expect(6, 19, cero::Message::ExpectNameAfterDeclarationType, cero::MessageArgs("`=`"));
 
 	build_test_source(r, R"_____(
 main() {
@@ -134,9 +134,9 @@ main() {
 
 CERO_TEST(ExpectExpr) {
 	ExhaustiveReporter r;
-	r.expect(3, 5, cero::Message::ExpectExpr, cero::ReportArgs("`]`"));
-	r.expect(8, 1, cero::Message::ExpectExpr, cero::ReportArgs("`}`"));
-	r.expect(11, 5, cero::Message::ExpectExpr, cero::ReportArgs("`+=`"));
+	r.expect(3, 5, cero::Message::ExpectExpr, cero::MessageArgs("`]`"));
+	r.expect(8, 1, cero::Message::ExpectExpr, cero::MessageArgs("`}`"));
+	r.expect(11, 5, cero::Message::ExpectExpr, cero::MessageArgs("`+=`"));
 
 	build_test_source(r, R"_____(
 a() {
@@ -158,8 +158,8 @@ foo() {
 
 CERO_TEST(ExpectSemicolon) {
 	ExhaustiveReporter r;
-	r.expect(4, 1, cero::Message::ExpectSemicolon, cero::ReportArgs("`}`"));
-	r.expect(11, 11, cero::Message::ExpectSemicolon, cero::ReportArgs("name `c`"));
+	r.expect(4, 1, cero::Message::ExpectSemicolon, cero::MessageArgs("`}`"));
+	r.expect(11, 11, cero::Message::ExpectSemicolon, cero::MessageArgs("name `c`"));
 
 	build_test_source(r, R"_____(
 a() {
@@ -178,8 +178,8 @@ c(int32 a, int32 b) {
 
 CERO_TEST(MissingNameAfterDot) {
 	ExhaustiveReporter r;
-	r.expect(3, 7, cero::Message::ExpectNameAfterDot, cero::ReportArgs("`;`"));
-	r.expect(6, 7, cero::Message::ExpectNameAfterDot, cero::ReportArgs("`(`"));
+	r.expect(3, 7, cero::Message::ExpectNameAfterDot, cero::MessageArgs("`;`"));
+	r.expect(6, 7, cero::Message::ExpectNameAfterDot, cero::MessageArgs("`(`"));
 
 	build_test_source(r, R"_____(
 f() {
@@ -194,7 +194,7 @@ f() {
 
 CERO_TEST(MissingColonInIfExpression) {
 	ExhaustiveReporter r;
-	r.expect(3, 18, cero::Message::ExpectColonInIfExpr, cero::ReportArgs("integer literal `0`"));
+	r.expect(3, 18, cero::Message::ExpectColonInIfExpr, cero::MessageArgs("integer literal `0`"));
 
 	build_test_source(r, R"_____(
 f(bool b) -> int32 {
@@ -211,7 +211,7 @@ g(bool b) -> int32 {
 
 CERO_TEST(MissingColonAfterIfStatementCondition) {
 	ExhaustiveReporter r;
-	r.expect(4, 9, cero::Message::ExpectColonOrBlock, cero::ReportArgs("`return`"));
+	r.expect(4, 9, cero::Message::ExpectColonOrBlock, cero::MessageArgs("`return`"));
 
 	build_test_source(r, R"_____(
 f(bool b) -> int32 {
@@ -255,7 +255,7 @@ g(bool b) -> int32 {
 
 CERO_TEST(MissingParenAfterGroupExpression) {
 	ExhaustiveReporter r;
-	r.expect(4, 1, cero::Message::ExpectClosingParen, cero::ReportArgs("`}`"));
+	r.expect(4, 1, cero::Message::ExpectClosingParen, cero::MessageArgs("`}`"));
 
 	build_test_source(r, R"_____(
 f(bool a, bool b, bool c, bool d) -> bool {
@@ -270,7 +270,7 @@ g(bool a, bool b, bool c, bool d) -> bool {
 
 CERO_TEST(MissingParenAfterFunctionCall) {
 	ExhaustiveReporter r;
-	r.expect(7, 1, cero::Message::ExpectClosingParen, cero::ReportArgs("`}`"));
+	r.expect(7, 1, cero::Message::ExpectClosingParen, cero::MessageArgs("`}`"));
 
 	build_test_source(r, R"_____(
 foo(int32 _) {
@@ -288,7 +288,7 @@ g() {
 
 CERO_TEST(MissingBracketAfterIndex) {
 	ExhaustiveReporter r;
-	r.expect(4, 1, cero::Message::ExpectBracketAfterIndex, cero::ReportArgs("`}`"));
+	r.expect(4, 1, cero::Message::ExpectBracketAfterIndex, cero::MessageArgs("`}`"));
 
 	build_test_source(r, R"_____(
 f([4]int32 x) -> int32 {
@@ -303,7 +303,7 @@ g([4]int32 x) -> int32 {
 
 CERO_TEST(MissingBracketAfterArrayBound) {
 	ExhaustiveReporter r;
-	r.expect(2, 6, cero::Message::ExpectBracketAfterArrayBound, cero::ReportArgs("name `int32`"));
+	r.expect(2, 6, cero::Message::ExpectBracketAfterArrayBound, cero::MessageArgs("name `int32`"));
 
 	build_test_source(r, R"_____(
 f([4 int32 x) -> int32 {
@@ -318,7 +318,7 @@ g([4]int32 x) -> int32 {
 
 CERO_TEST(ExpectBraceAfterPermission) {
 	ExhaustiveReporter r;
-	r.expect(2, 10, cero::Message::ExpectBraceAfterPermission, cero::ReportArgs("name `MyList`"));
+	r.expect(2, 10, cero::Message::ExpectBraceAfterPermission, cero::MessageArgs("name `MyList`"));
 
 	build_test_source(r, R"_____(
 f(^var{1 MyList l) -> int32 {
@@ -335,7 +335,7 @@ g(^var{1} MyList p) -> int32 {
 
 CERO_TEST(ExpectArrowAfterFuncTypeParams) {
 	ExhaustiveReporter r;
-	r.expect(2, 12, cero::Message::ExpectArrowAfterFuncTypeParams, cero::ReportArgs("name `f`"));
+	r.expect(2, 12, cero::Message::ExpectArrowAfterFuncTypeParams, cero::MessageArgs("name `f`"));
 
 	build_test_source(r, R"_____(
 a(^(int32) f) -> int32 {
@@ -358,21 +358,21 @@ a(^(int32 x = 0)->int32 f) -> int32 {
 
 CERO_TEST(AmbiguousOperatorMixing) {
 	ExhaustiveReporter r;
-	r.expect(3, 19, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs(">", "=="));
-	r.expect(3, 24, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("==", "<"));
-	r.expect(4, 19, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("<", "=="));
-	r.expect(4, 24, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("==", ">"));
-	r.expect(5, 19, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("&", "+"));
-	r.expect(5, 28, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("&", "*"));
-	r.expect(6, 19, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("-", "|"));
-	r.expect(6, 32, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("/", "|"));
-	r.expect(7, 30, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("&&", "||"));
-	r.expect(8, 30, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("||", "&&"));
-	r.expect(9, 30, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("&&", "||"));
-	r.expect(9, 40, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("||", "&&"));
-	r.expect(10, 30, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("||", "&&"));
-	r.expect(10, 40, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("&&", "||"));
-	r.expect(11, 15, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("-", "**"));
+	r.expect(3, 19, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs(">", "=="));
+	r.expect(3, 24, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("==", "<"));
+	r.expect(4, 19, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("<", "=="));
+	r.expect(4, 24, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("==", ">"));
+	r.expect(5, 19, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("&", "+"));
+	r.expect(5, 28, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("&", "*"));
+	r.expect(6, 19, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("-", "|"));
+	r.expect(6, 32, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("/", "|"));
+	r.expect(7, 30, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("&&", "||"));
+	r.expect(8, 30, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("||", "&&"));
+	r.expect(9, 30, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("&&", "||"));
+	r.expect(9, 40, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("||", "&&"));
+	r.expect(10, 30, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("||", "&&"));
+	r.expect(10, 40, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("&&", "||"));
+	r.expect(11, 15, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("-", "**"));
 
 	build_test_source(r, R"_____(
 f(float32 a, float32 b, int32 c, int32 d) {
@@ -391,13 +391,13 @@ f(float32 a, float32 b, int32 c, int32 d) {
 
 CERO_TEST(IntransitiveOperatorMixing) {
 	ExhaustiveReporter r;
-	r.expect(4, 20, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("!=", "!="));
-	r.expect(5, 20, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("==", "!="));
-	r.expect(6, 20, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("!=", "=="));
-	r.expect(8, 19, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("<", ">"));
-	r.expect(8, 23, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs(">", "<"));
-	r.expect(12, 20, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs(">=", "!="));
-	r.expect(13, 19, cero::Message::AmbiguousOperatorMixing, cero::ReportArgs("<", "=="));
+	r.expect(4, 20, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("!=", "!="));
+	r.expect(5, 20, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("==", "!="));
+	r.expect(6, 20, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("!=", "=="));
+	r.expect(8, 19, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("<", ">"));
+	r.expect(8, 23, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs(">", "<"));
+	r.expect(12, 20, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs(">=", "!="));
+	r.expect(13, 19, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("<", "=="));
 
 	build_test_source(r, R"_____(
 f(int32 a, int32 b, int32 c, int32 d) {

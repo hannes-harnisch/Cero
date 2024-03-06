@@ -9,38 +9,40 @@ namespace cero {
 
 class SourceCursor {
 public:
-	explicit SourceCursor(const LockedSource& source);
+	explicit SourceCursor(const SourceGuard& source);
 
 	struct Position {
 		char character;
 		SourceOffset offset;
 
 		explicit operator bool() const {
-			return offset != UINT32_MAX;
+			return offset != std::numeric_limits<SourceOffset>::max();
 		}
 	};
 
-	// Returns the current character and offset and then advances, or returns nullopt and the source length if the cursor is at
-	// the end.
+	/// Returns the current character and offset and then advances, or returns the null character and an offset with all-one bits if the
+	/// cursor is at the end.
 	Position next_position();
 
-	// Returns the current character and then advances, or returns null if the cursor is at the end.
+	/// Returns the current character and then advances, or returns null if the cursor is at the end.
 	std::optional<char> next();
 
-	// Returns the current character or null if the cursor is at the end.
+	/// Returns the current character or null if the cursor is at the end.
 	std::optional<char> peek() const;
 
-	// Moves cursor to the next character.
+	/// Moves cursor to the next character.
 	void advance();
 
-	// Returns true and advances if the current character equals the expected, otherwise false.
+	/// Returns true and advances if the current character equals the expected, otherwise false.
 	bool match(char expected);
 
-	// True if the cursor is not at the end.
+	/// True if the cursor is not at the end.
 	bool valid() const;
 
-	// Current offset from the beginning of the source text.
+	/// Current offset from the beginning of the source text.
 	SourceOffset offset() const;
+
+	SourceOffset remaining_length() const;
 
 private:
 	std::string_view::iterator it_;

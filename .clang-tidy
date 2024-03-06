@@ -1,7 +1,5 @@
 Checks: >
   -bugprone-unhandled-self-assignment,
-  -cppcoreguidelines-pro-type-member-init,
-  -google-explicit-constructor,
   -hicpp-exception-baseclass,
   -misc-no-recursion,
   -modernize-return-braced-init-list,

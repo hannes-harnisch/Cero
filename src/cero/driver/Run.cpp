@@ -2,7 +2,7 @@
 
 #include "cero/driver/BuildCommand.hpp"
 #include "cero/driver/Environment.hpp"
-#include "cero/io/Config.hpp"
+#include "cero/io/Configuration.hpp"
 #include "cero/util/Fail.hpp"
 
 namespace cero {
@@ -52,7 +52,7 @@ options:
 bool run(std::span<char*> args) {
 	initialize_environment();
 
-	if (auto config = Config::from(args)) {
+	if (auto config = Configuration::from(args)) {
 		switch (config->command) {
 			using enum Command;
 			case Help: return run_help_command();

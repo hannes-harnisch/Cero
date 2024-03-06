@@ -33,7 +33,7 @@ private:
 
 	template<typename Fn>
 	static R fn_object_thunk(void* object, Args... args) {
-		return std::invoke(*reinterpret_cast<std::add_pointer_t<Fn>>(object), std::forward<Args>(args)...);
+		return (*reinterpret_cast<Fn*>(object))(std::forward<Args>(args)...);
 	}
 
 	static R fn_ptr_thunk(void* object, Args... args) {

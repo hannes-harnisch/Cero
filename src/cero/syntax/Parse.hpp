@@ -7,7 +7,7 @@
 
 namespace cero {
 
-Ast parse(const LockedSource& source, Reporter& reporter);
-Ast parse(const TokenStream& token_stream, const LockedSource& source, Reporter& reporter);
+Ast parse(const SourceGuard& source, Reporter& reporter);
+Ast parse(const TokenStream& token_stream, const SourceGuard& source, Reporter& reporter);
 
 } // namespace cero

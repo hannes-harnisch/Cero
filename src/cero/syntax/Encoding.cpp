@@ -2,26 +2,6 @@
 
 namespace cero {
 
-bool is_dec_digit(char c) {
-	return c >= '0' && c <= '9';
-}
-
-bool is_hex_digit(char c) {
-	return is_dec_digit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
-}
-
-bool is_standard_ascii(char c) {
-	return static_cast<uint8_t>(c) >> 7 == 0;
-}
-
-bool is_ascii_word_character(char c) {
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_';
-}
-
-bool is_whitespace(char c) {
-	return c == ' ' || (c >= '\t' && c <= '\r');
-}
-
 namespace {
 
 	struct CodePointRange {
@@ -287,20 +267,20 @@ namespace {
 	};
 
 	bool search_range_table(std::span<const CodePointRange> table, uint32_t encoded) {
-		static constexpr uint8_t LENGTHS[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		static constexpr uint8_t Lengths[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 											  0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0};
-		static constexpr uint32_t MASKS[] = {0x00, 0x7f, 0x1f, 0x0f, 0x07};
-		static constexpr uint32_t SHIFTS[] = {0, 18, 12, 6, 0};
+		static constexpr uint32_t Masks[] = {0x00, 0x7f, 0x1f, 0x0f, 0x07};
+		static constexpr uint32_t Shifts[] = {0, 18, 12, 6, 0};
 
 		uint8_t* byte_ptr = reinterpret_cast<uint8_t*>(&encoded);
 
-		uint32_t length = LENGTHS[*byte_ptr >> 3];
+		uint32_t length = Lengths[*byte_ptr >> 3];
 
-		uint32_t code_point = (byte_ptr[0] & MASKS[length]) << 18;
+		uint32_t code_point = (byte_ptr[0] & Masks[length]) << 18;
 		code_point |= (byte_ptr[1] & 0x3fu) << 12;
 		code_point |= (byte_ptr[2] & 0x3fu) << 6;
 		code_point |= (byte_ptr[3] & 0x3fu) << 0;
-		code_point >>= SHIFTS[length];
+		code_point >>= Shifts[length];
 
 		return std::binary_search(table.begin(), table.end(), code_point);
 	}

@@ -16,7 +16,7 @@ public:
 	ExhaustiveReporter();
 	~ExhaustiveReporter() override;
 
-	void expect(uint32_t line, uint32_t column, cero::Message message, cero::ReportArgs args);
+	void expect(uint32_t line, uint32_t column, cero::Message message, cero::MessageArgs args);
 
 	ExhaustiveReporter(ExhaustiveReporter&&) = delete;
 	ExhaustiveReporter& operator=(ExhaustiveReporter&&) = delete;
@@ -32,7 +32,7 @@ private:
 	std::queue<Report> expected_reports_;
 	std::string_view test_name_;
 
-	void handle_report(cero::Severity severity, cero::CodeLocation location, std::string message_text) override;
+	void handle_report(cero::MessageLevel message_level, cero::CodeLocation location, std::string message_text) override;
 };
 
 } // namespace tests

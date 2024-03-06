@@ -16,7 +16,7 @@ std::span<const AstNode> Ast::raw() const {
 	return {nodes_};
 }
 
-std::string Ast::to_string(const LockedSource& source) const {
+std::string Ast::to_string(const SourceGuard& source) const {
 	AstToString ast_to_string(*this, source);
 	return ast_to_string.make_string();
 }

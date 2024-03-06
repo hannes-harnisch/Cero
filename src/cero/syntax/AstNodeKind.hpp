@@ -19,7 +19,7 @@ using StringId = std::string_view;
 	CERO_AST_NODE_KIND(WhileLoop)                                                                                              \
 	CERO_AST_NODE_KIND(ForLoop)                                                                                                \
 	CERO_AST_NODE_KIND(NameExpr)                                                                                               \
-	CERO_AST_NODE_KIND(GenericNameExpr)                                                                                               \
+	CERO_AST_NODE_KIND(GenericNameExpr)                                                                                        \
 	CERO_AST_NODE_KIND(MemberExpr)                                                                                             \
 	CERO_AST_NODE_KIND(GroupExpr)                                                                                              \
 	CERO_AST_NODE_KIND(CallExpr)                                                                                               \
@@ -55,7 +55,7 @@ struct AstNodeHeader {
 		offset(source_offset & 0x00ffffffu) {
 	}
 
-	CodeLocation locate_in(const LockedSource& source) const {
+	CodeLocation locate_in(const SourceGuard& source) const {
 		return source.locate(offset);
 	}
 };

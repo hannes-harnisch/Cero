@@ -119,10 +119,10 @@ static_assert(sizeof(TokenHeader) == 4);
 struct Token : TokenHeader {
 	uint32_t length = 0; // will be 0 if the token kind is a fixed-length kind
 
-	std::string_view get_lexeme(const LockedSource& source) const;
-	std::string to_message_string(const LockedSource& source) const;
-	std::string to_log_string(const LockedSource& source) const;
-	CodeLocation locate_in(const LockedSource& source) const;
+	std::string_view get_lexeme(const SourceGuard& source) const;
+	std::string to_message_string(const SourceGuard& source) const;
+	std::string to_log_string(const SourceGuard& source) const;
+	CodeLocation locate_in(const SourceGuard& source) const;
 };
 
 static_assert(sizeof(Token) == 8);

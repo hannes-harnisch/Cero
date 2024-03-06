@@ -16,8 +16,8 @@ std::span<const TokenStream::Unit> TokenStream::raw() const {
 	return {stream_};
 }
 
-std::string TokenStream::to_string(const LockedSource& source) const {
-	auto str = fmt::format("Token stream for {} ({} token{})\n", source.get_path(), num_tokens_, num_tokens_ == 1 ? "" : "s");
+std::string TokenStream::to_string(const SourceGuard& source) const {
+	auto str = fmt::format("Token stream for {} ({} token{})\n", source.get_name(), num_tokens_, num_tokens_ == 1 ? "" : "s");
 
 	TokenCursor cursor(*this);
 	Token token;
@@ -32,7 +32,7 @@ std::string TokenStream::to_string(const LockedSource& source) const {
 	return str;
 }
 
-TokenStream::TokenStream(const LockedSource& source) :
+TokenStream::TokenStream(const SourceGuard& source) :
 	num_tokens_(0),
 	has_errors_(false) {
 	stream_.reserve(source.get_length()); // TODO: find heuristic for this

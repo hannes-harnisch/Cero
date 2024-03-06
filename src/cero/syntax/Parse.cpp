@@ -61,7 +61,7 @@ consteval Precedence lookup_precedence_for_associativity(BinaryOperator op) {
 
 class Parser {
 public:
-	Parser(const TokenStream& token_stream, const LockedSource& source, Reporter& reporter) :
+	Parser(const TokenStream& token_stream, const SourceGuard& source, Reporter& reporter) :
 		source_(source),
 		reporter_(reporter),
 		cursor_(token_stream) {
@@ -87,7 +87,7 @@ public:
 
 private:
 	std::vector<AstNode> nodes_;
-	const LockedSource& source_;
+	const SourceGuard& source_;
 	Reporter& reporter_;
 	TokenCursor cursor_;
 	bool is_looking_ahead_ = false;
@@ -823,7 +823,7 @@ private:
 			auto location = operator_token.locate_in(source_);
 			auto left_str = binary_operator_to_string(left);
 			auto right_str = binary_operator_to_string(right);
-			report(Message::AmbiguousOperatorMixing, location, ReportArgs(left_str, right_str));
+			report(Message::AmbiguousOperatorMixing, location, MessageArgs(left_str, right_str));
 		}
 	}
 
@@ -871,7 +871,7 @@ private:
 	void validate_unary_binary_associativity(UnaryOperator left, BinaryOperator right, Token operator_token) {
 		if (left == UnaryOperator::Negate && right == BinaryOperator::Power) {
 			auto location = operator_token.locate_in(source_);
-			report(Message::AmbiguousOperatorMixing, location, ReportArgs("-", "**"));
+			report(Message::AmbiguousOperatorMixing, location, MessageArgs("-", "**"));
 		}
 	}
 
@@ -1093,22 +1093,22 @@ private:
 
 	void report_expectation(Message message, Token unexpected) {
 		auto location = unexpected.locate_in(source_);
-		report(message, location, ReportArgs(unexpected.to_message_string(source_)));
+		report(message, location, MessageArgs(unexpected.to_message_string(source_)));
 	}
 
-	void report(Message message, CodeLocation location, ReportArgs args) {
+	void report(Message message, CodeLocation location, MessageArgs args) {
 		if (!is_looking_ahead_) {
 			reporter_.report(message, location, std::move(args));
 		}
 	}
 };
 
-Ast parse(const LockedSource& source, Reporter& reporter) {
+Ast parse(const SourceGuard& source, Reporter& reporter) {
 	auto token_stream = lex(source, reporter);
 	return parse(token_stream, source, reporter);
 }
 
-Ast parse(const TokenStream& token_stream, const LockedSource& source, Reporter& reporter) {
+Ast parse(const TokenStream& token_stream, const SourceGuard& source, Reporter& reporter) {
 	Parser parser(token_stream, source, reporter);
 	return parser.parse();
 }

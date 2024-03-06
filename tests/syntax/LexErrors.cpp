@@ -5,13 +5,13 @@ namespace tests {
 
 CERO_TEST(SourceTooLarge) {
 	ExhaustiveReporter r;
-	r.expect(0, 0, cero::Message::SourceInputTooLarge, cero::ReportArgs(cero::MaxSourceLength));
+	r.expect(0, 0, cero::Message::SourceInputTooLarge, cero::MessageArgs(cero::MaxSourceLength));
 	build_test_source(r, std::string(cero::MaxSourceLength + 1, ' '));
 }
 
 CERO_TEST(IllegalChar) {
 	ExhaustiveReporter r;
-	r.expect(5, 1, cero::Message::UnexpectedCharacter, cero::ReportArgs(0x7));
+	r.expect(5, 1, cero::Message::UnexpectedCharacter, cero::MessageArgs(0x7));
 	build_test_source(r, R"_____(
 main() {
 }

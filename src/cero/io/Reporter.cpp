@@ -27,7 +27,7 @@ namespace {
 
 } // namespace
 
-void ReportArgs::store_args(fmt::format_args args) {
+void MessageArgs::store_args(fmt::format_args args) {
 	store.reserve(count, 0);
 
 	int i = 0;
@@ -40,20 +40,20 @@ void ReportArgs::store_args(fmt::format_args args) {
 	}
 }
 
-void Reporter::report(Message message, CodeLocation location, ReportArgs args) {
+void Reporter::report(Message message, CodeLocation location, MessageArgs args) {
 	verify_message_arg_count(message, args.count);
 
-	auto severity = get_message_severity(message);
-	if (warnings_as_errors_ && severity == Severity::Warning) {
-		severity = Severity::Error;
+	auto message_level = get_default_message_level(message);
+	if (warnings_as_errors_ && message_level == MessageLevel::Warning) {
+		message_level = MessageLevel::Error;
 	}
 
-	if (severity == Severity::Error) {
+	if (message_level == MessageLevel::Error) {
 		has_error_reports_ = true;
 	}
 
 	auto format = get_message_format(message);
-	handle_report(severity, location, fmt::vformat(format, args.store));
+	handle_report(message_level, location, fmt::vformat(format, args.store));
 }
 
 bool Reporter::has_errors() const {

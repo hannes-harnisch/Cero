@@ -8,7 +8,7 @@ namespace cero {
 
 class Lexer {
 public:
-	Lexer(const LockedSource& source, Reporter& reporter) :
+	Lexer(const SourceGuard& source, Reporter& reporter) :
 		source_(source),
 		reporter_(reporter),
 		cursor_(source),
@@ -17,8 +17,8 @@ public:
 
 	TokenStream lex() {
 		if (source_.get_length() > MaxSourceLength) {
-			const CodeLocation blank {source_.get_path(), 0, 0};
-			reporter_.report(Message::SourceInputTooLarge, blank, ReportArgs(MaxSourceLength));
+			const CodeLocation blank {source_.get_name(), 0, 0};
+			reporter_.report(Message::SourceInputTooLarge, blank, MessageArgs(MaxSourceLength));
 		} else {
 			lex_source();
 		}
@@ -28,14 +28,15 @@ public:
 	}
 
 private:
-	const LockedSource& source_;
+	const SourceGuard& source_;
 	Reporter& reporter_;
 	SourceCursor cursor_;
 	TokenStream stream_;
 
 	void lex_source() {
 		while (auto position = cursor_.next_position()) {
-			switch (position.character) {
+			const auto [character, offset] = position;
+			switch (character) {
 				case ' ':
 				case '\t':
 				case '\n':
@@ -95,9 +96,9 @@ private:
 				case 'W':
 				case 'X':
 				case 'Y':
-				case 'Z': lex_word(position.offset); break;
+				case 'Z': lex_word(offset); break;
 
-				case '0': lex_zero(position.offset); break;
+				case '0': lex_zero(offset); break;
 				case '1':
 				case '2':
 				case '3':
@@ -106,38 +107,38 @@ private:
 				case '6':
 				case '7':
 				case '8':
-				case '9': lex_number(position.offset); break;
+				case '9': lex_number(offset); break;
 
-				case '.': lex_dot(position.offset); break;
-				case ':': lex_colon(position.offset); break;
-				case ',': stream_.add_header(TokenKind::Comma, position.offset); break;
-				case ';': stream_.add_header(TokenKind::Semicolon, position.offset); break;
-				case '{': stream_.add_header(TokenKind::LeftBrace, position.offset); break;
-				case '}': stream_.add_header(TokenKind::RightBrace, position.offset); break;
-				case '(': stream_.add_header(TokenKind::LeftParen, position.offset); break;
-				case ')': stream_.add_header(TokenKind::RightParen, position.offset); break;
-				case '[': stream_.add_header(TokenKind::LeftBracket, position.offset); break;
-				case ']': stream_.add_header(TokenKind::RightBracket, position.offset); break;
-				case '<': lex_left_angle(position.offset); break;
-				case '>': lex_right_angle(position.offset); break;
-				case '=': lex_equal(position.offset); break;
-				case '+': lex_plus(position.offset); break;
-				case '-': lex_minus(position.offset); break;
-				case '*': lex_star(position.offset); break;
-				case '/': lex_slash(position.offset); break;
-				case '%': lex_percent(position.offset); break;
-				case '!': lex_bang(position.offset); break;
-				case '&': lex_ampersand(position.offset); break;
-				case '|': lex_pipe(position.offset); break;
-				case '~': lex_tilde(position.offset); break;
-				case '^': stream_.add_header(TokenKind::Caret, position.offset); break;
-				case '?': stream_.add_header(TokenKind::QuestionMark, position.offset); break;
-				case '@': stream_.add_header(TokenKind::At, position.offset); break;
-				case '$': stream_.add_header(TokenKind::Dollar, position.offset); break;
-				case '#': stream_.add_header(TokenKind::Hash, position.offset); break;
-				case '"': lex_quoted_sequence(TokenKind::StringLiteral, position.offset, '"'); break;
-				case '\'': lex_quoted_sequence(TokenKind::CharLiteral, position.offset, '\''); break;
-				default: lex_unicode_name(position.character, position.offset); break;
+				case '.': lex_dot(offset); break;
+				case ':': lex_colon(offset); break;
+				case ',': stream_.add_header(TokenKind::Comma, offset); break;
+				case ';': stream_.add_header(TokenKind::Semicolon, offset); break;
+				case '{': stream_.add_header(TokenKind::LeftBrace, offset); break;
+				case '}': stream_.add_header(TokenKind::RightBrace, offset); break;
+				case '(': stream_.add_header(TokenKind::LeftParen, offset); break;
+				case ')': stream_.add_header(TokenKind::RightParen, offset); break;
+				case '[': stream_.add_header(TokenKind::LeftBracket, offset); break;
+				case ']': stream_.add_header(TokenKind::RightBracket, offset); break;
+				case '<': lex_left_angle(offset); break;
+				case '>': lex_right_angle(offset); break;
+				case '=': lex_equal(offset); break;
+				case '+': lex_plus(offset); break;
+				case '-': lex_minus(offset); break;
+				case '*': lex_star(offset); break;
+				case '/': lex_slash(offset); break;
+				case '%': lex_percent(offset); break;
+				case '!': lex_bang(offset); break;
+				case '&': lex_ampersand(offset); break;
+				case '|': lex_pipe(offset); break;
+				case '~': lex_tilde(offset); break;
+				case '^': stream_.add_header(TokenKind::Caret, offset); break;
+				case '?': stream_.add_header(TokenKind::QuestionMark, offset); break;
+				case '@': stream_.add_header(TokenKind::At, offset); break;
+				case '$': stream_.add_header(TokenKind::Dollar, offset); break;
+				case '#': stream_.add_header(TokenKind::Hash, offset); break;
+				case '"': lex_quoted_sequence(TokenKind::StringLiteral, offset, '"'); break;
+				case '\'': lex_quoted_sequence(TokenKind::CharLiteral, offset, '\''); break;
+				default: lex_unicode_name(character, offset); break;
 			}
 		}
 	}
@@ -171,28 +172,26 @@ private:
 		}
 	}
 
-	template<bool (*Utf8Predicate)(uint32_t encoded)>
-	bool check_multibyte_utf8_value(char next, SourceOffset offset) {
-		const auto leading_byte = static_cast<uint8_t>(next);
+	template<bool (*Utf8Predicate)(uint32_t encoded_value)>
+	bool check_multibyte_utf8_value(char character, SourceOffset offset) {
+		const auto leading_byte = static_cast<uint8_t>(character);
 		const auto leading_ones = static_cast<uint8_t>(std::countl_one(leading_byte));
 
-		uint32_t encoding = leading_byte;
-
-		bool valid = false;
+		uint32_t encoded_value = leading_byte;
 		if (leading_ones >= 2 && leading_ones <= 4) {
-			char* bytes = reinterpret_cast<char*>(&encoding) + 1;
-
+			auto bytes = std::bit_cast<std::array<char, 4>>(encoded_value);
 			for (uint32_t i = 1; i != leading_ones; ++i) {
-				*bytes++ = cursor_.next().value_or('\0');
+				bytes[i] = cursor_.next().value_or('\0');
 			}
 
-			valid = Utf8Predicate(encoding);
+			encoded_value = std::bit_cast<uint32_t>(bytes);
+			if (Utf8Predicate(encoded_value)) {
+				return true;
+			}
 		}
 
-		if (!valid) {
-			report(Message::UnexpectedCharacter, offset, ReportArgs(encoding));
-		}
-		return valid;
+		report(Message::UnexpectedCharacter, offset, MessageArgs(encoded_value));
+		return false;
 	}
 
 	void add_variable_length_token(TokenKind kind, SourceOffset offset) {
@@ -209,12 +208,12 @@ private:
 				return;
 
 			case 'b':
-				eat_number_literal<is_dec_digit>(); // consume all decimal digits for better errors during literal parsing later
+				eat_number_literal<is_dec_digit>(); // consume any decimal digit for better errors during literal parsing later
 				add_variable_length_token(TokenKind::BinIntLiteral, offset);
 				return;
 
 			case 'o':
-				eat_number_literal<is_dec_digit>(); // consume all decimal digits for better errors during literal parsing later
+				eat_number_literal<is_dec_digit>(); // consume any decimal digit for better errors during literal parsing later
 				add_variable_length_token(TokenKind::OctIntLiteral, offset);
 				return;
 		}
@@ -499,14 +498,14 @@ private:
 		add_variable_length_token(kind, offset);
 	}
 
-	void lex_unicode_name(char next, SourceOffset offset) {
-		if (check_multibyte_utf8_value<is_utf8_xid_start>(next, offset)) {
+	void lex_unicode_name(char character, SourceOffset offset) {
+		if (check_multibyte_utf8_value<is_utf8_xid_start>(character, offset)) {
 			eat_word_token_rest();
 		}
 		add_variable_length_token(TokenKind::Name, offset);
 	}
 
-	void report(Message message, SourceOffset offset, ReportArgs args) const {
+	void report(Message message, SourceOffset offset, MessageArgs args) const {
 		auto location = source_.locate(offset);
 		reporter_.report(message, location, std::move(args));
 	}
@@ -564,7 +563,7 @@ private:
 	}
 };
 
-TokenStream lex(const LockedSource& source, Reporter& reporter) {
+TokenStream lex(const SourceGuard& source, Reporter& reporter) {
 	Lexer lexer(source, reporter);
 	return lexer.lex();
 }
