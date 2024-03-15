@@ -57,7 +57,7 @@ namespace {
 AstToString::AstToString(const Ast& ast, const SourceGuard& source) :
 	cursor_(ast),
 	source_(source),
-	edge_(&BODY),
+	edge_(&Body),
 	string_(fmt::format("AST for {} ({} node{})\n", source.get_name(), ast.num_nodes(), ast.num_nodes() == 1 ? "" : "s")) {
 	prefixes_.emplace();
 }
@@ -83,7 +83,7 @@ void AstToString::pop_level() {
 }
 
 void AstToString::set_tail(bool at_tail) {
-	edge_ = at_tail ? &TAIL : &BODY;
+	edge_ = at_tail ? &Tail : &Body;
 }
 
 void AstToString::add_line(std::string_view text) {

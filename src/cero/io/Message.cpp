@@ -18,9 +18,9 @@ std::string_view get_message_format(Message message) {
 	switch (message) {
 		using enum Message;
 		case FileNotFound: return "file not found";
-		case CouldNotOpenFile: return "could not open file (system error {})";
+		case CouldNotOpenFile: return "could not open file, system error: \"{}\"";
 		case SourceInputTooLarge: return "source input is too large, maximum allowed is {} bytes";
-		case UnexpectedCharacter: return "unexpected character `0x{:x}`";
+		case InvalidCharacter: return "invalid character `0x{:x}`";
 		case MissingClosingQuote: return "missing closing quote";
 		case UnterminatedBlockComment: return "block comment must be closed with `*/`";
 		case ExpectFuncStructEnum: return "expected function, struct or enum, but found {}";
@@ -34,6 +34,7 @@ std::string_view get_message_format(Message message) {
 		case ExpectNameAfterDeclarationType: return "expected a name after type in declaration, but found {}";
 		case ExpectExpr: return "expected expression, but found {}";
 		case ExpectSemicolon: return "expected a `;`, but found {}";
+		case NameCannotAppearHere: return "name cannot appear here";
 		case ExpectNameAfterDot: return "expected a member name after `.`, but found {}";
 		case ExpectColonInIfExpr: return "expected `:` after `if` condition, but found {}";
 		case ExpectColonOrBlock: return "expected `:` or `{{` before control flow statement, but found {}";

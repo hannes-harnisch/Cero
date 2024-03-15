@@ -159,7 +159,6 @@ foo() {
 CERO_TEST(ExpectSemicolon) {
 	ExhaustiveReporter r;
 	r.expect(4, 1, cero::Message::ExpectSemicolon, cero::MessageArgs("`}`"));
-	r.expect(11, 11, cero::Message::ExpectSemicolon, cero::MessageArgs("name `c`"));
 
 	build_test_source(r, R"_____(
 a() {
@@ -169,7 +168,14 @@ a() {
 b() {
     return 0;
 }
+)_____");
+}
 
+CERO_TEST(NameCannotAppearHere) {
+	ExhaustiveReporter r;
+	r.expect(3, 11, cero::Message::NameCannotAppearHere, {});
+
+	build_test_source(r, R"_____(
 c(int32 a, int32 b) {
 	a + b c;
 }

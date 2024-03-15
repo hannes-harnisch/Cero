@@ -17,7 +17,7 @@ public:
 
 	TokenStream lex() {
 		if (source_.get_length() > MaxSourceLength) {
-			const CodeLocation blank {source_.get_name(), 0, 0};
+			const auto blank = CodeLocation::blank(source_.get_name());
 			reporter_.report(Message::SourceInputTooLarge, blank, MessageArgs(MaxSourceLength));
 		} else {
 			lex_source();
@@ -172,7 +172,7 @@ private:
 		}
 	}
 
-	template<bool (*Utf8Predicate)(uint32_t encoded_value)>
+	template<bool Utf8Predicate(uint32_t encoded_value)>
 	bool check_multibyte_utf8_value(char character, SourceOffset offset) {
 		const auto leading_byte = static_cast<uint8_t>(character);
 		const auto leading_ones = static_cast<uint8_t>(std::countl_one(leading_byte));
@@ -190,7 +190,7 @@ private:
 			}
 		}
 
-		report(Message::UnexpectedCharacter, offset, MessageArgs(encoded_value));
+		report(Message::InvalidCharacter, offset, MessageArgs(encoded_value));
 		return false;
 	}
 
@@ -251,7 +251,7 @@ private:
 		add_variable_length_token(TokenKind::DecIntLiteral, offset);
 	}
 
-	template<bool (*CharPredicate)(char)>
+	template<bool CharPredicate(char)>
 	void eat_number_literal() {
 		auto lookahead = cursor_;
 
@@ -342,49 +342,65 @@ private:
 	}
 
 	void lex_equal(SourceOffset offset) {
+		TokenKind kind;
+
 		if (cursor_.match('=')) {
-			stream_.add_header(TokenKind::EqualsEquals, offset);
+			kind = TokenKind::EqualsEquals;
 		} else if (cursor_.match('>')) {
-			stream_.add_header(TokenKind::ThickArrow, offset);
+			kind = TokenKind::ThickArrow;
 		} else {
-			stream_.add_header(TokenKind::Equals, offset);
+			kind = TokenKind::Equals;
 		}
+
+		stream_.add_header(kind, offset);
 	}
 
 	void lex_plus(SourceOffset offset) {
+		TokenKind kind;
+
 		if (cursor_.match('+')) {
-			stream_.add_header(TokenKind::PlusPlus, offset);
+			kind = TokenKind::PlusPlus;
 		} else if (cursor_.match('=')) {
-			stream_.add_header(TokenKind::PlusEquals, offset);
+			kind = TokenKind::PlusEquals;
 		} else {
-			stream_.add_header(TokenKind::Plus, offset);
+			kind = TokenKind::Plus;
 		}
+
+		stream_.add_header(kind, offset);
 	}
 
 	void lex_minus(SourceOffset offset) {
+		TokenKind kind;
+
 		if (cursor_.match('>')) {
-			stream_.add_header(TokenKind::ThinArrow, offset);
+			kind = TokenKind::ThinArrow;
 		} else if (cursor_.match('-')) {
-			stream_.add_header(TokenKind::MinusMinus, offset);
+			kind = TokenKind::MinusMinus;
 		} else if (cursor_.match('=')) {
-			stream_.add_header(TokenKind::MinusEquals, offset);
+			kind = TokenKind::MinusEquals;
 		} else {
-			stream_.add_header(TokenKind::Minus, offset);
+			kind = TokenKind::Minus;
 		}
+
+		stream_.add_header(kind, offset);
 	}
 
 	void lex_star(SourceOffset offset) {
+		TokenKind kind;
+
 		if (cursor_.match('*')) {
 			if (cursor_.match('=')) {
-				stream_.add_header(TokenKind::StarStarEquals, offset);
+				kind = TokenKind::StarStarEquals;
 			} else {
-				stream_.add_header(TokenKind::StarStar, offset);
+				kind = TokenKind::StarStar;
 			}
 		} else if (cursor_.match('=')) {
-			stream_.add_header(TokenKind::StarEquals, offset);
+			kind = TokenKind::StarEquals;
 		} else {
-			stream_.add_header(TokenKind::Star, offset);
+			kind = TokenKind::Star;
 		}
+
+		stream_.add_header(kind, offset);
 	}
 
 	void lex_slash(SourceOffset offset) {
@@ -426,7 +442,7 @@ private:
 			}
 		}
 
-		if (unclosed_count != 0) {
+		if (unclosed_count > 0) {
 			report(Message::UnterminatedBlockComment, offset, {});
 		}
 	}
@@ -449,7 +465,11 @@ private:
 
 	void lex_ampersand(SourceOffset offset) {
 		if (cursor_.match('&')) {
-			stream_.add_header(TokenKind::AmpersandAmpersand, offset);
+			if (cursor_.match('=')) {
+				stream_.add_header(TokenKind::AmpersandAmpersandEquals, offset);
+			} else {
+				stream_.add_header(TokenKind::AmpersandAmpersand, offset);
+			}
 		} else if (cursor_.match('=')) {
 			stream_.add_header(TokenKind::AmpersandEquals, offset);
 		} else {
@@ -459,7 +479,11 @@ private:
 
 	void lex_pipe(SourceOffset offset) {
 		if (cursor_.match('|')) {
-			stream_.add_header(TokenKind::PipePipe, offset);
+			if (cursor_.match('=')) {
+				stream_.add_header(TokenKind::PipePipeEquals, offset);
+			} else {
+				stream_.add_header(TokenKind::PipePipe, offset);
+			}
 		} else if (cursor_.match('=')) {
 			stream_.add_header(TokenKind::PipeEquals, offset);
 		} else {

@@ -49,13 +49,13 @@ namespace {
 			case ColonColon:
 			case PlusPlus:
 			case MinusMinus:
+			case StarStar:
 			case AmpersandAmpersand:
 			case PipePipe:
 			case EqualsEquals:
 			case BangEquals:
 			case LeftAngleEquals:
 			case RightAngleEquals:
-			case StarStar:
 			case LeftAngleAngle:
 			case PlusEquals:
 			case MinusEquals:
@@ -69,6 +69,8 @@ namespace {
 			case StarStarEquals:
 			case LeftAngleAngleEquals:
 			case RightAngleAngleEquals:
+			case AmpersandAmpersandEquals:
+			case PipePipeEquals:
 			case Break:
 			case Catch:
 			case Const:
@@ -102,19 +104,14 @@ TokenCursor::TokenCursor(const TokenStream& token_stream) :
 	it_(token_stream.raw().begin()) {
 }
 
-Token TokenCursor::next() {
+TokenHeader TokenCursor::next() {
 	const auto header = it_->header;
 
 	if (header.kind != TokenKind::EndOfFile) {
-		++it_;
-		if (is_variable_length_token(header.kind)) {
-			const auto length = it_->length;
-			++it_;
-			return Token {header, length};
-		}
+		it_ += is_variable_length_token(header.kind) ? 2 : 1;
 	}
 
-	return Token {header, 0};
+	return header;
 }
 
 bool TokenCursor::match(TokenKind kind) {
@@ -126,7 +123,7 @@ bool TokenCursor::match(TokenKind kind) {
 	return false;
 }
 
-std::optional<Token> TokenCursor::match_token(TokenKind kind) {
+std::optional<TokenHeader> TokenCursor::match_token(TokenKind kind) {
 	auto token = peek();
 	if (token.kind == kind) {
 		advance();
@@ -135,7 +132,7 @@ std::optional<Token> TokenCursor::match_token(TokenKind kind) {
 	return std::nullopt;
 }
 
-std::optional<Token> TokenCursor::match_name() {
+std::optional<TokenHeader> TokenCursor::match_name() {
 	auto token = peek();
 	if (token.kind == TokenKind::Name) {
 		advance();
@@ -144,13 +141,8 @@ std::optional<Token> TokenCursor::match_name() {
 	return std::nullopt;
 }
 
-Token TokenCursor::current() const {
-	auto header = it_->header;
-	if (is_variable_length_token(header.kind)) {
-		return {header, it_[1].length};
-	} else {
-		return {header, 0};
-	}
+TokenHeader TokenCursor::current() const {
+	return it_->header;
 }
 
 TokenKind TokenCursor::current_kind() const {
@@ -161,12 +153,12 @@ SourceOffset TokenCursor::current_offset() const {
 	return it_->header.offset;
 }
 
-Token TokenCursor::peek() {
+TokenHeader TokenCursor::peek() {
 	skip_comments();
 	return current();
 }
 
-Token TokenCursor::peek_ahead() {
+TokenHeader TokenCursor::peek_ahead() {
 	skip_comments();
 	auto saved = it_;
 	advance();
@@ -188,10 +180,7 @@ SourceOffset TokenCursor::peek_offset() {
 void TokenCursor::advance() {
 	if (it_->header.kind != TokenKind::EndOfFile) {
 		const auto header = it_->header;
-		++it_;
-		if (is_variable_length_token(header.kind)) {
-			++it_;
-		}
+		it_ += is_variable_length_token(header.kind) ? 2 : 1;
 	}
 }
 
@@ -201,6 +190,49 @@ void TokenCursor::skip_comments() {
 		it_ += 2;
 		kind = it_->header.kind;
 	}
+}
+
+std::string_view TokenCursor::get_lexeme(const SourceGuard& source) const {
+	if (length == 0) {
+		return get_fixed_length_lexeme(kind);
+	} else {
+		return source.get_text().substr(offset, length);
+	}
+}
+
+namespace {
+
+	std::string_view get_token_message_format(TokenKind kind) {
+		switch (kind) {
+			using enum TokenKind;
+			case Name: return "name `{}`";
+			case LineComment:
+			case BlockComment: return "comment";
+			case DecIntLiteral:
+			case HexIntLiteral:
+			case BinIntLiteral:
+			case OctIntLiteral: return "integer literal `{}`";
+			case FloatLiteral: return "floating-point literal `{}`";
+			case CharLiteral: return "character literal {}";
+			case StringLiteral: return "string literal {}";
+			case EndOfFile: return "end of file";
+			default: return "`{}`";
+		}
+	}
+
+} // namespace
+
+std::string TokenCursor::to_message_string(const SourceGuard& source) const {
+	auto format = get_token_message_format(kind);
+	auto lexeme = get_lexeme(source);
+	return fmt::vformat(format, fmt::make_format_args(lexeme));
+}
+
+std::string TokenCursor::to_log_string(const SourceGuard& source) const {
+	auto token_kind = token_kind_to_string(kind);
+	auto lexeme = get_lexeme(source);
+	auto location = source.locate(offset);
+	return fmt::format("{} `{}` {}", token_kind, lexeme, location.to_short_string());
 }
 
 } // namespace cero

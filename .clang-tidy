@@ -1,5 +1,6 @@
 Checks: >
   -bugprone-unhandled-self-assignment,
+  -google-explicit-constructor,
   -hicpp-exception-baseclass,
   -misc-no-recursion,
   -modernize-return-braced-init-list,

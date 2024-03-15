@@ -43,8 +43,8 @@ fibonacci(var uint32 n) -> uint32 {
 			c.numeric_literal_expr(cero::NumericLiteralKind::Decimal);
 		});
 		c.while_loop([&] {
-			c.binary_expr(cero::BinaryOperator::NotEqual, [&] {
-				c.unary_expr(cero::UnaryOperator::PostDecrement, [&] {
+			c.binary_expr(cero::BinaryOperator::NotEq, [&] {
+				c.unary_expr(cero::UnaryOperator::PostDec, [&] {
 					c.name_expr("n");
 				});
 				c.numeric_literal_expr(cero::NumericLiteralKind::Decimal);

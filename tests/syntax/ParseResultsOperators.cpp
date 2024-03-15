@@ -12,7 +12,7 @@ foo(int32 a, int32 b) -> int32 {
 	let c = a + b;
 	let d = a + b * c;
 	let e = (d - a) / c;
-	return e ** 2 * b;
+	return e**2 * b;
 }
 )_____");
 
@@ -40,16 +40,16 @@ foo(int32 a, int32 b) -> int32 {
 		c.binding_statement(cero::BindingSpecifier::Let, "d", [&] {
 			c.binary_expr(cero::BinaryOperator::Add, [&] {
 				c.name_expr("a");
-				c.binary_expr(cero::BinaryOperator::Multiply, [&] {
+				c.binary_expr(cero::BinaryOperator::Mul, [&] {
 					c.name_expr("b");
 					c.name_expr("c");
 				});
 			});
 		});
 		c.binding_statement(cero::BindingSpecifier::Let, "e", [&] {
-			c.binary_expr(cero::BinaryOperator::Divide, [&] {
+			c.binary_expr(cero::BinaryOperator::Div, [&] {
 				c.group_expr([&] {
-					c.binary_expr(cero::BinaryOperator::Subtract, [&] {
+					c.binary_expr(cero::BinaryOperator::Sub, [&] {
 						c.name_expr("d");
 						c.name_expr("a");
 					});
@@ -58,8 +58,8 @@ foo(int32 a, int32 b) -> int32 {
 			});
 		});
 		c.return_expr([&] {
-			c.binary_expr(cero::BinaryOperator::Multiply, [&] {
-				c.binary_expr(cero::BinaryOperator::Power, [&] {
+			c.binary_expr(cero::BinaryOperator::Mul, [&] {
+				c.binary_expr(cero::BinaryOperator::Pow, [&] {
 					c.name_expr("e");
 					c.numeric_literal_expr(cero::NumericLiteralKind::Decimal);
 				});
@@ -103,8 +103,8 @@ bar(int32 a, int32 b, int32 c) -> bool {
 			c.name_expr("bool");
 		});
 		c.binding_statement(cero::BindingSpecifier::Let, "u", [&] {
-			c.binary_expr(cero::BinaryOperator::Equal, [&] {
-				c.binary_expr(cero::BinaryOperator::Subtract, [&] {
+			c.binary_expr(cero::BinaryOperator::Eq, [&] {
+				c.binary_expr(cero::BinaryOperator::Sub, [&] {
 					c.name_expr("a");
 					c.name_expr("b");
 				});
@@ -115,12 +115,12 @@ bar(int32 a, int32 b, int32 c) -> bool {
 			});
 		});
 		c.binding_statement(cero::BindingSpecifier::Let, "v", [&] {
-			c.binary_expr(cero::BinaryOperator::NotEqual, [&] {
-				c.binary_expr(cero::BinaryOperator::Multiply, [&] {
+			c.binary_expr(cero::BinaryOperator::NotEq, [&] {
+				c.binary_expr(cero::BinaryOperator::Mul, [&] {
 					c.name_expr("b");
 					c.name_expr("a");
 				});
-				c.binary_expr(cero::BinaryOperator::Divide, [&] {
+				c.binary_expr(cero::BinaryOperator::Div, [&] {
 					c.name_expr("c");
 					c.name_expr("a");
 				});
@@ -132,7 +132,7 @@ bar(int32 a, int32 b, int32 c) -> bool {
 					c.name_expr("c");
 					c.name_expr("b");
 				});
-				c.binary_expr(cero::BinaryOperator::Multiply, [&] {
+				c.binary_expr(cero::BinaryOperator::Mul, [&] {
 					c.name_expr("b");
 					c.name_expr("a");
 				});
@@ -140,46 +140,46 @@ bar(int32 a, int32 b, int32 c) -> bool {
 		});
 		c.binding_statement(cero::BindingSpecifier::Let, "x", [&] {
 			c.binary_expr(cero::BinaryOperator::Less, [&] {
-				c.binary_expr(cero::BinaryOperator::Divide, [&] {
+				c.binary_expr(cero::BinaryOperator::Div, [&] {
 					c.name_expr("b");
 					c.name_expr("a");
 				});
-				c.binary_expr(cero::BinaryOperator::Subtract, [&] {
+				c.binary_expr(cero::BinaryOperator::Sub, [&] {
 					c.name_expr("c");
 					c.name_expr("b");
 				});
 			});
 		});
 		c.binding_statement(cero::BindingSpecifier::Let, "y", [&] {
-			c.binary_expr(cero::BinaryOperator::LessEqual, [&] {
-				c.binary_expr(cero::BinaryOperator::Multiply, [&] {
+			c.binary_expr(cero::BinaryOperator::LessEq, [&] {
+				c.binary_expr(cero::BinaryOperator::Mul, [&] {
 					c.name_expr("a");
 					c.name_expr("c");
 				});
-				c.binary_expr(cero::BinaryOperator::Subtract, [&] {
+				c.binary_expr(cero::BinaryOperator::Sub, [&] {
 					c.name_expr("b");
 					c.name_expr("a");
 				});
 			});
 		});
 		c.binding_statement(cero::BindingSpecifier::Let, "z", [&] {
-			c.binary_expr(cero::BinaryOperator::GreaterEqual, [&] {
+			c.binary_expr(cero::BinaryOperator::GreaterEq, [&] {
 				c.binary_expr(cero::BinaryOperator::Add, [&] {
 					c.name_expr("b");
 					c.name_expr("c");
 				});
-				c.binary_expr(cero::BinaryOperator::Divide, [&] {
+				c.binary_expr(cero::BinaryOperator::Div, [&] {
 					c.name_expr("a");
 					c.name_expr("c");
 				});
 			});
 		});
 		c.return_expr([&] {
-			c.binary_expr(cero::BinaryOperator::LogicalOr, [&] {
-				c.binary_expr(cero::BinaryOperator::LogicalOr, [&] {
-					c.binary_expr(cero::BinaryOperator::LogicalOr, [&] {
-						c.binary_expr(cero::BinaryOperator::LogicalOr, [&] {
-							c.binary_expr(cero::BinaryOperator::LogicalOr, [&] {
+			c.binary_expr(cero::BinaryOperator::LogicOr, [&] {
+				c.binary_expr(cero::BinaryOperator::LogicOr, [&] {
+					c.binary_expr(cero::BinaryOperator::LogicOr, [&] {
+						c.binary_expr(cero::BinaryOperator::LogicOr, [&] {
+							c.binary_expr(cero::BinaryOperator::LogicOr, [&] {
 								c.name_expr("u");
 								c.name_expr("v");
 							});
@@ -226,10 +226,10 @@ baz(int32 a, int32 b, int32 c, int32 d) -> bool {
 			c.name_expr("bool");
 		});
 		c.return_expr([&] {
-			c.binary_expr(cero::BinaryOperator::LogicalAnd, [&] {
-				c.binary_expr(cero::BinaryOperator::LogicalAnd, [&] {
-					c.binary_expr(cero::BinaryOperator::LogicalAnd, [&] {
-						c.binary_expr(cero::BinaryOperator::Equal, [&] {
+			c.binary_expr(cero::BinaryOperator::LogicAnd, [&] {
+				c.binary_expr(cero::BinaryOperator::LogicAnd, [&] {
+					c.binary_expr(cero::BinaryOperator::LogicAnd, [&] {
+						c.binary_expr(cero::BinaryOperator::Eq, [&] {
 							c.binary_expr(cero::BinaryOperator::Add, [&] {
 								c.name_expr("a");
 								c.name_expr("b");
@@ -239,7 +239,7 @@ baz(int32 a, int32 b, int32 c, int32 d) -> bool {
 								c.name_expr("c");
 							});
 						});
-						c.binary_expr(cero::BinaryOperator::NotEqual, [&] {
+						c.binary_expr(cero::BinaryOperator::NotEq, [&] {
 							c.binary_expr(cero::BinaryOperator::Add, [&] {
 								c.name_expr("b");
 								c.name_expr("c");

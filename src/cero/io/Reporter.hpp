@@ -8,14 +8,17 @@ namespace cero {
 /// Stores formatting arguments for diagnostic messages.
 struct MessageArgs {
 	fmt::dynamic_format_arg_store<fmt::format_context> store;
-	const size_t count = 0;
+	const size_t arg_count = 0;
 
 	MessageArgs() = default;
 
 	explicit MessageArgs(auto&&... args) :
-		count(sizeof...(args)) {
+		arg_count(sizeof...(args)) {
 		store_args(fmt::make_format_args(args...));
 	}
+
+	/// Checks if the number of message arguments matches the expected number of arguments for that message.
+	bool verify_message_arg_count(Message message) const;
 
 private:
 	void store_args(fmt::format_args args);
@@ -27,8 +30,8 @@ public:
 	virtual ~Reporter() = default;
 
 	/// Reports a diagnostic message. If the number of message arguments does not match the expected number for the given
-	/// message, the compiler will terminate itself. This runtime check is preferred over a compile-time check because every
-	/// place a message can be emitted should have a unit test anyway.
+	/// message, the compiler will terminate itself. This runtime check is preferred over a compile-time check to reduce
+	/// template instantiations and because every place a message can be emitted should have a unit test anyway.
 	void report(Message message, CodeLocation location, MessageArgs args);
 
 	/// Whether the reporter has encountered any error reports.

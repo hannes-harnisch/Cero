@@ -9,7 +9,7 @@ namespace cero {
 
 /// The primary command line argument for the compiler for a given execution, that determines what it should mainly do when
 /// executed.
-enum class Command {
+enum class Command : uint8_t {
 	Help,
 	Version,
 	Build,
@@ -35,6 +35,9 @@ struct Configuration {
 
 	/// Decides whether warnings should be treated as errors.
 	bool warnings_as_errors = false;
+
+	/// Decides whether the compiler should print the source before lexing.
+	bool print_source = false;
 
 	/// Decides whether the compiler should print the token stream after lexing.
 	bool print_tokens = false;

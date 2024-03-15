@@ -20,13 +20,10 @@ std::string TokenStream::to_string(const SourceGuard& source) const {
 	auto str = fmt::format("Token stream for {} ({} token{})\n", source.get_name(), num_tokens_, num_tokens_ == 1 ? "" : "s");
 
 	TokenCursor cursor(*this);
-	Token token;
 	do {
-		token = cursor.next();
-
-		// This loop is technically quadratic since Token::to_log_string will search the source for the code location
+		// This loop is technically quadratic since to_log_string will search the source for the code location
 		// repeatedly, but it really doesn't matter.
-		str += fmt::format("\t{}\n", token.to_log_string(source));
+		str += fmt::format("\t{}\n", cursor.to_log_string(source));
 	} while (token.kind != TokenKind::EndOfFile);
 
 	return str;

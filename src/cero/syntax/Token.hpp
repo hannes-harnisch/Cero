@@ -40,11 +40,11 @@ enum class TokenKind : unsigned {
 	Star,		  // *
 	Slash,		  // /
 	Percent,	  // %
-	Bang,		  // !
 	Ampersand,	  // &
 	Pipe,		  // |
 	Tilde,		  // ~
 	Caret,		  // ^
+	Bang,		  // !
 	QuestionMark, // ?
 	At,			  // @
 	Dollar,		  // $
@@ -56,14 +56,14 @@ enum class TokenKind : unsigned {
 	ColonColon,			// ::
 	PlusPlus,			// ++
 	MinusMinus,			// --
+	StarStar,			// **
+	LeftAngleAngle,		// <<
 	AmpersandAmpersand, // &&
 	PipePipe,			// ||
 	EqualsEquals,		// ==
 	BangEquals,			// !=
 	LeftAngleEquals,	// <=
 	RightAngleEquals,	// >=
-	StarStar,			// **
-	LeftAngleAngle,		// <<
 	PlusEquals,			// +=
 	MinusEquals,		// -=
 	StarEquals,			// *=
@@ -74,10 +74,12 @@ enum class TokenKind : unsigned {
 	TildeEquals,		// ~=
 
 	// Three-character tokens
-	Ellipsis,			   // ...
-	StarStarEquals,		   // **=
-	LeftAngleAngleEquals,  // <<=
-	RightAngleAngleEquals, // >>=
+	Ellipsis,				  // ...
+	StarStarEquals,			  // **=
+	LeftAngleAngleEquals,	  // <<=
+	RightAngleAngleEquals,	  // >>=
+	AmpersandAmpersandEquals, // &&=
+	PipePipeEquals,			  // ||=
 
 	// Keywords
 	Break,
@@ -112,19 +114,10 @@ std::string_view get_fixed_length_lexeme(TokenKind kind);
 struct TokenHeader {
 	TokenKind kind : 8 = {};
 	SourceOffset offset : SourceOffsetBits = 0;
-};
 
-static_assert(sizeof(TokenHeader) == 4);
-
-struct Token : TokenHeader {
-	uint32_t length = 0; // will be 0 if the token kind is a fixed-length kind
-
-	std::string_view get_lexeme(const SourceGuard& source) const;
-	std::string to_message_string(const SourceGuard& source) const;
-	std::string to_log_string(const SourceGuard& source) const;
 	CodeLocation locate_in(const SourceGuard& source) const;
 };
 
-static_assert(sizeof(Token) == 8);
+static_assert(sizeof(TokenHeader) == 4);
 
 } // namespace cero

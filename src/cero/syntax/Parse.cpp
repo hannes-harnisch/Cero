@@ -26,36 +26,38 @@ consteval Precedence lookup_precedence_for_associativity(BinaryOperator op) {
 	switch (op) {
 		using enum BinaryOperator;
 		case Add:
-		case Subtract: return Precedence::AdditiveOrBitwise;
-		case Multiply:
-		case Divide:
-		case Remainder:
-		case Power: return Precedence::Multiplicative; // using a lower precedence for power here makes it right-associative
-		case LogicalAnd:
-		case LogicalOr: return Precedence::Logical;
+		case Sub: return Precedence::AdditiveOrBitwise;
+		case Mul:
+		case Div:
+		case Rem:
+		case Pow: return Precedence::Multiplicative; // using a lower precedence for power here makes it right-associative
 		case BitAnd:
 		case BitOr:
 		case Xor:
-		case LeftShift:
-		case RightShift: return Precedence::AdditiveOrBitwise;
-		case Equal:
-		case NotEqual:
+		case Shl:
+		case Shr: return Precedence::AdditiveOrBitwise;
+		case Eq:
+		case NotEq:
 		case Less:
+		case LessEq:
 		case Greater:
-		case LessEqual:
-		case GreaterEqual: return Precedence::Comparison;
+		case GreaterEq: return Precedence::Comparison;
+		case LogicAnd:
+		case LogicOr: return Precedence::Logical;
 		case Assign:
 		case AddAssign:
-		case SubtractAssign:
-		case MultiplyAssign:
-		case DivideAssign:
-		case RemainderAssign:
-		case PowerAssign:
-		case AndAssign:
-		case OrAssign:
+		case SubAssign:
+		case MulAssign:
+		case DivAssign:
+		case RemAssign:
+		case PowAssign:
+		case BitAndAssign:
+		case BitOrAssign:
 		case XorAssign:
-		case LeftShiftAssign:
-		case RightShiftAssign: return Precedence::Assignment;
+		case ShlAssign:
+		case ShrAssign:
+		case LogicAndAssign:
+		case LogicOrAssign: return Precedence::Assignment;
 	}
 }
 
@@ -111,7 +113,7 @@ private:
 	template<typename T>
 	T& store() {
 		// valid thanks to pointer interconvertibility for unions and union members
-		return reinterpret_cast<T&>(nodes_.emplace_back(AstNode(T())));
+		return reinterpret_cast<T&>(nodes_.emplace_back(T()));
 	}
 
 	void insert_parent(NodeIndex first_descendant_index, AstNode&& node) {
@@ -147,7 +149,7 @@ private:
 			return;
 		}
 
-		report_expectation(Message::ExpectFuncStructEnum, cursor_.current());
+		report_expectation(Message::ExpectFuncStructEnum);
 		throw ParseError();
 	}
 
@@ -167,7 +169,7 @@ private:
 
 		auto name = expect_name(Message::ExpectNameForStruct);
 
-		struct_def = AstStructDefinition(offset, access_specifier, name);
+		struct_def = AstStructDefinition {offset, access_specifier, name};
 	}
 
 	void parse_enum(SourceOffset offset, AccessSpecifier access_specifier) {
@@ -175,7 +177,7 @@ private:
 
 		auto name = expect_name(Message::ExpectNameForEnum);
 
-		enum_def = AstEnumDefinition(offset, access_specifier, name);
+		enum_def = AstEnumDefinition {offset, access_specifier, name};
 	}
 
 	void parse_function(SourceOffset offset, AccessSpecifier access_specifier, Token name_token) {
@@ -189,7 +191,7 @@ private:
 		expect(TokenKind::LeftBrace, Message::ExpectBraceBeforeFuncBody);
 
 		auto num_statements = parse_block();
-		func_def = AstFunctionDefinition(offset, access_specifier, name, num_parameters, num_outputs, num_statements);
+		func_def = AstFunctionDefinition {offset, access_specifier, name, num_parameters, num_outputs, num_statements};
 	}
 
 	uint16_t parse_function_definition_parameters() {
@@ -330,7 +332,8 @@ private:
 														AstNodeKind::MemberExpr,	  AstNodeKind::ArrayTypeExpr,
 														AstNodeKind::PointerTypeExpr, AstNodeKind::FunctionTypeExpr};
 		if (!contains(type_expr_kinds, kind)) {
-			report_expectation(Message::ExpectSemicolon, name_token); // TODO: report different error: "name cannot appear here"
+			auto location = name_token.locate_in(source_);
+			report(Message::NameCannotAppearHere, location, {});
 			throw ParseError();
 		}
 
@@ -360,7 +363,7 @@ private:
 
 		auto head_parse_method = lookup_head_parse_method(next.kind);
 		if (head_parse_method == nullptr) {
-			report_expectation(Message::ExpectExpr, next);
+			report_expectation(Message::ExpectExpr);
 			throw ParseError();
 		}
 
@@ -391,11 +394,11 @@ private:
 			case Continue:		return &Parser::on_continue;
 			case Return:		return &Parser::on_return;
 			case Throw:			return &Parser::on_throw;
-			case Ampersand:		return &Parser::on_prefix_operator<UnaryOperator::AddressOf>;
-			case Minus:			return &Parser::on_prefix_operator<UnaryOperator::Negate>;
-			case Tilde:			return &Parser::on_prefix_operator<UnaryOperator::Not>;
-			case PlusPlus:		return &Parser::on_prefix_operator<UnaryOperator::PreIncrement>;
-			case MinusMinus:	return &Parser::on_prefix_operator<UnaryOperator::PreDecrement>;
+			case Ampersand:		return &Parser::on_prefix_op<UnaryOperator::Addr>;
+			case Minus:			return &Parser::on_prefix_op<UnaryOperator::Neg>;
+			case Tilde:			return &Parser::on_prefix_op<UnaryOperator::Not>;
+			case PlusPlus:		return &Parser::on_prefix_op<UnaryOperator::PreInc>;
+			case MinusMinus:	return &Parser::on_prefix_op<UnaryOperator::PreDec>;
 			case Caret:			return &Parser::on_caret;
 			default:			return nullptr;
 		} // clang-format on
@@ -408,56 +411,59 @@ private:
 		switch (token.kind) {
 			using enum TokenKind;
 			using enum Precedence; // clang-format off
-			default:					rule = {}; break;
-			case Equals:				rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::Assign>}; break;
-			case PlusEquals:			rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::AddAssign>}; break;
-			case MinusEquals:			rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::SubtractAssign>}; break;
-			case StarEquals:			rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::MultiplyAssign>}; break;
-			case SlashEquals:			rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::DivideAssign>}; break;
-			case PercentEquals:			rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::RemainderAssign>}; break;
-			case StarStarEquals:		rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::PowerAssign>}; break;
-			case AmpersandEquals:		rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::AndAssign>}; break;
-			case PipeEquals:			rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::OrAssign>}; break;
-			case TildeEquals:			rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::XorAssign>}; break;
-			case LeftAngleAngleEquals:	rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::LeftShiftAssign>}; break;
-			case RightAngleAngleEquals:	rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::RightShiftAssign>}; break;
-			case AmpersandAmpersand:	rule = {Logical, &Parser::on_binary_operator<BinaryOperator::LogicalAnd>}; break;
-			case PipePipe:				rule = {Logical, &Parser::on_binary_operator<BinaryOperator::LogicalOr>}; break;
-			case EqualsEquals:			rule = {Comparison, &Parser::on_binary_operator<BinaryOperator::Equal>}; break;
-			case BangEquals:			rule = {Comparison, &Parser::on_binary_operator<BinaryOperator::NotEqual>}; break;
-			case LeftAngle:				rule = {Comparison, &Parser::on_binary_operator<BinaryOperator::Less>}; break;
-			case LeftAngleEquals:		rule = {Comparison, &Parser::on_binary_operator<BinaryOperator::LessEqual>}; break;
-			case RightAngleEquals:		rule = {Comparison, &Parser::on_binary_operator<BinaryOperator::GreaterEqual>}; break;
-			case Plus:					rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::Add>}; break;
-			case Minus:					rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::Subtract>}; break;
-			case Ampersand:				rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::BitAnd>}; break;
-			case Pipe:					rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::BitOr>}; break;
-			case Tilde:					rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::Xor>}; break;
-			case LeftAngleAngle:		rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::LeftShift>}; break;
-			case Star:					rule = {Multiplicative, &Parser::on_binary_operator<BinaryOperator::Multiply>}; break;
-			case Slash:					rule = {Multiplicative, &Parser::on_binary_operator<BinaryOperator::Divide>}; break;
-			case Percent:				rule = {Multiplicative, &Parser::on_binary_operator<BinaryOperator::Remainder>}; break;
-			case StarStar:				rule = {Prefix, &Parser::on_binary_operator<BinaryOperator::Power>}; break;
-			case Caret:					rule = {Postfix, &Parser::on_postfix_operator<UnaryOperator::Dereference>}; break;
-			case PlusPlus:				rule = {Postfix, &Parser::on_postfix_operator<UnaryOperator::PostIncrement>}; break;
-			case MinusMinus:			rule = {Postfix, &Parser::on_postfix_operator<UnaryOperator::PostDecrement>}; break;
-			case Dot:					rule = {Postfix, &Parser::on_dot}; break;
-			case LeftParen:				rule = {Postfix, &Parser::on_infix_left_paren}; break;
-			case LeftBracket:			rule = {Postfix, &Parser::on_infix_left_bracket}; break; // clang-format on
+			case Equals:				   rule = {Assignment, &Parser::on_binary_op<BinaryOperator::Assign>}; break;
+			case PlusEquals:			   rule = {Assignment, &Parser::on_binary_op<BinaryOperator::AddAssign>}; break;
+			case MinusEquals:			   rule = {Assignment, &Parser::on_binary_op<BinaryOperator::SubAssign>}; break;
+			case StarEquals:			   rule = {Assignment, &Parser::on_binary_op<BinaryOperator::MulAssign>}; break;
+			case SlashEquals:			   rule = {Assignment, &Parser::on_binary_op<BinaryOperator::DivAssign>}; break;
+			case PercentEquals:			   rule = {Assignment, &Parser::on_binary_op<BinaryOperator::RemAssign>}; break;
+			case StarStarEquals:		   rule = {Assignment, &Parser::on_binary_op<BinaryOperator::PowAssign>}; break;
+			case AmpersandEquals:		   rule = {Assignment, &Parser::on_binary_op<BinaryOperator::BitAndAssign>}; break;
+			case PipeEquals:			   rule = {Assignment, &Parser::on_binary_op<BinaryOperator::BitOrAssign>}; break;
+			case TildeEquals:			   rule = {Assignment, &Parser::on_binary_op<BinaryOperator::XorAssign>}; break;
+			case LeftAngleAngleEquals:	   rule = {Assignment, &Parser::on_binary_op<BinaryOperator::ShlAssign>}; break;
+			case RightAngleAngleEquals:	   rule = {Assignment, &Parser::on_binary_op<BinaryOperator::ShrAssign>}; break;
+			case AmpersandAmpersandEquals: rule = {Assignment, &Parser::on_binary_op<BinaryOperator::LogicAndAssign>}; break;
+			case PipePipeEquals:		   rule = {Assignment, &Parser::on_binary_op<BinaryOperator::LogicOrAssign>}; break;
+			case AmpersandAmpersand:	   rule = {Logical, &Parser::on_binary_op<BinaryOperator::LogicAnd>}; break;
+			case PipePipe:				   rule = {Logical, &Parser::on_binary_op<BinaryOperator::LogicOr>}; break;
+			case EqualsEquals:			   rule = {Comparison, &Parser::on_binary_op<BinaryOperator::Eq>}; break;
+			case BangEquals:			   rule = {Comparison, &Parser::on_binary_op<BinaryOperator::NotEq>}; break;
+			case LeftAngle:				   rule = {Comparison, &Parser::on_binary_op<BinaryOperator::Less>}; break;
+			case LeftAngleEquals:		   rule = {Comparison, &Parser::on_binary_op<BinaryOperator::LessEq>}; break;
+			case RightAngleEquals:		   rule = {Comparison, &Parser::on_binary_op<BinaryOperator::GreaterEq>}; break;
+			case Plus:					   rule = {AdditiveOrBitwise, &Parser::on_binary_op<BinaryOperator::Add>}; break;
+			case Minus:					   rule = {AdditiveOrBitwise, &Parser::on_binary_op<BinaryOperator::Sub>}; break;
+			case Ampersand:				   rule = {AdditiveOrBitwise, &Parser::on_binary_op<BinaryOperator::BitAnd>}; break;
+			case Pipe:					   rule = {AdditiveOrBitwise, &Parser::on_binary_op<BinaryOperator::BitOr>}; break;
+			case Tilde:					   rule = {AdditiveOrBitwise, &Parser::on_binary_op<BinaryOperator::Xor>}; break;
+			case LeftAngleAngle:		   rule = {AdditiveOrBitwise, &Parser::on_binary_op<BinaryOperator::Shl>}; break;
+			case Star:					   rule = {Multiplicative, &Parser::on_binary_op<BinaryOperator::Mul>}; break;
+			case Slash:					   rule = {Multiplicative, &Parser::on_binary_op<BinaryOperator::Div>}; break;
+			case Percent:				   rule = {Multiplicative, &Parser::on_binary_op<BinaryOperator::Rem>}; break;
+			case StarStar:				   rule = {Prefix, &Parser::on_binary_op<BinaryOperator::Pow>}; break;
+			case Caret:					   rule = {Postfix, &Parser::on_postfix_op<UnaryOperator::Deref>}; break;
+			case PlusPlus:				   rule = {Postfix, &Parser::on_postfix_op<UnaryOperator::PostInc>}; break;
+			case MinusMinus:			   rule = {Postfix, &Parser::on_postfix_op<UnaryOperator::PostDec>}; break;
+			case Dot:					   rule = {Postfix, &Parser::on_dot}; break;
+			case LeftParen:				   rule = {Postfix, &Parser::on_infix_left_paren}; break;
+			case LeftBracket:			   rule = {Postfix, &Parser::on_infix_left_bracket}; break; // clang-format on
 			case RightAngle:
 				// check for unclosed angle brackets so the last one gets closed instead of parsing a greater-than expression
 				if (open_angles_ > 0) {
 					return nullptr;
-				}
-
-				auto next = cursor_.peek_ahead();
-				if (next.kind == TokenKind::RightAngle && next.offset == token.offset + 1) {
-					cursor_.advance();
-					rule = {Precedence::AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::RightShift>};
 				} else {
-					rule = {Precedence::Comparison, &Parser::on_binary_operator<BinaryOperator::Greater>};
+					auto next = cursor_.peek_ahead();
+					if (next.kind == TokenKind::RightAngle && next.offset == token.offset + 1) {
+						cursor_.advance();
+						rule = {Precedence::AdditiveOrBitwise, &Parser::on_binary_op<BinaryOperator::Shr>};
+					} else {
+						rule = {Precedence::Comparison, &Parser::on_binary_op<BinaryOperator::Greater>};
+					}
 				}
 				break;
+
+			default: rule = {}; break;
 		}
 
 		if (current_precedence >= rule.precedence) {
@@ -533,7 +539,7 @@ private:
 		} else {
 			auto next = cursor_.peek();
 			if (next.kind != TokenKind::LeftBrace) {
-				report_expectation(Message::ExpectColonOrBlock, next);
+				report_expectation(Message::ExpectColonOrBlock);
 			}
 		}
 	}
@@ -666,14 +672,14 @@ private:
 		return true;
 	}
 
-	template<void (*LiteralParseFn)(std::string_view), NumericLiteralKind KIND>
+	template<void LiteralParseFn(std::string_view), NumericLiteralKind Kind>
 	NodeIndex on_numeric_literal() {
 		auto token = cursor_.next();
 		auto lexeme = token.get_lexeme(source_);
 		LiteralParseFn(lexeme);
 
 		auto literal_begin = next_index();
-		nodes_.push_back(AstNumericLiteralExpr {token.offset, KIND});
+		nodes_.push_back(AstNumericLiteralExpr {token.offset, Kind});
 		return literal_begin;
 	}
 
@@ -783,7 +789,7 @@ private:
 	}
 
 	template<UnaryOperator O>
-	NodeIndex on_prefix_operator() {
+	NodeIndex on_prefix_op() {
 		auto token = cursor_.next();
 
 		auto expr_begin = parse_subexpression(Precedence::Prefix);
@@ -793,7 +799,7 @@ private:
 	}
 
 	template<BinaryOperator O>
-	void on_binary_operator(NodeIndex left, SourceOffset offset) {
+	void on_binary_op(NodeIndex left, SourceOffset offset) {
 		static constexpr auto precedence = lookup_precedence_for_associativity(O);
 
 		auto operator_token = cursor_.next();
@@ -803,7 +809,7 @@ private:
 		insert_parent(left, AstBinaryExpr {offset, O});
 	}
 
-	void validate_associativity(BinaryOperator op, NodeIndex left_idx, NodeIndex right_idx, Token operator_token) {
+	void validate_associativity(BinaryOperator op, NodeIndex left_idx, NodeIndex right_idx, TokenHeader operator_token) {
 		auto& left_node = nodes_[left_idx];
 		auto& right_node = nodes_[right_idx];
 
@@ -818,7 +824,7 @@ private:
 		}
 	}
 
-	void validate_binary_associativity(BinaryOperator left, BinaryOperator right, Token operator_token) {
+	void validate_binary_associativity(BinaryOperator left, BinaryOperator right, TokenHeader operator_token) {
 		if (associates_ambiguous_operators(left, right)) {
 			auto location = operator_token.locate_in(source_);
 			auto left_str = binary_operator_to_string(left);
@@ -830,53 +836,58 @@ private:
 	static bool associates_ambiguous_operators(BinaryOperator left, BinaryOperator right) {
 		using enum BinaryOperator;
 
-		static constexpr BinaryOperator bitwise_operators[] {BitAnd, BitOr, Xor, LeftShift, RightShift};
-		static constexpr BinaryOperator arithmetic_operators[] {Add, Subtract, Multiply, Divide, Remainder, Power};
-		static constexpr BinaryOperator comparison_operators[] {Equal, NotEqual, Less, Greater, LessEqual, GreaterEqual};
+		static constexpr BinaryOperator bitwise_operators[] {BitAnd, BitOr, Xor, Shl, Shr};
+		static constexpr BinaryOperator arithmetic_operators[] {Add, Sub, Mul, Div, Rem, Pow};
+		static constexpr BinaryOperator comparison_operators[] {Eq, NotEq, Less, Greater, LessEq, GreaterEq};
 
 		struct OperatorPair {
 			BinaryOperator left, right;
 			bool operator==(const OperatorPair&) const = default;
 		};
 
-		static constexpr OperatorPair transitive_comparisons[] {{Equal, Equal},			 {Less, Less},
-																{Less, LessEqual},		 {LessEqual, LessEqual},
-																{LessEqual, Less},		 {Greater, Greater},
-																{Greater, GreaterEqual}, {GreaterEqual, GreaterEqual},
-																{GreaterEqual, Greater}};
+		static constexpr OperatorPair transitive_comparisons[] {{Eq, Eq},
+																{Less, Less},
+																{Less, LessEq},
+																{LessEq, LessEq},
+																{LessEq, Less},
+																{Greater, Greater},
+																{Greater, GreaterEq},
+																{GreaterEq, GreaterEq},
+																{GreaterEq, Greater}};
+
 		switch (left) {
 			case Add:
-			case Subtract:
-			case Multiply:
-			case Divide:
-			case Remainder:
-			case Power: return contains(bitwise_operators, right);
+			case Sub:
+			case Mul:
+			case Div:
+			case Rem:
+			case Pow: return contains(bitwise_operators, right);
 			case BitAnd:
 			case BitOr:
 			case Xor:
-			case LeftShift:
-			case RightShift: return contains(arithmetic_operators, right);
-			case LogicalAnd: return right == LogicalOr;
-			case LogicalOr: return right == LogicalAnd;
-			case Equal:
-			case NotEqual:
+			case Shl:
+			case Shr: return contains(arithmetic_operators, right);
+			case LogicAnd: return right == LogicOr;
+			case LogicOr: return right == LogicAnd;
+			case Eq:
+			case NotEq:
 			case Less:
 			case Greater:
-			case LessEqual:
-			case GreaterEqual: return contains(comparison_operators, right) && !contains(transitive_comparisons, {left, right});
+			case LessEq:
+			case GreaterEq: return contains(comparison_operators, right) && !contains(transitive_comparisons, {left, right});
 			default: return false;
 		}
 	}
 
-	void validate_unary_binary_associativity(UnaryOperator left, BinaryOperator right, Token operator_token) {
-		if (left == UnaryOperator::Negate && right == BinaryOperator::Power) {
+	void validate_unary_binary_associativity(UnaryOperator left, BinaryOperator right, TokenHeader operator_token) {
+		if (left == UnaryOperator::Neg && right == BinaryOperator::Pow) {
 			auto location = operator_token.locate_in(source_);
 			report(Message::AmbiguousOperatorMixing, location, MessageArgs("-", "**"));
 		}
 	}
 
 	template<UnaryOperator O>
-	void on_postfix_operator(NodeIndex left, SourceOffset offset) {
+	void on_postfix_op(NodeIndex left, SourceOffset offset) {
 		cursor_.advance();
 
 		insert_parent(left, AstUnaryExpr {offset, O});
@@ -1077,7 +1088,7 @@ private:
 
 	void expect(TokenKind kind, Message message) {
 		if (!cursor_.match(kind)) {
-			report_expectation(message, cursor_.peek());
+			report_expectation(message);
 			throw ParseError();
 		}
 	}
@@ -1086,14 +1097,14 @@ private:
 		if (auto name_token = cursor_.match_name()) {
 			return name_token->get_lexeme(source_);
 		} else {
-			report_expectation(message, cursor_.peek());
+			report_expectation(message);
 			return {};
 		}
 	}
 
-	void report_expectation(Message message, Token unexpected) {
-		auto location = unexpected.locate_in(source_);
-		report(message, location, MessageArgs(unexpected.to_message_string(source_)));
+	void report_expectation(Message message) {
+		auto location = cursor_.current().locate_in(source_);
+		report(message, location, MessageArgs(cursor_.to_message_string(source_)));
 	}
 
 	void report(Message message, CodeLocation location, MessageArgs args) {

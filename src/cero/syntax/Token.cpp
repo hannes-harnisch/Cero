@@ -56,7 +56,6 @@ std::string_view token_kind_to_string(TokenKind kind) {
 		case BangEquals: return "BangEquals";
 		case LeftAngleEquals: return "LeftAngleEquals";
 		case RightAngleEquals: return "RightAngleEquals";
-		case StarStar: return "StarStar";
 		case LeftAngleAngle: return "LeftAngleAngle";
 		case PlusEquals: return "PlusEquals";
 		case MinusEquals: return "MinusEquals";
@@ -132,13 +131,13 @@ std::string_view get_fixed_length_lexeme(TokenKind kind) {
 		case ColonColon: return "::";
 		case PlusPlus: return "++";
 		case MinusMinus: return "--";
+		case StarStar: return "**";
 		case AmpersandAmpersand: return "&&";
 		case PipePipe: return "||";
 		case EqualsEquals: return "==";
 		case BangEquals: return "!=";
 		case LeftAngleEquals: return "<=";
 		case RightAngleEquals: return ">=";
-		case StarStar: return "**";
 		case LeftAngleAngle: return "<<";
 		case PlusEquals: return "+=";
 		case MinusEquals: return "-=";
@@ -179,12 +178,8 @@ std::string_view get_fixed_length_lexeme(TokenKind kind) {
 	}
 }
 
-std::string_view Token::get_lexeme(const SourceGuard& source) const {
-	if (length == 0) {
-		return get_fixed_length_lexeme(kind);
-	} else {
-		return source.get_text().substr(offset, length);
-	}
+CodeLocation TokenHeader::locate_in(const SourceGuard& source) const {
+	return source.locate(offset);
 }
 
 namespace {
@@ -208,22 +203,5 @@ namespace {
 	}
 
 } // namespace
-
-std::string Token::to_message_string(const SourceGuard& source) const {
-	auto format = get_token_message_format(kind);
-	auto lexeme = get_lexeme(source);
-	return fmt::vformat(format, fmt::make_format_args(lexeme));
-}
-
-std::string Token::to_log_string(const SourceGuard& source) const {
-	auto token_kind = token_kind_to_string(kind);
-	auto lexeme = get_lexeme(source);
-	auto location = source.locate(offset);
-	return fmt::format("{} `{}` {}", token_kind, lexeme, location.to_short_string());
-}
-
-CodeLocation Token::locate_in(const SourceGuard& source) const {
-	return source.locate(offset);
-}
 
 } // namespace cero

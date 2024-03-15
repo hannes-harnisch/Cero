@@ -2,6 +2,7 @@
 
 #include "cero/driver/BuildCommand.hpp"
 #include "cero/driver/Environment.hpp"
+#include "cero/driver/Version.hpp"
 #include "cero/io/Configuration.hpp"
 #include "cero/util/Fail.hpp"
 
@@ -11,7 +12,7 @@ namespace {
 
 	bool run_help_command() {
 		static constexpr auto help = R"_____(
-Cero compiler, version {}
+Cero compiler, version {}.{}.{}
 
 usage: cero [COMMAND] [OPTIONS]
 
@@ -27,12 +28,13 @@ options:
     -V, --version       Show version and build info for the compiler
 )_____";
 
-		fmt::println(help, "0.0.1");
+		fmt::println(help, version::Major, version::Minor, version::Patch);
 		return true;
 	}
 
 	bool run_version_command() {
-		to_do();
+		fmt::println("Cero compiler, version {}.{}.{}", version::Major, version::Minor, version::Patch);
+		return true;
 	}
 
 	bool run_install_command() {
