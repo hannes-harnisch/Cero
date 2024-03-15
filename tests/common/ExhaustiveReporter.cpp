@@ -7,7 +7,7 @@
 namespace tests {
 
 ExhaustiveReporter::ExhaustiveReporter() :
-	test_name_(get_current_test_name()) {
+	source_name_(get_current_test_name()) {
 }
 
 ExhaustiveReporter::~ExhaustiveReporter() {
@@ -16,11 +16,16 @@ ExhaustiveReporter::~ExhaustiveReporter() {
 }
 
 void ExhaustiveReporter::expect(uint32_t line, uint32_t column, cero::Message message, cero::MessageArgs args) {
+	CHECK(args.verify_message_arg_count(message));
 	auto format = cero::get_message_format(message);
 	auto message_text = fmt::vformat(format, args.store);
 
-	cero::CodeLocation location {test_name_, line, column};
+	cero::CodeLocation location {source_name_, line, column};
 	expected_reports_.emplace(location, std::move(message_text));
+}
+
+void ExhaustiveReporter::set_source_name(std::string_view source_name) {
+	source_name_ = source_name;
 }
 
 void ExhaustiveReporter::handle_report(cero::MessageLevel, cero::CodeLocation location, std::string message_text) {

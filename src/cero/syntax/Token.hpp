@@ -8,7 +8,7 @@
 
 namespace cero {
 
-enum class TokenKind : unsigned {
+enum class TokenKind {
 	// Variable-length tokens
 	Name,
 	LineComment,
@@ -22,62 +22,64 @@ enum class TokenKind : unsigned {
 	StringLiteral,
 
 	// One-character tokens
-	Dot,		  // .
-	Comma,		  // ,
-	Colon,		  // :
-	Semicolon,	  // ;
-	LeftBrace,	  // {
-	RightBrace,	  // }
-	LeftParen,	  // (
-	RightParen,	  // )
-	LeftBracket,  // [
-	RightBracket, // ]
-	LeftAngle,	  // <
-	RightAngle,	  // >
-	Equals,		  // =
-	Plus,		  // +
-	Minus,		  // -
-	Star,		  // *
-	Slash,		  // /
-	Percent,	  // %
-	Bang,		  // !
-	Ampersand,	  // &
-	Pipe,		  // |
-	Tilde,		  // ~
-	Caret,		  // ^
-	QuestionMark, // ?
-	At,			  // @
-	Dollar,		  // $
-	Hash,		  // #
+	Dot,	   // .
+	Comma,	   // ,
+	Colon,	   // :
+	Semicolon, // ;
+	LBrace,	   // {
+	RBrace,	   // }
+	LParen,	   // (
+	RParen,	   // )
+	LBracket,  // [
+	RBracket,  // ]
+	LAngle,	   // <
+	RAngle,	   // >
+	Eq,		   // =
+	Plus,	   // +
+	Minus,	   // -
+	Star,	   // *
+	Slash,	   // /
+	Percent,   // %
+	Amp,	   // &
+	Pipe,	   // |
+	Tilde,	   // ~
+	Caret,	   // ^
+	Bang,	   // !
+	Quest,	   // ?
+	At,		   // @
+	Dollar,	   // $
+	Hash,	   // #
 
 	// Two-character tokens
-	ThinArrow,			// ->
-	ThickArrow,			// =>
-	ColonColon,			// ::
-	PlusPlus,			// ++
-	MinusMinus,			// --
-	AmpersandAmpersand, // &&
-	PipePipe,			// ||
-	EqualsEquals,		// ==
-	BangEquals,			// !=
-	LeftAngleEquals,	// <=
-	RightAngleEquals,	// >=
-	StarStar,			// **
-	LeftAngleAngle,		// <<
-	PlusEquals,			// +=
-	MinusEquals,		// -=
-	StarEquals,			// *=
-	SlashEquals,		// /=
-	PercentEquals,		// %=
-	AmpersandEquals,	// &=
-	PipeEquals,			// |=
-	TildeEquals,		// ~=
+	ThinArrow,	  // ->
+	ThickArrow,	  // =>
+	ColonColon,	  // ::
+	PlusPlus,	  // ++
+	MinusMinus,	  // --
+	StarStar,	  // **
+	LAngleLAngle, // <<
+	AmpAmp,		  // &&
+	PipePipe,	  // ||
+	EqEq,		  // ==
+	BangEq,		  // !=
+	LAngleEq,	  // <=
+	RAngleEq,	  // >=
+	PlusEq,		  // +=
+	MinusEq,	  // -=
+	StarEq,		  // *=
+	SlashEq,	  // /=
+	PercentEq,	  // %=
+	AmpEq,		  // &=
+	PipeEq,		  // |=
+	TildeEq,	  // ~=
 
 	// Three-character tokens
-	Ellipsis,			   // ...
-	StarStarEquals,		   // **=
-	LeftAngleAngleEquals,  // <<=
-	RightAngleAngleEquals, // >>=
+	Ellipsis,		// ...
+	StarStarEq,		// **=
+	LAngleLAngleEq, // <<=
+	RAngleRAngleEq, // >>=
+	AmpAmpEq,		// &&=
+	PipePipeEq,		// ||=
 
 	// Keywords
 	Break,
@@ -108,23 +110,16 @@ enum class TokenKind : unsigned {
 
 std::string_view token_kind_to_string(TokenKind kind);
 std::string_view get_fixed_length_lexeme(TokenKind kind);
+std::string_view get_token_message_format(TokenKind kind);
+bool is_variable_length_token(TokenKind kind);
 
-struct TokenHeader {
+struct Token {
 	TokenKind kind : 8 = {};
 	SourceOffset offset : SourceOffsetBits = 0;
-};
 
-static_assert(sizeof(TokenHeader) == 4);
-
-struct Token : TokenHeader {
-	uint32_t length = 0; // will be 0 if the token kind is a fixed-length kind
-
-	std::string_view get_lexeme(const SourceGuard& source) const;
-	std::string to_message_string(const SourceGuard& source) const;
-	std::string to_log_string(const SourceGuard& source) const;
 	CodeLocation locate_in(const SourceGuard& source) const;
 };
 
-static_assert(sizeof(Token) == 8);
+static_assert(sizeof(Token) == 4);
 
 } // namespace cero

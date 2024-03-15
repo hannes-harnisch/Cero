@@ -1,11 +1,15 @@
 #pragma once
 
+#include "cero/util/Traits.hpp"
+
 namespace cero {
 
-// Simple implementation of a monadic result type, holding either a success value T or an error E.
+/// Simple implementation of a monadic result type, holding either a success value T or an error E.
 template<typename T, typename E>
 class Result {
 public:
+	static_assert(!std::same_as<T, E>, "T and E must be different types.");
+
 	Result(const T& value) :
 		has_value_(true),
 		value_(value) {
@@ -26,7 +30,11 @@ public:
 		error_(std::move(error)) {
 	}
 
-	Result(const Result& other) :
+	Result(const Result&) = default;
+
+	Result(const Result& other)
+	requires(!are_trivially_copy_constructible<T, E>)
+		:
 		has_value_(other.has_value_) {
 		if (has_value_) {
 			new (&value_) T(other.value_);
@@ -35,7 +43,11 @@ public:
 		}
 	}
 
-	Result(Result&& other) noexcept :
+	Result(Result&&) = default;
+
+	Result(Result&& other) noexcept
+	requires(!are_trivially_move_constructible<T, E>)
+		:
 		has_value_(other.has_value_) {
 		if (has_value_) {
 			new (&value_) T(std::move(other.value_));
@@ -44,7 +56,11 @@ public:
 		}
 	}
 
-	~Result() {
+	~Result() = default;
+
+	~Result()
+	requires(!are_trivially_destructible<T, E>)
+	{
 		if (has_value_) {
 			value_.~T();
 		} else {
@@ -52,7 +68,11 @@ public:
 		}
 	}
 
-	Result& operator=(const Result& other) {
+	Result& operator=(const Result&) = default;
+
+	Result& operator=(const Result& other)
+	requires(!are_trivially_copy_assignable<T, E>)
+	{
 		if (has_value_ == other.has_value_) {
 			if (has_value_) {
 				value_ = other.value_;
@@ -72,7 +92,11 @@ public:
 		return *this;
 	}
 
-	Result& operator=(Result&& other) noexcept {
+	Result& operator=(Result&&) = default;
+
+	Result& operator=(Result&& other) noexcept
+	requires(!are_trivially_move_assignable<T, E>)
+	{
 		if (has_value_ == other.has_value_) {
 			if (has_value_) {
 				value_ = std::move(other.value_);

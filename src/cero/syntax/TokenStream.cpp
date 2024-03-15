@@ -5,46 +5,49 @@
 namespace cero {
 
 uint32_t TokenStream::num_tokens() const {
-	return num_tokens_;
+	return static_cast<uint32_t>(stream_.size());
 }
 
 bool TokenStream::has_errors() const {
 	return has_errors_;
 }
 
-std::span<const TokenStream::Unit> TokenStream::raw() const {
+std::span<const Token> TokenStream::raw() const {
 	return {stream_};
 }
 
 std::string TokenStream::to_string(const SourceGuard& source) const {
-	auto str = fmt::format("Token stream for {} ({} token{})\n", source.get_name(), num_tokens_, num_tokens_ == 1 ? "" : "s");
+	auto num_tokens = stream_.size();
+	auto str = fmt::format("Token stream for {} ({} token{})\n", source.get_name(), num_tokens, num_tokens == 1 ? "" : "s");
 
 	TokenCursor cursor(*this);
-	Token token;
-	do {
-		token = cursor.next();
+	while (true) {
+		auto lexeme = cursor.get_lexeme(source);
+		auto token = cursor.next();
 
-		// This loop is technically quadratic since Token::to_log_string will search the source for the code location
-		// repeatedly, but it really doesn't matter.
-		str += fmt::format("\t{}\n", token.to_log_string(source));
-	} while (token.kind != TokenKind::EndOfFile);
+		auto kind_str = token_kind_to_string(token.kind);
+
+		// This loop is technically quadratic since SourceGuard::locate will linearly search the source for the code location
+		// every time, but it really doesn't matter.
+		auto location_str = token.locate_in(source).to_short_string();
+
+		str += fmt::format("\t{} `{}` {}\n", kind_str, lexeme, location_str);
+		if (token.kind == TokenKind::EndOfFile) {
+			break;
+		}
+	}
 
 	return str;
 }
 
 TokenStream::TokenStream(const SourceGuard& source) :
-	num_tokens_(0),
 	has_errors_(false) {
-	stream_.reserve(source.get_length()); // TODO: find heuristic for this
+	// TODO: find the most common ratio between source length and token count and then reserve based on that
+	stream_.reserve(source.get_length());
 }
 
-void TokenStream::add_header(TokenKind kind, SourceOffset offset) {
-	stream_.emplace_back(TokenHeader {kind, offset & 0x00ffffffu});
-	++num_tokens_;
-}
-
-void TokenStream::add_length(uint32_t length) {
-	stream_.emplace_back(Unit {.length = length});
+void TokenStream::add_token(TokenKind kind, SourceOffset offset) {
+	stream_.emplace_back(Token {kind, offset & 0x00ffffffu});
 }
 
 } // namespace cero

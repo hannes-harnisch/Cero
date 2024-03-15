@@ -14,6 +14,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <deque>
 #include <filesystem>
 #include <functional>
@@ -21,6 +22,7 @@
 #include <optional>
 #include <queue>
 #include <ranges>
+#include <shared_mutex>
 #include <source_location>
 #include <span>
 #include <stack>

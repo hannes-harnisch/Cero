@@ -17,13 +17,13 @@ public:
 
 	TokenStream lex() {
 		if (source_.get_length() > MaxSourceLength) {
-			const CodeLocation blank {source_.get_name(), 0, 0};
+			const auto blank = CodeLocation::blank(source_.get_name());
 			reporter_.report(Message::SourceInputTooLarge, blank, MessageArgs(MaxSourceLength));
 		} else {
 			lex_source();
 		}
 
-		stream_.add_header(TokenKind::EndOfFile, cursor_.offset());
+		stream_.add_token(TokenKind::EndOfFile, cursor_.offset());
 		return std::move(stream_);
 	}
 
@@ -109,51 +109,48 @@ private:
 				case '8':
 				case '9': lex_number(offset); break;
 
-				case '.': lex_dot(offset); break;
-				case ':': lex_colon(offset); break;
-				case ',': stream_.add_header(TokenKind::Comma, offset); break;
-				case ';': stream_.add_header(TokenKind::Semicolon, offset); break;
-				case '{': stream_.add_header(TokenKind::LeftBrace, offset); break;
-				case '}': stream_.add_header(TokenKind::RightBrace, offset); break;
-				case '(': stream_.add_header(TokenKind::LeftParen, offset); break;
-				case ')': stream_.add_header(TokenKind::RightParen, offset); break;
-				case '[': stream_.add_header(TokenKind::LeftBracket, offset); break;
-				case ']': stream_.add_header(TokenKind::RightBracket, offset); break;
-				case '<': lex_left_angle(offset); break;
-				case '>': lex_right_angle(offset); break;
-				case '=': lex_equal(offset); break;
-				case '+': lex_plus(offset); break;
-				case '-': lex_minus(offset); break;
-				case '*': lex_star(offset); break;
-				case '/': lex_slash(offset); break;
-				case '%': lex_percent(offset); break;
-				case '!': lex_bang(offset); break;
-				case '&': lex_ampersand(offset); break;
-				case '|': lex_pipe(offset); break;
-				case '~': lex_tilde(offset); break;
-				case '^': stream_.add_header(TokenKind::Caret, offset); break;
-				case '?': stream_.add_header(TokenKind::QuestionMark, offset); break;
-				case '@': stream_.add_header(TokenKind::At, offset); break;
-				case '$': stream_.add_header(TokenKind::Dollar, offset); break;
-				case '#': stream_.add_header(TokenKind::Hash, offset); break;
-				case '"': lex_quoted_sequence(TokenKind::StringLiteral, offset, '"'); break;
+				case '.':  lex_dot(offset); break;
+				case ':':  stream_.add_token(lex_colon(), offset); break;
+				case ',':  stream_.add_token(TokenKind::Comma, offset); break;
+				case ';':  stream_.add_token(TokenKind::Semicolon, offset); break;
+				case '{':  stream_.add_token(TokenKind::LBrace, offset); break;
+				case '}':  stream_.add_token(TokenKind::RBrace, offset); break;
+				case '(':  stream_.add_token(TokenKind::LParen, offset); break;
+				case ')':  stream_.add_token(TokenKind::RParen, offset); break;
+				case '[':  stream_.add_token(TokenKind::LBracket, offset); break;
+				case ']':  stream_.add_token(TokenKind::RBracket, offset); break;
+				case '<':  stream_.add_token(lex_left_angle(), offset); break;
+				case '>':  lex_right_angle(offset); break;
+				case '=':  stream_.add_token(lex_equal(), offset); break;
+				case '+':  stream_.add_token(lex_plus(), offset); break;
+				case '-':  stream_.add_token(lex_minus(), offset); break;
+				case '*':  stream_.add_token(lex_star(), offset); break;
+				case '/':  stream_.add_token(lex_slash(offset), offset); break;
+				case '%':  stream_.add_token(lex_percent(), offset); break;
+				case '!':  stream_.add_token(lex_bang(), offset); break;
+				case '&':  stream_.add_token(lex_ampersand(), offset); break;
+				case '|':  stream_.add_token(lex_pipe(), offset); break;
+				case '~':  stream_.add_token(lex_tilde(), offset); break;
+				case '^':  stream_.add_token(TokenKind::Caret, offset); break;
+				case '?':  stream_.add_token(TokenKind::Quest, offset); break;
+				case '@':  stream_.add_token(TokenKind::At, offset); break;
+				case '$':  stream_.add_token(TokenKind::Dollar, offset); break;
+				case '#':  stream_.add_token(TokenKind::Hash, offset); break;
+				case '"':  lex_quoted_sequence(TokenKind::StringLiteral, offset, '"'); break;
 				case '\'': lex_quoted_sequence(TokenKind::CharLiteral, offset, '\''); break;
-				default: lex_unicode_name(character, offset); break;
+				default:   lex_unicode_name(character, offset); break;
 			}
 		}
 	}
 
 	void lex_word(SourceOffset offset) {
 		eat_word_token_rest();
-		auto length = cursor_.offset() - offset;
 
+		auto length = cursor_.offset() - offset;
 		auto lexeme = source_.get_text().substr(offset, length);
 		auto kind = identify_keyword(lexeme);
 
-		stream_.add_header(kind, offset);
-		if (kind == TokenKind::Name) {
-			stream_.add_length(length);
-		}
+		stream_.add_token(kind, offset);
 	}
 
 	void eat_word_token_rest() {
@@ -172,7 +169,7 @@ private:
 		}
 	}
 
-	template<bool (*Utf8Predicate)(uint32_t encoded_value)>
+	template<bool Utf8Predicate(uint32_t encoded_value)>
 	bool check_multibyte_utf8_value(char character, SourceOffset offset) {
 		const auto leading_byte = static_cast<uint8_t>(character);
 		const auto leading_ones = static_cast<uint8_t>(std::countl_one(leading_byte));
@@ -190,35 +187,23 @@ private:
 			}
 		}
 
-		report(Message::UnexpectedCharacter, offset, MessageArgs(encoded_value));
+		report(Message::InvalidCharacter, offset, MessageArgs(encoded_value));
 		return false;
 	}
 
-	void add_variable_length_token(TokenKind kind, SourceOffset offset) {
-		stream_.add_header(kind, offset);
-		stream_.add_length(cursor_.offset() - offset);
-	}
-
 	void lex_zero(SourceOffset offset) {
-		auto backup = cursor_;
-		switch (cursor_.next().value_or('\0')) {
-			case 'x':
-				eat_number_literal<is_hex_digit>();
-				add_variable_length_token(TokenKind::HexIntLiteral, offset);
-				return;
-
-			case 'b':
-				eat_number_literal<is_dec_digit>(); // consume any decimal digit for better errors during literal parsing later
-				add_variable_length_token(TokenKind::BinIntLiteral, offset);
-				return;
-
-			case 'o':
-				eat_number_literal<is_dec_digit>(); // consume any decimal digit for better errors during literal parsing later
-				add_variable_length_token(TokenKind::OctIntLiteral, offset);
-				return;
+		if (cursor_.match('x')) {
+			eat_number_literal<is_hex_digit>();
+			stream_.add_token(TokenKind::HexIntLiteral, offset);
+		} else if (cursor_.match('b')) {
+			eat_number_literal<is_dec_digit>(); // consume any decimal digit for better errors during literal parsing later
+			stream_.add_token(TokenKind::BinIntLiteral, offset);
+		} else if (cursor_.match('o')) {
+			eat_number_literal<is_dec_digit>(); // consume any decimal digit for better errors during literal parsing later
+			stream_.add_token(TokenKind::OctIntLiteral, offset);
+		} else {
+			lex_number(offset);
 		}
-		cursor_ = backup;
-		lex_number(offset);
 	}
 
 	void lex_number(SourceOffset offset) {
@@ -239,7 +224,7 @@ private:
 		if (next == '.') {
 			const bool matched_number = eat_decimal_number();
 			if (matched_number) {
-				add_variable_length_token(TokenKind::FloatLiteral, offset);
+				stream_.add_token(TokenKind::FloatLiteral, offset);
 				return;
 			} else {
 				cursor_ = cursor_at_dot; // reset to dot if there's no fractional part
@@ -248,23 +233,17 @@ private:
 			cursor_ = cursor_at_token_end;
 		}
 
-		add_variable_length_token(TokenKind::DecIntLiteral, offset);
+		stream_.add_token(TokenKind::DecIntLiteral, offset);
 	}
 
-	template<bool (*CharPredicate)(char)>
+	template<bool CharPredicate(char)>
 	void eat_number_literal() {
-		auto lookahead = cursor_;
-
-		while (auto next = lookahead.peek()) {
+		while (auto next = cursor_.peek()) {
 			const char c = *next;
-			if (CharPredicate(c)) {
-				cursor_ = lookahead;
-				cursor_.advance();
-			} else if (!is_whitespace(c)) {
+			if (!CharPredicate(c) && !is_whitespace(c)) {
 				break;
 			}
-
-			lookahead.advance();
+			cursor_.advance();
 		}
 	}
 
@@ -291,113 +270,113 @@ private:
 	void lex_dot(SourceOffset offset) {
 		if (cursor_.match('.')) {
 			if (cursor_.match('.')) {
-				stream_.add_header(TokenKind::Ellipsis, offset);
+				stream_.add_token(TokenKind::Ellipsis, offset);
 			} else {
-				stream_.add_header(TokenKind::Dot, offset);
-				stream_.add_header(TokenKind::Dot, offset + 1);
+				stream_.add_token(TokenKind::Dot, offset);
+				stream_.add_token(TokenKind::Dot, offset + 1);
 			}
 		} else if (is_dec_digit(cursor_.peek().value_or('\0'))) {
 			eat_number_literal<is_dec_digit>();
-			add_variable_length_token(TokenKind::FloatLiteral, offset);
+			stream_.add_token(TokenKind::FloatLiteral, offset);
 		} else {
-			stream_.add_header(TokenKind::Dot, offset);
+			stream_.add_token(TokenKind::Dot, offset);
 		}
 	}
 
-	void lex_colon(SourceOffset offset) {
+	TokenKind lex_colon() {
 		if (cursor_.match(':')) {
-			stream_.add_header(TokenKind::ColonColon, offset);
+			return TokenKind::ColonColon;
 		} else {
-			stream_.add_header(TokenKind::Colon, offset);
+			return TokenKind::Colon;
 		}
 	}
 
-	void lex_left_angle(SourceOffset offset) {
+	TokenKind lex_left_angle() {
 		if (cursor_.match('<')) {
 			if (cursor_.match('=')) {
-				stream_.add_header(TokenKind::LeftAngleAngleEquals, offset);
+				return TokenKind::LAngleLAngleEq;
 			} else {
-				stream_.add_header(TokenKind::LeftAngleAngle, offset);
+				return TokenKind::LAngleLAngle;
 			}
 		} else if (cursor_.match('=')) {
-			stream_.add_header(TokenKind::LeftAngleEquals, offset);
+			return TokenKind::LAngleEq;
 		} else {
-			stream_.add_header(TokenKind::LeftAngle, offset);
+			return TokenKind::LAngle;
 		}
 	}
 
 	void lex_right_angle(SourceOffset offset) {
 		if (cursor_.match('>')) {
 			if (cursor_.match('=')) {
-				stream_.add_header(TokenKind::RightAngleAngleEquals, offset);
+				stream_.add_token(TokenKind::RAngleRAngleEq, offset);
 			} else {
-				stream_.add_header(TokenKind::RightAngle, offset);
-				stream_.add_header(TokenKind::RightAngle, offset + 1);
+				stream_.add_token(TokenKind::RAngle, offset);
+				stream_.add_token(TokenKind::RAngle, offset + 1);
 			}
 		} else if (cursor_.match('=')) {
-			stream_.add_header(TokenKind::RightAngleEquals, offset);
+			stream_.add_token(TokenKind::RAngleEq, offset);
 		} else {
-			stream_.add_header(TokenKind::RightAngle, offset);
+			stream_.add_token(TokenKind::RAngle, offset);
 		}
 	}
 
-	void lex_equal(SourceOffset offset) {
+	TokenKind lex_equal() {
 		if (cursor_.match('=')) {
-			stream_.add_header(TokenKind::EqualsEquals, offset);
+			return TokenKind::EqEq;
 		} else if (cursor_.match('>')) {
-			stream_.add_header(TokenKind::ThickArrow, offset);
+			return TokenKind::ThickArrow;
 		} else {
-			stream_.add_header(TokenKind::Equals, offset);
+			return TokenKind::Eq;
 		}
 	}
 
-	void lex_plus(SourceOffset offset) {
+	TokenKind lex_plus() {
 		if (cursor_.match('+')) {
-			stream_.add_header(TokenKind::PlusPlus, offset);
+			return TokenKind::PlusPlus;
 		} else if (cursor_.match('=')) {
-			stream_.add_header(TokenKind::PlusEquals, offset);
+			return TokenKind::PlusEq;
 		} else {
-			stream_.add_header(TokenKind::Plus, offset);
+			return TokenKind::Plus;
 		}
 	}
 
-	void lex_minus(SourceOffset offset) {
+	TokenKind lex_minus() {
 		if (cursor_.match('>')) {
-			stream_.add_header(TokenKind::ThinArrow, offset);
+			return TokenKind::ThinArrow;
 		} else if (cursor_.match('-')) {
-			stream_.add_header(TokenKind::MinusMinus, offset);
+			return TokenKind::MinusMinus;
 		} else if (cursor_.match('=')) {
-			stream_.add_header(TokenKind::MinusEquals, offset);
+			return TokenKind::MinusEq;
 		} else {
-			stream_.add_header(TokenKind::Minus, offset);
+			return TokenKind::Minus;
 		}
 	}
 
-	void lex_star(SourceOffset offset) {
+	TokenKind lex_star() {
 		if (cursor_.match('*')) {
 			if (cursor_.match('=')) {
-				stream_.add_header(TokenKind::StarStarEquals, offset);
+				return TokenKind::StarStarEq;
 			} else {
-				stream_.add_header(TokenKind::StarStar, offset);
+				return TokenKind::StarStar;
 			}
 		} else if (cursor_.match('=')) {
-			stream_.add_header(TokenKind::StarEquals, offset);
+			return TokenKind::StarEq;
 		} else {
-			stream_.add_header(TokenKind::Star, offset);
+			return TokenKind::Star;
 		}
 	}
 
-	void lex_slash(SourceOffset offset) {
+	TokenKind lex_slash(SourceOffset offset) {
 		if (cursor_.match('/')) {
 			eat_line_comment();
-			add_variable_length_token(TokenKind::LineComment, offset);
+			return TokenKind::LineComment;
 		} else if (cursor_.match('*')) {
 			eat_block_comment(offset);
-			add_variable_length_token(TokenKind::BlockComment, offset);
+			return TokenKind::BlockComment;
 		} else if (cursor_.match('=')) {
-			stream_.add_header(TokenKind::SlashEquals, offset);
+			return TokenKind::SlashEq;
 		} else {
-			stream_.add_header(TokenKind::Slash, offset);
+			return TokenKind::Slash;
 		}
 	}
 
@@ -426,52 +405,58 @@ private:
 			}
 		}
 
-		if (unclosed_count != 0) {
-			report(Message::UnterminatedBlockComment, offset, {});
-		}
+		report(Message::UnterminatedBlockComment, offset, {});
 	}
 
-	void lex_percent(SourceOffset offset) {
+	TokenKind lex_percent() {
 		if (cursor_.match('=')) {
-			stream_.add_header(TokenKind::PercentEquals, offset);
+			return TokenKind::PercentEq;
 		} else {
-			stream_.add_header(TokenKind::Percent, offset);
+			return TokenKind::Percent;
 		}
 	}
 
-	void lex_bang(SourceOffset offset) {
+	TokenKind lex_bang() {
 		if (cursor_.match('=')) {
-			stream_.add_header(TokenKind::BangEquals, offset);
+			return TokenKind::BangEq;
 		} else {
-			stream_.add_header(TokenKind::Bang, offset);
+			return TokenKind::Bang;
 		}
 	}
 
-	void lex_ampersand(SourceOffset offset) {
+	TokenKind lex_ampersand() {
 		if (cursor_.match('&')) {
-			stream_.add_header(TokenKind::AmpersandAmpersand, offset);
+			if (cursor_.match('=')) {
+				return TokenKind::AmpAmpEq;
+			} else {
+				return TokenKind::AmpAmp;
+			}
 		} else if (cursor_.match('=')) {
-			stream_.add_header(TokenKind::AmpersandEquals, offset);
+			return TokenKind::AmpEq;
 		} else {
-			stream_.add_header(TokenKind::Ampersand, offset);
+			return TokenKind::Amp;
 		}
 	}
 
-	void lex_pipe(SourceOffset offset) {
+	TokenKind lex_pipe() {
 		if (cursor_.match('|')) {
-			stream_.add_header(TokenKind::PipePipe, offset);
+			if (cursor_.match('=')) {
+				return TokenKind::PipePipeEq;
+			} else {
+				return TokenKind::PipePipe;
+			}
 		} else if (cursor_.match('=')) {
-			stream_.add_header(TokenKind::PipeEquals, offset);
+			return TokenKind::PipeEq;
 		} else {
-			stream_.add_header(TokenKind::Pipe, offset);
+			return TokenKind::Pipe;
 		}
 	}
 
-	void lex_tilde(SourceOffset offset) {
+	TokenKind lex_tilde() {
 		if (cursor_.match('=')) {
-			stream_.add_header(TokenKind::TildeEquals, offset);
+			return TokenKind::TildeEq;
 		} else {
-			stream_.add_header(TokenKind::Tilde, offset);
+			return TokenKind::Tilde;
 		}
 	}
 
@@ -495,14 +480,14 @@ private:
 			}
 		}
 
-		add_variable_length_token(kind, offset);
+		stream_.add_token(kind, offset);
 	}
 
 	void lex_unicode_name(char character, SourceOffset offset) {
 		if (check_multibyte_utf8_value<is_utf8_xid_start>(character, offset)) {
 			eat_word_token_rest();
 		}
-		add_variable_length_token(TokenKind::Name, offset);
+		stream_.add_token(TokenKind::Name, offset);
 	}
 
 	void report(Message message, SourceOffset offset, MessageArgs args) const {
@@ -557,8 +542,8 @@ private:
 
 			case 9:
 				if (lexeme == "unchecked") return Unchecked;
-				break;
-		} // clang-format on
+				break; // clang-format on
+		}
 		return Name;
 	}
 };

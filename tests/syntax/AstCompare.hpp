@@ -27,6 +27,7 @@ public:
 	void function_output(std::string_view name, ChildScope cs);
 	void block_statement(ChildScope cs);
 	void binding_statement(cero::BindingSpecifier specifier, std::string_view name, ChildScope cs);
+	void if_expr(ChildScope cs);
 	void while_loop(ChildScope cs);
 	void name_expr(std::string_view name);
 	void generic_name_expr(std::string_view name, ChildScope cs);

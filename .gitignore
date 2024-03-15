@@ -3,7 +3,7 @@
 /.vs/
 /build/
 /CMakeFiles/
-/cmake-build-debug/
+/cmake-build-*
 /out/
 
 CMakeCache.txt

@@ -26,36 +26,38 @@ consteval Precedence lookup_precedence_for_associativity(BinaryOperator op) {
 	switch (op) {
 		using enum BinaryOperator;
 		case Add:
-		case Subtract: return Precedence::AdditiveOrBitwise;
-		case Multiply:
-		case Divide:
-		case Remainder:
-		case Power: return Precedence::Multiplicative; // using a lower precedence for power here makes it right-associative
-		case LogicalAnd:
-		case LogicalOr: return Precedence::Logical;
+		case Sub:			 return Precedence::AdditiveOrBitwise;
+		case Mul:
+		case Div:
+		case Rem:
+		case Pow:			 return Precedence::Multiplicative; // using a lower precedence for power here makes it right-associative
 		case BitAnd:
 		case BitOr:
 		case Xor:
-		case LeftShift:
-		case RightShift: return Precedence::AdditiveOrBitwise;
-		case Equal:
-		case NotEqual:
+		case Shl:
+		case Shr:			 return Precedence::AdditiveOrBitwise;
+		case Eq:
+		case NotEq:
 		case Less:
+		case LessEq:
 		case Greater:
-		case LessEqual:
-		case GreaterEqual: return Precedence::Comparison;
+		case GreaterEq:		 return Precedence::Comparison;
+		case LogicAnd:
+		case LogicOr:		 return Precedence::Logical;
 		case Assign:
 		case AddAssign:
-		case SubtractAssign:
-		case MultiplyAssign:
-		case DivideAssign:
-		case RemainderAssign:
-		case PowerAssign:
-		case AndAssign:
-		case OrAssign:
+		case SubAssign:
+		case MulAssign:
+		case DivAssign:
+		case RemAssign:
+		case PowAssign:
+		case BitAndAssign:
+		case BitOrAssign:
 		case XorAssign:
-		case LeftShiftAssign:
-		case RightShiftAssign: return Precedence::Assignment;
+		case ShlAssign:
+		case ShrAssign:
+		case LogicAndAssign:
+		case LogicOrAssign:	 return Precedence::Assignment;
 	}
 }
 
@@ -94,13 +96,13 @@ private:
 	bool is_binding_allowed_ = true;
 	uint32_t open_angles_ = 0;
 
-	// index of the leftmost descendant of a node (the node that is syntactically "first")
+	/// Index of the leftmost descendant of a node (the node that is syntactically "first")
 	using NodeIndex = uint32_t;
 
-	// parse method for grammar rules determined by the kind of their first token, like prefix operators
+	/// Parse method for grammar rules determined by the kind of their first token, like prefix operators
 	using HeadParseMethod = NodeIndex (Parser::*)();
 
-	// parse method for grammar rules determined by the kind of token appearing after another expression, like infix operators
+	/// Parse method for grammar rules determined by the kind of token appearing after another expression, like infix operators
 	using TailParseMethod = void (Parser::*)(NodeIndex head_begin, SourceOffset offset);
 
 	struct TailParseRule {
@@ -115,7 +117,7 @@ private:
 	}
 
 	void insert_parent(NodeIndex first_descendant_index, AstNode&& node) {
-		nodes_.insert(nodes_.begin() + first_descendant_index, std::move(node));
+		nodes_.insert(nodes_.begin() + static_cast<ptrdiff_t>(first_descendant_index), std::move(node));
 	}
 
 	NodeIndex next_index() const {
@@ -132,23 +134,17 @@ private:
 			access_specifier = AccessSpecifier::Public;
 		}
 
-		if (auto name_token = cursor_.match_name()) {
-			parse_function(offset, access_specifier, *name_token);
-			return;
-		}
-
-		if (cursor_.match(TokenKind::Struct)) {
+		auto name = cursor_.match_identifier(source_);
+		if (!name.empty()) {
+			parse_function(offset, access_specifier, name);
+		} else if (cursor_.match(TokenKind::Struct)) {
 			parse_struct(offset, access_specifier);
-			return;
-		}
-
-		if (cursor_.match(TokenKind::Enum)) {
+		} else if (cursor_.match(TokenKind::Enum)) {
 			parse_enum(offset, access_specifier);
-			return;
+		} else {
+			report_expectation(Message::ExpectFuncStructEnum);
+			throw ParseError();
 		}
-
-		report_expectation(Message::ExpectFuncStructEnum, cursor_.current());
-		throw ParseError();
 	}
 
 	void recover_at_definition_scope() {
@@ -167,7 +163,7 @@ private:
 
 		auto name = expect_name(Message::ExpectNameForStruct);
 
-		struct_def = AstStructDefinition(offset, access_specifier, name);
+		struct_def = AstStructDefinition {offset, access_specifier, name};
 	}
 
 	void parse_enum(SourceOffset offset, AccessSpecifier access_specifier) {
@@ -175,31 +171,30 @@ private:
 
 		auto name = expect_name(Message::ExpectNameForEnum);
 
-		enum_def = AstEnumDefinition(offset, access_specifier, name);
+		enum_def = AstEnumDefinition {offset, access_specifier, name};
 	}
 
-	void parse_function(SourceOffset offset, AccessSpecifier access_specifier, Token name_token) {
+	void parse_function(SourceOffset offset, AccessSpecifier access_specifier, StringId name) {
 		auto& func_def = store<AstFunctionDefinition>();
 
-		auto name = name_token.get_lexeme(source_);
-		expect(TokenKind::LeftParen, Message::ExpectParenAfterFuncName);
+		expect(TokenKind::LParen, Message::ExpectParenAfterFuncName);
 
 		auto num_parameters = parse_function_definition_parameters();
 		auto num_outputs = parse_function_definition_outputs();
-		expect(TokenKind::LeftBrace, Message::ExpectBraceBeforeFuncBody);
+		expect(TokenKind::LBrace, Message::ExpectBraceBeforeFuncBody);
 
 		auto num_statements = parse_block();
-		func_def = AstFunctionDefinition(offset, access_specifier, name, num_parameters, num_outputs, num_statements);
+		func_def = AstFunctionDefinition {offset, access_specifier, name, num_parameters, num_outputs, num_statements};
 	}
 
 	uint16_t parse_function_definition_parameters() {
 		uint16_t num_parameters = 0;
-		if (!cursor_.match(TokenKind::RightParen)) {
+		if (!cursor_.match(TokenKind::RParen)) {
 			do {
 				parse_function_definition_parameter();
 				++num_parameters;
 			} while (cursor_.match(TokenKind::Comma));
-			expect(TokenKind::RightParen, Message::ExpectParenAfterParams);
+			expect(TokenKind::RParen, Message::ExpectParenAfterParams);
 		}
 		return num_parameters;
 	}
@@ -223,7 +218,7 @@ private:
 		}
 
 		bool has_default_argument = false;
-		if (cursor_.match(TokenKind::Equals)) {
+		if (cursor_.match(TokenKind::Eq)) {
 			parse_subexpression();
 			has_default_argument = true;
 		}
@@ -247,11 +242,7 @@ private:
 		auto offset = cursor_.peek_offset();
 
 		parse_type();
-
-		StringId name;
-		if (auto name_token = cursor_.match_name()) {
-			name = name_token->get_lexeme(source_);
-		}
+		auto name = cursor_.match_identifier(source_);
 
 		output = AstFunctionOutput(offset, name);
 	}
@@ -261,7 +252,7 @@ private:
 		ScopedAssign _2(is_binding_allowed_, true);
 
 		uint32_t num_statements = 0;
-		while (!cursor_.match(TokenKind::RightBrace)) {
+		while (!cursor_.match(TokenKind::RBrace)) {
 			try {
 				parse_statement();
 				++num_statements;
@@ -282,7 +273,7 @@ private:
 				cursor_.advance();
 				return false;
 			}
-			if (kind == TokenKind::RightBrace) {
+			if (kind == TokenKind::RBrace) {
 				return false;
 			}
 
@@ -300,8 +291,10 @@ private:
 		auto prev_expr = (this->*parse_method)();
 
 		if (!parses_complete_stmt) {
-			if (auto name_token = cursor_.match_name()) {
-				on_trailing_name(offset, prev_expr, *name_token);
+			auto name_offset = cursor_.peek_offset();
+			auto name = cursor_.match_identifier(source_);
+			if (!name.empty()) {
+				on_trailing_name(offset, prev_expr, name, name_offset);
 			}
 			expect(TokenKind::Semicolon, Message::ExpectSemicolon);
 		}
@@ -311,33 +304,32 @@ private:
 		auto next = cursor_.peek_kind();
 		switch (next) {
 			using enum TokenKind;
-			case If: parses_complete_stmt = true; return &Parser::on_if_stmt;
-			case For: parses_complete_stmt = true; return &Parser::on_for;
-			case While: parses_complete_stmt = true; return &Parser::on_while;
-			case LeftBrace: parses_complete_stmt = true; return &Parser::on_left_brace;
-			case Let: return &Parser::on_let;
-			case Var: return &Parser::on_var;
-			case Const: return &Parser::on_const;
+			case If:	 parses_complete_stmt = true; return &Parser::on_if_stmt;
+			case For:	 parses_complete_stmt = true; return &Parser::on_for;
+			case While:	 parses_complete_stmt = true; return &Parser::on_while;
+			case LBrace: parses_complete_stmt = true; return &Parser::on_left_brace;
+			case Let:	 return &Parser::on_let;
+			case Var:	 return &Parser::on_var;
+			case Const:	 return &Parser::on_const;
 			case Static: return &Parser::on_static;
-			default: return &Parser::parse_expression_or_binding;
+			default:	 return &Parser::parse_expression_or_binding;
 		}
 	}
 
-	void on_trailing_name(SourceOffset offset, NodeIndex prev_expr, Token name_token) {
+	void on_trailing_name(SourceOffset offset, NodeIndex prev_expr, StringId name, SourceOffset name_offset) {
 		auto kind = nodes_[prev_expr].get_kind();
 
 		static constexpr AstNodeKind type_expr_kinds[] {AstNodeKind::NameExpr,		  AstNodeKind::GenericNameExpr,
 														AstNodeKind::MemberExpr,	  AstNodeKind::ArrayTypeExpr,
 														AstNodeKind::PointerTypeExpr, AstNodeKind::FunctionTypeExpr};
 		if (!contains(type_expr_kinds, kind)) {
-			report_expectation(Message::ExpectSemicolon, name_token); // TODO: report different error: "name cannot appear here"
+			auto location = source_.locate(name_offset);
+			report(Message::NameCannotAppearHere, location, {});
 			throw ParseError();
 		}
 
-		auto name = name_token.get_lexeme(source_);
-
 		bool has_initializer = false;
-		if (cursor_.match(TokenKind::Equals)) {
+		if (cursor_.match(TokenKind::Eq)) {
 			parse_subexpression();
 			has_initializer = true;
 		}
@@ -360,7 +352,7 @@ private:
 
 		auto head_parse_method = lookup_head_parse_method(next.kind);
 		if (head_parse_method == nullptr) {
-			report_expectation(Message::ExpectExpr, next);
+			report_expectation(Message::ExpectExpr);
 			throw ParseError();
 		}
 
@@ -374,31 +366,31 @@ private:
 
 	static HeadParseMethod lookup_head_parse_method(TokenKind kind) {
 		switch (kind) {
-			using enum TokenKind; // clang-format off
+			using enum TokenKind;
 			case Name:			return &Parser::on_name;
 			case If:			return &Parser::on_if_expr;
 			case Var:			return &Parser::on_permission;
-			case DecIntLiteral:	return &Parser::on_numeric_literal<evaluate_dec_int_literal, NumericLiteralKind::Decimal>;
-			case HexIntLiteral:	return &Parser::on_numeric_literal<evaluate_hex_int_literal, NumericLiteralKind::Hexadecimal>;
-			case BinIntLiteral:	return &Parser::on_numeric_literal<evaluate_bin_int_literal, NumericLiteralKind::Binary>;
-			case OctIntLiteral:	return &Parser::on_numeric_literal<evaluate_oct_int_literal, NumericLiteralKind::Octal>;
+			case DecIntLiteral: return &Parser::on_numeric_literal<evaluate_dec_int_literal, NumericLiteralKind::Decimal>;
+			case HexIntLiteral: return &Parser::on_numeric_literal<evaluate_hex_int_literal, NumericLiteralKind::Hexadecimal>;
+			case BinIntLiteral: return &Parser::on_numeric_literal<evaluate_bin_int_literal, NumericLiteralKind::Binary>;
+			case OctIntLiteral: return &Parser::on_numeric_literal<evaluate_oct_int_literal, NumericLiteralKind::Octal>;
 			case FloatLiteral:	return &Parser::on_numeric_literal<evaluate_float_literal, NumericLiteralKind::Float>;
 			case CharLiteral:	return &Parser::on_numeric_literal<evaluate_char_literal, NumericLiteralKind::Character>;
-			case StringLiteral:	return &Parser::on_string_literal;
-			case LeftParen:		return &Parser::on_prefix_left_paren;
-			case LeftBracket:	return &Parser::on_prefix_left_bracket;
+			case StringLiteral: return &Parser::on_string_literal;
+			case LParen:		return &Parser::on_prefix_left_paren;
+			case LBracket:		return &Parser::on_prefix_left_bracket;
 			case Break:			return &Parser::on_break;
 			case Continue:		return &Parser::on_continue;
 			case Return:		return &Parser::on_return;
 			case Throw:			return &Parser::on_throw;
-			case Ampersand:		return &Parser::on_prefix_operator<UnaryOperator::AddressOf>;
-			case Minus:			return &Parser::on_prefix_operator<UnaryOperator::Negate>;
+			case Amp:			return &Parser::on_prefix_operator<UnaryOperator::Addr>;
+			case Minus:			return &Parser::on_prefix_operator<UnaryOperator::Neg>;
 			case Tilde:			return &Parser::on_prefix_operator<UnaryOperator::Not>;
-			case PlusPlus:		return &Parser::on_prefix_operator<UnaryOperator::PreIncrement>;
-			case MinusMinus:	return &Parser::on_prefix_operator<UnaryOperator::PreDecrement>;
+			case PlusPlus:		return &Parser::on_prefix_operator<UnaryOperator::PreInc>;
+			case MinusMinus:	return &Parser::on_prefix_operator<UnaryOperator::PreDec>;
 			case Caret:			return &Parser::on_caret;
 			default:			return nullptr;
-		} // clang-format on
+		}
 	}
 
 	TailParseMethod get_next_tail_parse_method(Precedence current_precedence) {
@@ -407,63 +399,65 @@ private:
 		TailParseRule rule;
 		switch (token.kind) {
 			using enum TokenKind;
-			using enum Precedence; // clang-format off
-			default:					rule = {}; break;
-			case Equals:				rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::Assign>}; break;
-			case PlusEquals:			rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::AddAssign>}; break;
-			case MinusEquals:			rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::SubtractAssign>}; break;
-			case StarEquals:			rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::MultiplyAssign>}; break;
-			case SlashEquals:			rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::DivideAssign>}; break;
-			case PercentEquals:			rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::RemainderAssign>}; break;
-			case StarStarEquals:		rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::PowerAssign>}; break;
-			case AmpersandEquals:		rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::AndAssign>}; break;
-			case PipeEquals:			rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::OrAssign>}; break;
-			case TildeEquals:			rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::XorAssign>}; break;
-			case LeftAngleAngleEquals:	rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::LeftShiftAssign>}; break;
-			case RightAngleAngleEquals:	rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::RightShiftAssign>}; break;
-			case AmpersandAmpersand:	rule = {Logical, &Parser::on_binary_operator<BinaryOperator::LogicalAnd>}; break;
-			case PipePipe:				rule = {Logical, &Parser::on_binary_operator<BinaryOperator::LogicalOr>}; break;
-			case EqualsEquals:			rule = {Comparison, &Parser::on_binary_operator<BinaryOperator::Equal>}; break;
-			case BangEquals:			rule = {Comparison, &Parser::on_binary_operator<BinaryOperator::NotEqual>}; break;
-			case LeftAngle:				rule = {Comparison, &Parser::on_binary_operator<BinaryOperator::Less>}; break;
-			case LeftAngleEquals:		rule = {Comparison, &Parser::on_binary_operator<BinaryOperator::LessEqual>}; break;
-			case RightAngleEquals:		rule = {Comparison, &Parser::on_binary_operator<BinaryOperator::GreaterEqual>}; break;
-			case Plus:					rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::Add>}; break;
-			case Minus:					rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::Subtract>}; break;
-			case Ampersand:				rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::BitAnd>}; break;
-			case Pipe:					rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::BitOr>}; break;
-			case Tilde:					rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::Xor>}; break;
-			case LeftAngleAngle:		rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::LeftShift>}; break;
-			case Star:					rule = {Multiplicative, &Parser::on_binary_operator<BinaryOperator::Multiply>}; break;
-			case Slash:					rule = {Multiplicative, &Parser::on_binary_operator<BinaryOperator::Divide>}; break;
-			case Percent:				rule = {Multiplicative, &Parser::on_binary_operator<BinaryOperator::Remainder>}; break;
-			case StarStar:				rule = {Prefix, &Parser::on_binary_operator<BinaryOperator::Power>}; break;
-			case Caret:					rule = {Postfix, &Parser::on_postfix_operator<UnaryOperator::Dereference>}; break;
-			case PlusPlus:				rule = {Postfix, &Parser::on_postfix_operator<UnaryOperator::PostIncrement>}; break;
-			case MinusMinus:			rule = {Postfix, &Parser::on_postfix_operator<UnaryOperator::PostDecrement>}; break;
-			case Dot:					rule = {Postfix, &Parser::on_dot}; break;
-			case LeftParen:				rule = {Postfix, &Parser::on_infix_left_paren}; break;
-			case LeftBracket:			rule = {Postfix, &Parser::on_infix_left_bracket}; break; // clang-format on
-			case RightAngle:
+			using enum Precedence;
+			case Eq:			 rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::Assign>}; break;
+			case PlusEq:		 rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::AddAssign>}; break;
+			case MinusEq:		 rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::SubAssign>}; break;
+			case StarEq:		 rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::MulAssign>}; break;
+			case SlashEq:		 rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::DivAssign>}; break;
+			case PercentEq:		 rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::RemAssign>}; break;
+			case StarStarEq:	 rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::PowAssign>}; break;
+			case AmpEq:			 rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::BitAndAssign>}; break;
+			case PipeEq:		 rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::BitOrAssign>}; break;
+			case TildeEq:		 rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::XorAssign>}; break;
+			case LAngleLAngleEq: rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::ShlAssign>}; break;
+			case RAngleRAngleEq: rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::ShrAssign>}; break;
+			case AmpAmpEq:		 rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::LogicAndAssign>}; break;
+			case PipePipeEq:	 rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::LogicOrAssign>}; break;
+			case AmpAmp:		 rule = {Logical, &Parser::on_binary_operator<BinaryOperator::LogicAnd>}; break;
+			case PipePipe:		 rule = {Logical, &Parser::on_binary_operator<BinaryOperator::LogicOr>}; break;
+			case EqEq:			 rule = {Comparison, &Parser::on_binary_operator<BinaryOperator::Eq>}; break;
+			case BangEq:		 rule = {Comparison, &Parser::on_binary_operator<BinaryOperator::NotEq>}; break;
+			case LAngle:		 rule = {Comparison, &Parser::on_binary_operator<BinaryOperator::Less>}; break;
+			case LAngleEq:		 rule = {Comparison, &Parser::on_binary_operator<BinaryOperator::LessEq>}; break;
+			case RAngleEq:		 rule = {Comparison, &Parser::on_binary_operator<BinaryOperator::GreaterEq>}; break;
+			case Plus:			 rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::Add>}; break;
+			case Minus:			 rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::Sub>}; break;
+			case Amp:			 rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::BitAnd>}; break;
+			case Pipe:			 rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::BitOr>}; break;
+			case Tilde:			 rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::Xor>}; break;
+			case LAngleLAngle:	 rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::Shl>}; break;
+			case Star:			 rule = {Multiplicative, &Parser::on_binary_operator<BinaryOperator::Mul>}; break;
+			case Slash:			 rule = {Multiplicative, &Parser::on_binary_operator<BinaryOperator::Div>}; break;
+			case Percent:		 rule = {Multiplicative, &Parser::on_binary_operator<BinaryOperator::Rem>}; break;
+			case StarStar:		 rule = {Prefix, &Parser::on_binary_operator<BinaryOperator::Pow>}; break;
+			case Caret:			 rule = {Postfix, &Parser::on_postfix_operator<UnaryOperator::Deref>}; break;
+			case PlusPlus:		 rule = {Postfix, &Parser::on_postfix_operator<UnaryOperator::PostInc>}; break;
+			case MinusMinus:	 rule = {Postfix, &Parser::on_postfix_operator<UnaryOperator::PostDec>}; break;
+			case Dot:			 rule = {Postfix, &Parser::on_dot}; break;
+			case LParen:		 rule = {Postfix, &Parser::on_infix_left_paren}; break;
+			case LBracket:		 rule = {Postfix, &Parser::on_infix_left_bracket}; break;
+			case RAngle:
 				// check for unclosed angle brackets so the last one gets closed instead of parsing a greater-than expression
 				if (open_angles_ > 0) {
 					return nullptr;
-				}
-
-				auto next = cursor_.peek_ahead();
-				if (next.kind == TokenKind::RightAngle && next.offset == token.offset + 1) {
-					cursor_.advance();
-					rule = {Precedence::AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::RightShift>};
 				} else {
-					rule = {Precedence::Comparison, &Parser::on_binary_operator<BinaryOperator::Greater>};
+					auto next = cursor_.peek_ahead();
+					if (next.kind == TokenKind::RAngle && next.offset == token.offset + 1) {
+						rule = {Precedence::AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::Shr>};
+					} else {
+						rule = {Precedence::Comparison, &Parser::on_binary_operator<BinaryOperator::Greater>};
+					}
 				}
 				break;
+
+			default: rule = {}; break;
 		}
 
-		if (current_precedence >= rule.precedence) {
-			return nullptr;
-		} else {
+		if (current_precedence < rule.precedence) {
 			return rule.method;
+		} else {
+			return nullptr;
 		}
 	}
 
@@ -524,17 +518,20 @@ private:
 		return block_stmt_begin;
 	}
 
-	void expect_colon_or_block() {
+	/// True if colon is matched.
+	bool expect_colon_or_block() {
 		if (auto colon = cursor_.match_token(TokenKind::Colon)) {
 			auto next = cursor_.peek();
-			if (next.kind == TokenKind::LeftBrace) {
+			if (next.kind == TokenKind::LBrace) {
 				report(Message::UnnecessaryColonBeforeBlock, colon->locate_in(source_), {});
 			}
+			return true;
 		} else {
 			auto next = cursor_.peek();
-			if (next.kind != TokenKind::LeftBrace) {
-				report_expectation(Message::ExpectColonOrBlock, next);
+			if (next.kind != TokenKind::LBrace) {
+				report_expectation(Message::ExpectColonOrBlock);
 			}
+			return false;
 		}
 	}
 
@@ -545,7 +542,7 @@ private:
 		auto name = expect_name(Message::ExpectNameAfterLet);
 
 		bool has_initializer = false;
-		if (cursor_.match(TokenKind::Equals)) {
+		if (cursor_.match(TokenKind::Eq)) {
 			let_stmt_begin = parse_subexpression();
 			has_initializer = true;
 		}
@@ -556,7 +553,7 @@ private:
 	NodeIndex on_var() {
 		auto token = cursor_.next();
 
-		if (cursor_.peek_kind() == TokenKind::LeftBrace) {
+		if (cursor_.peek_kind() == TokenKind::LBrace) {
 			return parse_permission(token.offset);
 		}
 
@@ -578,11 +575,11 @@ private:
 
 	NodeIndex parse_binding(SourceOffset offset, BindingSpecifier specifier) {
 		auto lookahead = cursor_;
-		if (auto name_token = lookahead.match_name()) {
-			if (lookahead.match(TokenKind::Equals)) {
+		auto name = lookahead.match_identifier(source_);
+		if (!name.empty()) {
+			if (lookahead.match(TokenKind::Eq)) {
 				cursor_ = lookahead;
 
-				auto name = name_token->get_lexeme(source_);
 				auto binding_begin = parse_subexpression();
 
 				insert_parent(binding_begin, AstBindingStatement {offset, specifier, false, name, true});
@@ -591,10 +588,10 @@ private:
 		}
 
 		auto binding_begin = parse_type();
-		auto name = expect_name(Message::ExpectNameAfterDeclarationType);
+		name = expect_name(Message::ExpectNameAfterDeclarationType);
 
 		bool has_initializer = false;
-		if (cursor_.match(TokenKind::Equals)) {
+		if (cursor_.match(TokenKind::Eq)) {
 			parse_subexpression();
 			has_initializer = true;
 		}
@@ -604,14 +601,14 @@ private:
 	}
 
 	NodeIndex on_name() {
+		auto lexeme = cursor_.get_lexeme(source_);
 		auto token = cursor_.next();
-		auto name = token.get_lexeme(source_);
-		return parse_name(token.offset, name);
+		return parse_name(token.offset, lexeme);
 	}
 
-	NodeIndex parse_name(SourceOffset offset, std::string_view name) {
+	NodeIndex parse_name(SourceOffset offset, StringId name) {
 		auto saved_cursor = cursor_;
-		if (cursor_.match(TokenKind::LeftAngle)) {
+		if (cursor_.match(TokenKind::LAngle)) {
 			return parse_generic_name(offset, name, saved_cursor);
 		}
 
@@ -620,12 +617,12 @@ private:
 		return name_begin;
 	}
 
-	NodeIndex parse_generic_name(SourceOffset offset, std::string_view name, TokenCursor name_start) {
+	NodeIndex parse_generic_name(SourceOffset offset, StringId name, TokenCursor name_start) {
 		ScopedAssign _(open_angles_, open_angles_ + 1);
 
 		const auto name_begin = next_index();
 		uint16_t num_generic_args = 0;
-		if (!cursor_.match(TokenKind::RightAngle)) {
+		if (!cursor_.match(TokenKind::RAngle)) {
 			const bool fall_back = should_fall_back_to_name();
 
 			cursor_ = name_start;
@@ -657,29 +654,29 @@ private:
 		static constexpr TokenKind fallbacks[] {TokenKind::DecIntLiteral, TokenKind::HexIntLiteral, TokenKind::BinIntLiteral,
 												TokenKind::OctIntLiteral, TokenKind::FloatLiteral,	TokenKind::CharLiteral,
 												TokenKind::StringLiteral, TokenKind::Minus,			TokenKind::Tilde,
-												TokenKind::Ampersand,	  TokenKind::PlusPlus,		TokenKind::MinusMinus};
-		if (cursor_.match(TokenKind::RightAngle)) {
+												TokenKind::Amp,			  TokenKind::PlusPlus,		TokenKind::MinusMinus};
+		if (cursor_.match(TokenKind::RAngle)) {
 			auto kind = cursor_.peek_kind();
 			return (kind == TokenKind::Name && !is_binding_allowed_) || contains(fallbacks, kind)
-				   || (open_angles_ == 1 && kind == TokenKind::RightAngle);
+				   || (open_angles_ == 1 && kind == TokenKind::RAngle);
 		}
 		return true;
 	}
 
-	template<void (*LiteralParseFn)(std::string_view), NumericLiteralKind KIND>
+	template<void LiteralParseFn(std::string_view), NumericLiteralKind Kind>
 	NodeIndex on_numeric_literal() {
+		auto lexeme = cursor_.get_lexeme(source_);
 		auto token = cursor_.next();
-		auto lexeme = token.get_lexeme(source_);
 		LiteralParseFn(lexeme);
 
 		auto literal_begin = next_index();
-		nodes_.push_back(AstNumericLiteralExpr {token.offset, KIND});
+		nodes_.push_back(AstNumericLiteralExpr {token.offset, Kind});
 		return literal_begin;
 	}
 
 	NodeIndex on_string_literal() {
+		auto lexeme = cursor_.get_lexeme(source_);
 		auto token = cursor_.next();
-		auto lexeme = token.get_lexeme(source_);
 
 		auto literal_begin = next_index();
 		nodes_.push_back(AstStringLiteralExpr {token.offset, evaluate_string_literal(lexeme)});
@@ -693,12 +690,12 @@ private:
 		auto group_begin = next_index();
 
 		uint16_t num_args = 0;
-		if (!cursor_.match(TokenKind::RightParen)) {
+		if (!cursor_.match(TokenKind::RParen)) {
 			do {
 				parse_subexpression();
 				++num_args;
 			} while (cursor_.match(TokenKind::Comma));
-			expect(TokenKind::RightParen, Message::ExpectClosingParen);
+			expect(TokenKind::RParen, Message::ExpectClosingParen);
 		}
 
 		insert_parent(group_begin, AstGroupExpr {token.offset, num_args});
@@ -715,12 +712,12 @@ private:
 		ScopedAssign _(open_angles_, 0);
 
 		uint16_t num_args = 0;
-		if (!cursor_.match(TokenKind::RightBracket)) {
+		if (!cursor_.match(TokenKind::RBracket)) {
 			do {
 				parse_subexpression();
 				++num_args;
 			} while (cursor_.match(TokenKind::Comma));
-			expect(TokenKind::RightBracket, Message::ExpectBracketAfterIndex);
+			expect(TokenKind::RBracket, Message::ExpectBracketAfterIndex);
 		}
 		return num_args;
 	}
@@ -797,6 +794,10 @@ private:
 		static constexpr auto precedence = lookup_precedence_for_associativity(O);
 
 		auto operator_token = cursor_.next();
+		if constexpr (O == BinaryOperator::Shr) {
+			cursor_.advance();
+		}
+
 		auto right = parse_subexpression(precedence);
 		validate_associativity(O, left, right, operator_token);
 
@@ -830,46 +831,51 @@ private:
 	static bool associates_ambiguous_operators(BinaryOperator left, BinaryOperator right) {
 		using enum BinaryOperator;
 
-		static constexpr BinaryOperator bitwise_operators[] {BitAnd, BitOr, Xor, LeftShift, RightShift};
-		static constexpr BinaryOperator arithmetic_operators[] {Add, Subtract, Multiply, Divide, Remainder, Power};
-		static constexpr BinaryOperator comparison_operators[] {Equal, NotEqual, Less, Greater, LessEqual, GreaterEqual};
+		static constexpr BinaryOperator bitwise_operators[] {BitAnd, BitOr, Xor, Shl, Shr};
+		static constexpr BinaryOperator arithmetic_operators[] {Add, Sub, Mul, Div, Rem, Pow};
+		static constexpr BinaryOperator comparison_operators[] {Eq, NotEq, Less, Greater, LessEq, GreaterEq};
 
 		struct OperatorPair {
 			BinaryOperator left, right;
 			bool operator==(const OperatorPair&) const = default;
 		};
 
-		static constexpr OperatorPair transitive_comparisons[] {{Equal, Equal},			 {Less, Less},
-																{Less, LessEqual},		 {LessEqual, LessEqual},
-																{LessEqual, Less},		 {Greater, Greater},
-																{Greater, GreaterEqual}, {GreaterEqual, GreaterEqual},
-																{GreaterEqual, Greater}};
+		static constexpr OperatorPair transitive_comparisons[] {{Eq, Eq},
+																{Less, Less},
+																{Less, LessEq},
+																{LessEq, LessEq},
+																{LessEq, Less},
+																{Greater, Greater},
+																{Greater, GreaterEq},
+																{GreaterEq, GreaterEq},
+																{GreaterEq, Greater}};
+
 		switch (left) {
 			case Add:
-			case Subtract:
-			case Multiply:
-			case Divide:
-			case Remainder:
-			case Power: return contains(bitwise_operators, right);
+			case Sub:
+			case Mul:
+			case Div:
+			case Rem:
+			case Pow:		return contains(bitwise_operators, right);
 			case BitAnd:
 			case BitOr:
 			case Xor:
-			case LeftShift:
-			case RightShift: return contains(arithmetic_operators, right);
-			case LogicalAnd: return right == LogicalOr;
-			case LogicalOr: return right == LogicalAnd;
-			case Equal:
-			case NotEqual:
+			case Shl:
+			case Shr:		return contains(arithmetic_operators, right);
+			case LogicAnd:	return right == LogicOr;
+			case LogicOr:	return right == LogicAnd;
+			case Eq:
+			case NotEq:
 			case Less:
 			case Greater:
-			case LessEqual:
-			case GreaterEqual: return contains(comparison_operators, right) && !contains(transitive_comparisons, {left, right});
-			default: return false;
+			case LessEq:
+			case GreaterEq: return contains(comparison_operators, right) && !contains(transitive_comparisons, {left, right});
+			default:		return false;
 		}
 	}
 
 	void validate_unary_binary_associativity(UnaryOperator left, BinaryOperator right, Token operator_token) {
-		if (left == UnaryOperator::Negate && right == BinaryOperator::Power) {
+		if (left == UnaryOperator::Neg && right == BinaryOperator::Pow) {
 			auto location = operator_token.locate_in(source_);
 			report(Message::AmbiguousOperatorMixing, location, MessageArgs("-", "**"));
 		}
@@ -894,12 +900,12 @@ private:
 
 		cursor_.advance();
 		uint16_t num_args = 0;
-		if (!cursor_.match(TokenKind::RightParen)) {
+		if (!cursor_.match(TokenKind::RParen)) {
 			do {
 				parse_subexpression();
 				++num_args;
 			} while (cursor_.match(TokenKind::Comma));
-			expect(TokenKind::RightParen, Message::ExpectClosingParen);
+			expect(TokenKind::RParen, Message::ExpectClosingParen);
 		}
 		insert_parent(left, AstCallExpr {offset, num_args});
 	}
@@ -926,11 +932,11 @@ private:
 
 		auto specifier = PermissionSpecifier::Var;
 		uint16_t num_args = 0;
-		if (cursor_.match(TokenKind::LeftBrace)) {
+		if (cursor_.match(TokenKind::LBrace)) {
 			ScopedAssign _(open_angles_, 0);
 
 			specifier = PermissionSpecifier::VarBounded;
-			if (!cursor_.match(TokenKind::RightBrace)) {
+			if (!cursor_.match(TokenKind::RBrace)) {
 				do {
 					parse_subexpression();
 					++num_args;
@@ -940,7 +946,7 @@ private:
 					specifier = PermissionSpecifier::VarUnbounded;
 				}
 
-				expect(TokenKind::RightBrace, Message::ExpectBraceAfterPermission);
+				expect(TokenKind::RBrace, Message::ExpectBraceAfterPermission);
 			}
 		}
 
@@ -954,10 +960,10 @@ private:
 		if (cursor_.match(TokenKind::Caret)) {
 			return parse_pointer_type(offset);
 		}
-		if (cursor_.match(TokenKind::LeftBracket)) {
+		if (cursor_.match(TokenKind::LBracket)) {
 			return parse_array_type(offset);
 		}
-		if (cursor_.match(TokenKind::LeftParen)) {
+		if (cursor_.match(TokenKind::LParen)) {
 			return parse_function_type(offset);
 		}
 
@@ -968,13 +974,13 @@ private:
 	NodeIndex parse_array_type(SourceOffset offset) {
 		bool has_bound;
 		NodeIndex array_type_begin;
-		if (cursor_.match(TokenKind::RightBracket)) {
+		if (cursor_.match(TokenKind::RBracket)) {
 			has_bound = false;
 			array_type_begin = parse_type();
 		} else {
 			has_bound = true;
 			array_type_begin = parse_subexpression();
-			expect(TokenKind::RightBracket, Message::ExpectBracketAfterArrayBound);
+			expect(TokenKind::RBracket, Message::ExpectBracketAfterArrayBound);
 			parse_type();
 		}
 
@@ -1011,12 +1017,12 @@ private:
 
 	uint16_t parse_function_type_parameters() {
 		uint16_t num_parameters = 0;
-		if (!cursor_.match(TokenKind::RightParen)) {
+		if (!cursor_.match(TokenKind::RParen)) {
 			do {
 				parse_function_type_parameter();
 				++num_parameters;
 			} while (cursor_.match(TokenKind::Comma));
-			expect(TokenKind::RightParen, Message::ExpectParenAfterParams);
+			expect(TokenKind::RParen, Message::ExpectParenAfterParams);
 		}
 		return num_parameters;
 	}
@@ -1032,13 +1038,9 @@ private:
 		}
 
 		auto param_begin = parse_type();
+		auto name = cursor_.match_identifier(source_);
 
-		std::string_view name;
-		if (auto name_token = cursor_.match_name()) {
-			name = name_token->get_lexeme(source_);
-		}
-
-		if (auto equal = cursor_.match_token(TokenKind::Equals)) {
+		if (auto equal = cursor_.match_token(TokenKind::Eq)) {
 			auto location = equal->locate_in(source_);
 			report(Message::FuncTypeDefaultArgument, location, {});
 			throw ParseError();
@@ -1053,19 +1055,16 @@ private:
 			parse_function_type_output();
 			++num_outputs;
 		} while (cursor_.match(TokenKind::Comma));
-		expect(TokenKind::RightParen, Message::ExpectParenAfterOutputs);
+		expect(TokenKind::RParen, Message::ExpectParenAfterOutputs);
 
 		return num_outputs;
 	}
 
 	void parse_function_type_output() {
 		auto offset = cursor_.peek_offset();
-		auto output_begin = parse_type();
 
-		std::string_view name;
-		if (auto token = cursor_.match_name()) {
-			name = token->get_lexeme(source_);
-		}
+		auto output_begin = parse_type();
+		auto name = cursor_.match_identifier(source_);
 
 		insert_parent(output_begin, AstFunctionOutput {offset, name});
 	}
@@ -1077,23 +1076,29 @@ private:
 
 	void expect(TokenKind kind, Message message) {
 		if (!cursor_.match(kind)) {
-			report_expectation(message, cursor_.peek());
+			report_expectation(message);
 			throw ParseError();
 		}
 	}
 
 	std::string_view expect_name(Message message) {
-		if (auto name_token = cursor_.match_name()) {
-			return name_token->get_lexeme(source_);
-		} else {
-			report_expectation(message, cursor_.peek());
-			return {};
+		auto name = cursor_.match_identifier(source_);
+		if (name.empty()) {
+			report_expectation(message);
 		}
+
+		return name;
 	}
 
-	void report_expectation(Message message, Token unexpected) {
-		auto location = unexpected.locate_in(source_);
-		report(message, location, MessageArgs(unexpected.to_message_string(source_)));
+	void report_expectation(Message message) {
+		auto token = cursor_.current();
+		auto location = token.locate_in(source_);
+
+		auto format = get_token_message_format(token.kind);
+		auto lexeme = cursor_.get_lexeme(source_);
+		auto message_str = fmt::vformat(format, fmt::make_format_args(lexeme));
+
+		report(message, location, MessageArgs(message_str));
 	}
 
 	void report(Message message, CodeLocation location, MessageArgs args) {

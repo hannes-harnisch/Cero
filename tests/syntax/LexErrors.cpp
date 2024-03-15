@@ -9,9 +9,9 @@ CERO_TEST(SourceTooLarge) {
 	build_test_source(r, std::string(cero::MaxSourceLength + 1, ' '));
 }
 
-CERO_TEST(IllegalChar) {
+CERO_TEST(InvalidCharacter) {
 	ExhaustiveReporter r;
-	r.expect(5, 1, cero::Message::UnexpectedCharacter, cero::MessageArgs(0x7));
+	r.expect(5, 1, cero::Message::InvalidCharacter, cero::MessageArgs(0x7));
 	build_test_source(r, R"_____(
 main() {
 }

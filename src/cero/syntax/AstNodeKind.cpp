@@ -7,14 +7,14 @@ namespace cero {
 std::string_view unary_operator_to_string(UnaryOperator op) {
 	switch (op) {
 		using enum UnaryOperator;
-		case PreIncrement: return "prefix ++";
-		case PreDecrement: return "prefix --";
-		case PostIncrement: return "postfix ++";
-		case PostDecrement: return "postfix --";
-		case AddressOf: return "&";
-		case Dereference: return "^";
-		case Negate: return "-";
-		case Not: return "~";
+		case PreInc:  return "prefix ++";
+		case PreDec:  return "prefix --";
+		case PostInc: return "postfix ++";
+		case PostDec: return "postfix --";
+		case Addr:	  return "&";
+		case Deref:	  return "^";
+		case Neg:	  return "-";
+		case Not:	  return "~";
 	}
 	fail_unreachable();
 }
@@ -22,37 +22,39 @@ std::string_view unary_operator_to_string(UnaryOperator op) {
 std::string_view binary_operator_to_string(BinaryOperator op) {
 	switch (op) {
 		using enum BinaryOperator;
-		case Add: return "+";
-		case Subtract: return "-";
-		case Multiply: return "*";
-		case Divide: return "/";
-		case Remainder: return "%";
-		case Power: return "**";
-		case LogicalAnd: return "&&";
-		case LogicalOr: return "||";
-		case BitAnd: return "&";
-		case BitOr: return "|";
-		case Xor: return "~";
-		case LeftShift: return "<<";
-		case RightShift: return ">>";
-		case Equal: return "==";
-		case NotEqual: return "!=";
-		case Less: return "<";
-		case Greater: return ">";
-		case LessEqual: return "<=";
-		case GreaterEqual: return ">=";
-		case Assign: return "=";
-		case AddAssign: return "+=";
-		case SubtractAssign: return "-=";
-		case MultiplyAssign: return "*=";
-		case DivideAssign: return "/=";
-		case RemainderAssign: return "%=";
-		case PowerAssign: return "**=";
-		case AndAssign: return "&=";
-		case OrAssign: return "|=";
-		case XorAssign: return "~=";
-		case LeftShiftAssign: return "<<=";
-		case RightShiftAssign: return ">>=";
+		case Add:			 return "+";
+		case Sub:			 return "-";
+		case Mul:			 return "*";
+		case Div:			 return "/";
+		case Rem:			 return "%";
+		case Pow:			 return "**";
+		case LogicAnd:		 return "&&";
+		case LogicOr:		 return "||";
+		case BitAnd:		 return "&";
+		case BitOr:			 return "|";
+		case Xor:			 return "~";
+		case Shl:			 return "<<";
+		case Shr:			 return ">>";
+		case Eq:			 return "==";
+		case NotEq:			 return "!=";
+		case Less:			 return "<";
+		case LessEq:		 return "<=";
+		case Greater:		 return ">";
+		case GreaterEq:		 return ">=";
+		case Assign:		 return "=";
+		case AddAssign:		 return "+=";
+		case SubAssign:		 return "-=";
+		case MulAssign:		 return "*=";
+		case DivAssign:		 return "/=";
+		case RemAssign:		 return "%=";
+		case PowAssign:		 return "**=";
+		case BitAndAssign:	 return "&=";
+		case BitOrAssign:	 return "|=";
+		case XorAssign:		 return "~=";
+		case ShlAssign:		 return "<<=";
+		case ShrAssign:		 return ">>=";
+		case LogicAndAssign: return "&&=";
+		case LogicOrAssign:	 return "||=";
 	}
 	fail_unreachable();
 }

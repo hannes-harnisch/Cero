@@ -154,12 +154,17 @@ void AstCompare::visit(const cero::AstBindingStatement& binding) {
 	visit_child_if(binding.has_initializer);
 }
 
+void AstCompare::if_expr(ChildScope cs) {
+	record(cero::AstNodeKind::IfExpr);
+	record_children(cs);
+}
+
 void AstCompare::visit(const cero::AstIfExpr& if_stmt) {
 	expect(cero::AstNodeKind::IfExpr);
 
-	visit_child();					  // condition
-	visit_child();					  // then-statement
-	visit_child_if(if_stmt.has_else); // else-statement
+	visit_child(); // condition
+	visit_children(if_stmt.num_then_statements);
+	visit_children(if_stmt.num_else_statements);
 }
 
 void AstCompare::while_loop(ChildScope cs) {

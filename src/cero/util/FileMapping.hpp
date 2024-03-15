@@ -17,16 +17,17 @@ public:
 	~FileMapping();
 
 	FileMapping(FileMapping&&) noexcept;
+
 	FileMapping& operator=(FileMapping&&) noexcept;
 
 private:
 	size_t size_;
 
-#if defined(CERO_WINDOWS)
+#if CERO_WINDOWS
 	void* file_;
 	void* mapping_;
 	const void* addr_;
-#elif defined(CERO_UNIX)
+#elif CERO_UNIX
 	int file_;
 	const void* addr_;
 #else

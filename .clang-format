@@ -9,6 +9,8 @@ AlignConsecutiveDeclarations:
   Enabled: false
 AlignConsecutiveMacros:
   Enabled: true
+AlignConsecutiveShortCaseStatements:
+  Enabled: true
 AlignEscapedNewlines: Right
 AlignOperands: Align
 AlignTrailingComments: true

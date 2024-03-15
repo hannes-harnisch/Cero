@@ -121,7 +121,7 @@ struct AstFunctionParameter {
 	bool has_default_argument = false;
 
 	uint32_t num_children() const {
-		return 1 + (has_default_argument ? 1 : 0);
+		return has_default_argument ? 2 : 1;
 	}
 };
 
@@ -165,10 +165,11 @@ struct AstBindingStatement {
 
 struct AstIfExpr {
 	AstNodeHeader<AstNodeKind::IfExpr> header;
-	bool has_else = false;
+	uint32_t num_then_statements = 0;
+	uint32_t num_else_statements = 0;
 
 	uint32_t num_children() const {
-		return has_else ? 2 : 1;
+		return 1 + num_then_statements + num_else_statements;
 	}
 };
 
@@ -256,13 +257,13 @@ struct AstArrayLiteralExpr {
 };
 
 enum class UnaryOperator : uint8_t {
-	PreIncrement,
-	PreDecrement,
-	PostIncrement,
-	PostDecrement,
-	AddressOf,
-	Dereference,
-	Negate,
+	PreInc,
+	PreDec,
+	PostInc,
+	PostDec,
+	Addr,
+	Deref,
+	Neg,
 	Not,
 };
 
@@ -279,36 +280,38 @@ struct AstUnaryExpr {
 
 enum class BinaryOperator : uint8_t {
 	Add,
-	Subtract,
-	Multiply,
-	Divide,
-	Remainder,
-	Power,
-	LogicalAnd,
-	LogicalOr,
+	Sub,
+	Mul,
+	Div,
+	Rem,
+	Pow,
 	BitAnd,
 	BitOr,
 	Xor,
-	LeftShift,
-	RightShift,
-	Equal,
-	NotEqual,
+	Shl,
+	Shr,
+	LogicAnd,
+	LogicOr,
+	Eq,
+	NotEq,
 	Less,
+	LessEq,
 	Greater,
-	LessEqual,
-	GreaterEqual,
+	GreaterEq,
 	Assign,
 	AddAssign,
-	SubtractAssign,
-	MultiplyAssign,
-	DivideAssign,
-	RemainderAssign,
-	PowerAssign,
-	AndAssign,
-	OrAssign,
+	SubAssign,
+	MulAssign,
+	DivAssign,
+	RemAssign,
+	PowAssign,
+	BitAndAssign,
+	BitOrAssign,
 	XorAssign,
-	LeftShiftAssign,
-	RightShiftAssign
+	ShlAssign,
+	ShrAssign,
+	LogicAndAssign,
+	LogicOrAssign
 };
 
 std::string_view binary_operator_to_string(BinaryOperator op);
@@ -402,8 +405,8 @@ struct AstPermissionExpr {
 	}
 };
 
-// AST node for pointer type expressions, i.e. `^var List<int32>` or `^bool`. The first child node is optional and is the
-// expression provided for the permission. The second child node is the type expression provided for the pointed-to type.
+/// AST node for pointer type expressions, i.e. `^var List<int32>` or `^bool`. The first child node is optional and is the
+/// expression provided for the permission. The second child node is the type expression provided for the pointed-to type.
 struct AstPointerTypeExpr {
 	AstNodeHeader<AstNodeKind::PointerTypeExpr> header;
 	bool has_permission = false;
@@ -413,8 +416,8 @@ struct AstPointerTypeExpr {
 	}
 };
 
-// AST node for array type expressions, i.e. `[4]int32` or `[]int32`. The first child node is optional and is the expression
-// provided for the array bound. The second child node is the type expression provided for the element type.
+/// AST node for array type expressions, i.e. `[4]int32` or `[]int32`. The first child node is optional and is the expression
+/// provided for the array bound. The second child node is the type expression provided for the element type.
 struct AstArrayTypeExpr {
 	AstNodeHeader<AstNodeKind::ArrayTypeExpr> header;
 	bool has_bound = false;
@@ -424,10 +427,9 @@ struct AstArrayTypeExpr {
 	}
 };
 
-// AST node for function type expressions, i.e. `(int32 a, int32)->void`. The first set of children is the parameters, the
-// second set of children are the outputs.
-// TODO: handle the fact that parameters are allowed to be completely without name
-struct AstFunctionTypeExpr {
+/// AST node for function type expressions, i.e. `(int32 a, int32)->void`. The first set of children is the parameters, the
+/// second set of children are the outputs.
+struct AstFunctionTypeExpr { // TODO: handle the fact that parameters are allowed to be completely without name
 	AstNodeHeader<AstNodeKind::FunctionTypeExpr> header;
 	uint16_t num_parameters = 0;
 	uint16_t num_outputs = 0;

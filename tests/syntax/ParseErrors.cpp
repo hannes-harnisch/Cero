@@ -159,7 +159,6 @@ foo() {
 CERO_TEST(ExpectSemicolon) {
 	ExhaustiveReporter r;
 	r.expect(4, 1, cero::Message::ExpectSemicolon, cero::MessageArgs("`}`"));
-	r.expect(11, 11, cero::Message::ExpectSemicolon, cero::MessageArgs("name `c`"));
 
 	build_test_source(r, R"_____(
 a() {
@@ -169,7 +168,14 @@ a() {
 b() {
     return 0;
 }
+)_____");
+}
 
+CERO_TEST(NameCannotAppearHere) {
+	ExhaustiveReporter r;
+	r.expect(3, 11, cero::Message::NameCannotAppearHere, {});
+
+	build_test_source(r, R"_____(
 c(int32 a, int32 b) {
 	a + b c;
 }
@@ -373,6 +379,7 @@ CERO_TEST(AmbiguousOperatorMixing) {
 	r.expect(10, 30, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("||", "&&"));
 	r.expect(10, 40, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("&&", "||"));
 	r.expect(11, 15, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("-", "**"));
+	r.expect(12, 19, cero::Message::AmbiguousOperatorMixing, cero::MessageArgs("+", ">>"));
 
 	build_test_source(r, R"_____(
 f(float32 a, float32 b, int32 c, int32 d) {
@@ -385,6 +392,7 @@ f(float32 a, float32 b, int32 c, int32 d) {
 	let k = a == b && c == d || a != d && b > c;
 	let l = a == b || c == d && a != d || b > c;
 	let m = -a**b;
+	let n = a + b >> c;
 }
 )_____");
 }

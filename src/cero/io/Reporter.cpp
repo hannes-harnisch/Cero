@@ -4,31 +4,8 @@
 
 namespace cero {
 
-namespace {
-
-	void verify_message_arg_count(Message message, size_t arg_count) {
-		auto format = get_message_format(message);
-
-		size_t count = 0;
-		bool open = false;
-		for (char c : format) {
-			if (c == '{') {
-				open = true;
-			} else if (c == '}' && open) {
-				++count;
-				open = false;
-			}
-		}
-
-		if (count != arg_count) {
-			fail_assert("Incorrect number of message arguments.");
-		}
-	}
-
-} // namespace
-
 void MessageArgs::store_args(fmt::format_args args) {
-	store.reserve(count, 0);
+	store.reserve(arg_count, 0);
 
 	int i = 0;
 	while (auto arg = args.get(i++)) {
@@ -40,8 +17,27 @@ void MessageArgs::store_args(fmt::format_args args) {
 	}
 }
 
+bool MessageArgs::verify_message_arg_count(Message message) const {
+	auto format = get_message_format(message);
+
+	size_t brace_pair_count = 0;
+	bool open = false;
+	for (char c : format) {
+		if (c == '{') {
+			open = true;
+		} else if (c == '}' && open) {
+			++brace_pair_count;
+			open = false;
+		}
+	}
+
+	return brace_pair_count == arg_count;
+}
+
 void Reporter::report(Message message, CodeLocation location, MessageArgs args) {
-	verify_message_arg_count(message, args.count);
+	if (!args.verify_message_arg_count(message)) {
+		fail_assert("Incorrect number of message arguments.");
+	}
 
 	auto message_level = get_default_message_level(message);
 	if (warnings_as_errors_ && message_level == MessageLevel::Warning) {

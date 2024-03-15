@@ -1,10 +1,13 @@
 #include "Fail.hpp"
 
+#include "cero/util/Macros.hpp"
+
 namespace cero {
 
 namespace {
 
 	[[noreturn]] void fail(std::source_location location) {
+		CERO_DEBUG_BREAK();
 		fmt::println("\tFile:     {}", location.file_name());
 		fmt::println("\tFunction: {}", location.function_name());
 		std::abort();

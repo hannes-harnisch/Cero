@@ -19,8 +19,8 @@ private:
 		std::string_view prefix;
 	};
 
-	static constexpr Edge BODY {"├── ", "│   "};
-	static constexpr Edge TAIL {"└── ", "    "};
+	static constexpr Edge Body {"├── ", "│   "};
+	static constexpr Edge Tail {"└── ", "    "};
 
 	AstCursor cursor_;
 	const SourceGuard& source_;

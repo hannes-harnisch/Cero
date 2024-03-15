@@ -6,7 +6,7 @@
 
 namespace tests {
 
-CERO_TEST(ParseSimpleFunction) {
+CERO_TEST(ParseWhileLoopFibonacci) {
 	auto source = make_test_source(R"_____(
 fibonacci(var uint32 n) -> uint32 {
     var uint32 result = 0;
@@ -43,8 +43,8 @@ fibonacci(var uint32 n) -> uint32 {
 			c.numeric_literal_expr(cero::NumericLiteralKind::Decimal);
 		});
 		c.while_loop([&] {
-			c.binary_expr(cero::BinaryOperator::NotEqual, [&] {
-				c.unary_expr(cero::UnaryOperator::PostDecrement, [&] {
+			c.binary_expr(cero::BinaryOperator::NotEq, [&] {
+				c.unary_expr(cero::UnaryOperator::PostDec, [&] {
 					c.name_expr("n");
 				});
 				c.numeric_literal_expr(cero::NumericLiteralKind::Decimal);
@@ -65,6 +65,56 @@ fibonacci(var uint32 n) -> uint32 {
 			c.name_expr("result");
 		});
 	});
+
+	c.compare();
+}
+
+CERO_TEST(ParseIfStatement) {
+	auto source = make_test_source(R"_____(
+public divChecked(int32 a, int32 b) -> Opt<int32> {
+	if b == 0 {
+		return null;
+	} else {
+		return a / b;
+	}
+}
+)_____");
+
+	ExhaustiveReporter r;
+	auto ast = cero::parse(source, r);
+
+	AstCompare c(ast);
+	c.root();
+	c.function_definition(cero::AccessSpecifier::Public, "divChecked", [&] {
+		c.function_parameter(cero::ParameterSpecifier::None, "a", [&] {
+			c.name_expr("int32");
+		});
+		c.function_parameter(cero::ParameterSpecifier::None, "b", [&] {
+			c.name_expr("int32");
+		});
+		c.function_output("", [&] {
+			c.generic_name_expr("Opt", [&] {
+				c.name_expr("int32");
+			});
+		});
+		c.if_expr([&] {
+			c.binary_expr(cero::BinaryOperator::Eq, [&] {
+				c.name_expr("b");
+				c.numeric_literal_expr(cero::NumericLiteralKind::Decimal);
+			});
+			c.return_expr([&] {
+				c.name_expr("null");
+			});
+			c.return_expr([&] {
+				c.binary_expr(cero::BinaryOperator::Div, [&] {
+					c.name_expr("a");
+					c.name_expr("b");
+				});
+			});
+		});
+	});
+
+	fmt::println("{}", ast.to_string(source));
 
 	c.compare();
 }

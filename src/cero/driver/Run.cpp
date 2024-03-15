@@ -2,6 +2,7 @@
 
 #include "cero/driver/BuildCommand.hpp"
 #include "cero/driver/Environment.hpp"
+#include "cero/driver/Version.hpp"
 #include "cero/io/Configuration.hpp"
 #include "cero/util/Fail.hpp"
 
@@ -11,7 +12,7 @@ namespace {
 
 	bool run_help_command() {
 		static constexpr auto help = R"_____(
-Cero compiler, version {}
+Cero compiler, version {}.{}.{}
 
 usage: cero [COMMAND] [OPTIONS]
 
@@ -27,12 +28,13 @@ options:
     -V, --version       Show version and build info for the compiler
 )_____";
 
-		fmt::println(help, "0.0.1");
+		fmt::println(help, version::Major, version::Minor, version::Patch);
 		return true;
 	}
 
 	bool run_version_command() {
-		to_do();
+		fmt::println("Cero compiler, version {}.{}.{}", version::Major, version::Minor, version::Patch);
+		return true;
 	}
 
 	bool run_install_command() {
@@ -55,12 +57,12 @@ bool run(std::span<char*> args) {
 	if (auto config = Configuration::from(args)) {
 		switch (config->command) {
 			using enum Command;
-			case Help: return run_help_command();
+			case Help:	  return run_help_command();
 			case Version: return run_version_command();
-			case Build: return run_build_command(*config);
+			case Build:	  return run_build_command(*config);
 			case Install: return run_install_command();
-			case Clean: return run_clean_command();
-			case Run: return run_run_command();
+			case Clean:	  return run_clean_command();
+			case Run:	  return run_run_command();
 		}
 		fail_unreachable();
 	}

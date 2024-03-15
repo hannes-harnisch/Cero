@@ -18,7 +18,7 @@ include(FetchContent)
 message("Fetching dependency: fmtlib")
 FetchContent_Declare(fmt
   GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-  GIT_TAG master
+  GIT_TAG 45b772f85c0c8ef95cdee73a2f33ed5d69739e28
 )
 FetchContent_MakeAvailable(fmt)
 

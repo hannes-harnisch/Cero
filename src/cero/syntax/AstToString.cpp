@@ -10,8 +10,8 @@ namespace {
 		switch (specifier) {
 			using enum ParameterSpecifier;
 			case None: return "value";
-			case In: return "in";
-			case Var: return "var";
+			case In:   return "in";
+			case Var:  return "var";
 		}
 		fail_unreachable();
 	}
@@ -19,9 +19,9 @@ namespace {
 	std::string_view permission_specifier_to_string(PermissionSpecifier spec) {
 		switch (spec) {
 			using enum PermissionSpecifier;
-			case In: return "in";
-			case Var: return "var";
-			case VarBounded: return "var (bounded)";
+			case In:		   return "in";
+			case Var:		   return "var";
+			case VarBounded:   return "var (bounded)";
 			case VarUnbounded: return "var (unbounded)";
 		}
 		fail_unreachable();
@@ -30,10 +30,10 @@ namespace {
 	std::string_view binding_specifier_to_string(BindingSpecifier spec) {
 		switch (spec) {
 			using enum BindingSpecifier;
-			case Let: return "let";
-			case Var: return "var";
-			case Const: return "const";
-			case Static: return "static";
+			case Let:		return "let";
+			case Var:		return "var";
+			case Const:		return "const";
+			case Static:	return "static";
 			case StaticVar: return "static var";
 		}
 		fail_unreachable();
@@ -42,12 +42,12 @@ namespace {
 	std::string_view numeric_literal_kind_to_string(NumericLiteralKind kind) {
 		switch (kind) {
 			using enum NumericLiteralKind;
-			case Decimal: return "decimal";
+			case Decimal:	  return "decimal";
 			case Hexadecimal: return "hexadecimal";
-			case Binary: return "binary";
-			case Octal: return "octal";
-			case Float: return "float";
-			case Character: return "character";
+			case Binary:	  return "binary";
+			case Octal:		  return "octal";
+			case Float:		  return "float";
+			case Character:	  return "character";
 		}
 		fail_unreachable();
 	}
@@ -57,7 +57,7 @@ namespace {
 AstToString::AstToString(const Ast& ast, const SourceGuard& source) :
 	cursor_(ast),
 	source_(source),
-	edge_(&BODY),
+	edge_(&Body),
 	string_(fmt::format("AST for {} ({} node{})\n", source.get_name(), ast.num_nodes(), ast.num_nodes() == 1 ? "" : "s")) {
 	prefixes_.emplace();
 }
@@ -83,7 +83,7 @@ void AstToString::pop_level() {
 }
 
 void AstToString::set_tail(bool at_tail) {
-	edge_ = at_tail ? &TAIL : &BODY;
+	edge_ = at_tail ? &Tail : &Body;
 }
 
 void AstToString::add_line(std::string_view text) {
@@ -238,16 +238,16 @@ void AstToString::visit(const AstIfExpr& if_stmt) {
 	visit_child_at_tail();
 	pop_level();
 
-	set_tail(!if_stmt.has_else);
+	set_tail(if_stmt.num_else_statements == 0);
 	add_line("then");
 	push_level();
-	visit_child();
+	visit_children(if_stmt.num_then_statements);
 	pop_level();
 
-	if (if_stmt.has_else) {
+	if (if_stmt.num_else_statements > 0) {
 		add_tail_line("else");
 		push_level();
-		visit_child();
+		visit_children(if_stmt.num_else_statements);
 		pop_level();
 	}
 

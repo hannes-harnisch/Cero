@@ -60,6 +60,8 @@ bool Configuration::parse_option(std::string_view arg) {
 		verbose = true;
 	} else if (arg == "-Werror") {
 		warnings_as_errors = true;
+	} else if (arg == "--print-source") {
+		print_source = true;
 	} else if (arg == "--print-tokens") {
 		print_tokens = true;
 	} else if (arg == "--print-ast") {

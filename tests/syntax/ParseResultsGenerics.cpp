@@ -124,8 +124,7 @@ f() -> List<List<List<int32>>> {
 
 CERO_TEST(ParseLessAndRightShift) {
 	auto source = make_test_source(R"_____(
-oof(int32 a, int32 b) -> bool
-{
+oof(int32 a, int32 b) -> bool {
 	return a < b >> (16 - 4);
 }
 )_____");
@@ -148,10 +147,10 @@ oof(int32 a, int32 b) -> bool
 		c.return_expr([&] {
 			c.binary_expr(cero::BinaryOperator::Less, [&] {
 				c.name_expr("a");
-				c.binary_expr(cero::BinaryOperator::RightShift, [&] {
+				c.binary_expr(cero::BinaryOperator::Shr, [&] {
 					c.name_expr("b");
 					c.group_expr([&] {
-						c.binary_expr(cero::BinaryOperator::Subtract, [&] {
+						c.binary_expr(cero::BinaryOperator::Sub, [&] {
 							c.numeric_literal_expr(cero::NumericLiteralKind::Decimal);
 							c.numeric_literal_expr(cero::NumericLiteralKind::Decimal);
 						});
@@ -272,7 +271,7 @@ meow() -> A<(D >> E)> {
 		c.function_output("", [&] {
 			c.generic_name_expr("A", [&] {
 				c.group_expr([&] {
-					c.binary_expr(cero::BinaryOperator::RightShift, [&] {
+					c.binary_expr(cero::BinaryOperator::Shr, [&] {
 						c.name_expr("D");
 						c.name_expr("E");
 					});

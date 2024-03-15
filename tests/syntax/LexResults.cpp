@@ -17,6 +17,12 @@ namespace {
 		}
 	}
 
+	std::string_view next_lexeme(cero::TokenCursor& cursor, const cero::SourceGuard& source) {
+		auto lexeme = cursor.get_lexeme(source);
+		cursor.advance();
+		return lexeme;
+	}
+
 } // namespace
 
 using enum cero::TokenKind;
@@ -56,32 +62,32 @@ CERO_TEST(LexIntegerLiterals) {
 					   Semicolon,	  OctIntLiteral, Semicolon,		OctIntLiteral, Semicolon,	  EndOfFile});
 
 	cero::TokenCursor c(tokens);
-	CHECK_EQ(c.next().get_lexeme(source), "0");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), "123");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), "123 456");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), "1234 5678");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), "0x123 456 eaeAEB234 32 B");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), "0x AB3235");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), "0x AB3235");
-	CHECK_EQ(c.next().get_lexeme(source), "i");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), "0x 29356237");
-	CHECK_EQ(c.next().get_lexeme(source), "kk");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), "0b010110111");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), "0b 0110 11101 110");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), "0o1125417245");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), "0o 124 22115 2736");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
+	CHECK_EQ(next_lexeme(c, source), "0");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), "123");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), "123 456");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), "1234 5678");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), "0x123 456 eaeAEB234 32 B");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), "0x AB3235");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), "0x AB3235");
+	CHECK_EQ(next_lexeme(c, source), "i");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), "0x 29356237");
+	CHECK_EQ(next_lexeme(c, source), "kk");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), "0b010110111");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), "0b 0110 11101 110");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), "0o1125417245");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), "0o 124 22115 2736");
+	CHECK_EQ(next_lexeme(c, source), ";");
 }
 
 CERO_TEST(LexFloatLiterals) {
@@ -106,30 +112,30 @@ CERO_TEST(LexFloatLiterals) {
 							   Dot,			 Name,			Semicolon,	   EndOfFile});
 
 	cero::TokenCursor c(tokens);
-	CHECK_EQ(c.next().get_lexeme(source), "1.0");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), "1");
-	CHECK_EQ(c.next().get_lexeme(source), ".");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), ".4");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), ".045");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), "100 000.000 231");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), "123 .456 7");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), "234 5 . 23 948");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), "1");
-	CHECK_EQ(c.next().get_lexeme(source), ".");
-	CHECK_EQ(c.next().get_lexeme(source), ".");
-	CHECK_EQ(c.next().get_lexeme(source), "z");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
-	CHECK_EQ(c.next().get_lexeme(source), "1.0");
-	CHECK_EQ(c.next().get_lexeme(source), ".");
-	CHECK_EQ(c.next().get_lexeme(source), "a");
-	CHECK_EQ(c.next().get_lexeme(source), ";");
+	CHECK_EQ(next_lexeme(c, source), "1.0");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), "1");
+	CHECK_EQ(next_lexeme(c, source), ".");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), ".4");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), ".045");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), "100 000.000 231");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), "123 .456 7");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), "234 5 . 23 948");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), "1");
+	CHECK_EQ(next_lexeme(c, source), ".");
+	CHECK_EQ(next_lexeme(c, source), ".");
+	CHECK_EQ(next_lexeme(c, source), "z");
+	CHECK_EQ(next_lexeme(c, source), ";");
+	CHECK_EQ(next_lexeme(c, source), "1.0");
+	CHECK_EQ(next_lexeme(c, source), ".");
+	CHECK_EQ(next_lexeme(c, source), "a");
+	CHECK_EQ(next_lexeme(c, source), ";");
 }
 
 CERO_TEST(LexStringLiteralsWithEscapes) {
@@ -151,14 +157,14 @@ CERO_TEST(LexStringLiteralsWithEscapes) {
 							   StringLiteral, StringLiteral, EndOfFile});
 
 	cero::TokenCursor c(tokens);
-	CHECK_EQ(c.next().get_lexeme(source), "\"123\\\"\"");
-	CHECK_EQ(c.next().get_lexeme(source), "\"\\\"\"");
-	CHECK_EQ(c.next().get_lexeme(source), "\"\"");
-	CHECK_EQ(c.next().get_lexeme(source), "\"\\\\\"");
-	CHECK_EQ(c.next().get_lexeme(source), "\"\\a\"");
-	CHECK_EQ(c.next().get_lexeme(source), "\"\\np\"");
-	CHECK_EQ(c.next().get_lexeme(source), "\"\\\"\\\\a\\a\"");
-	CHECK_EQ(c.next().get_lexeme(source), "\"\\\"\\\\\\\"\\\\\\\\a\\\\a\\\"\"");
+	CHECK_EQ(next_lexeme(c, source), "\"123\\\"\"");
+	CHECK_EQ(next_lexeme(c, source), "\"\\\"\"");
+	CHECK_EQ(next_lexeme(c, source), "\"\"");
+	CHECK_EQ(next_lexeme(c, source), "\"\\\\\"");
+	CHECK_EQ(next_lexeme(c, source), "\"\\a\"");
+	CHECK_EQ(next_lexeme(c, source), "\"\\np\"");
+	CHECK_EQ(next_lexeme(c, source), "\"\\\"\\\\a\\a\"");
+	CHECK_EQ(next_lexeme(c, source), "\"\\\"\\\\\\\"\\\\\\\\a\\\\a\\\"\"");
 }
 
 CERO_TEST(LexLineComments) {
@@ -175,13 +181,10 @@ CERO_TEST(LexLineComments) {
 	check_token_kinds(tokens, {LineComment, LineComment, LineComment, LineComment, EndOfFile});
 
 	cero::TokenCursor c(tokens);
-	CHECK_EQ(c.next().get_lexeme(source), "//");
-
-	// If you get a test failure here, your editor may have removed the trailing space on line 3 of the test source above.
-	CHECK_EQ(c.next().get_lexeme(source), "// ");
-
-	CHECK_EQ(c.next().get_lexeme(source), "// abc");
-	CHECK_EQ(c.next().get_lexeme(source), "// //");
+	CHECK_EQ(next_lexeme(c, source), "//");
+	CHECK_EQ(next_lexeme(c, source), "//");
+	CHECK_EQ(next_lexeme(c, source), "// abc");
+	CHECK_EQ(next_lexeme(c, source), "// //");
 }
 
 CERO_TEST(LexBlockComments) {
@@ -209,16 +212,16 @@ CERO_TEST(LexBlockComments) {
 							   BlockComment, BlockComment, BlockComment, EndOfFile});
 
 	cero::TokenCursor c(tokens);
-	CHECK_EQ(c.next().get_lexeme(source), "/**/");
-	CHECK_EQ(c.next().get_lexeme(source), "/* abc\n*/");
-	CHECK_EQ(c.next().get_lexeme(source), "/*\n\n\n*/");
-	CHECK_EQ(c.next().get_lexeme(source), "/*/**/*/");
-	CHECK_EQ(c.next().get_lexeme(source), "/*a/*b*/c*/");
-	CHECK_EQ(c.next().get_lexeme(source), "/*/*/**/*/*/");
-	CHECK_EQ(c.next().get_lexeme(source), "/***/");
-	CHECK_EQ(c.next().get_lexeme(source), "/* **** */");
-	CHECK_EQ(c.next().get_lexeme(source), "/*/ */");
-	CHECK_EQ(c.next().get_lexeme(source), "/*// */");
+	CHECK_EQ(next_lexeme(c, source), "/**/");
+	CHECK_EQ(next_lexeme(c, source), "/* abc\n*/");
+	CHECK_EQ(next_lexeme(c, source), "/*\n\n\n*/");
+	CHECK_EQ(next_lexeme(c, source), "/*/**/*/");
+	CHECK_EQ(next_lexeme(c, source), "/*a/*b*/c*/");
+	CHECK_EQ(next_lexeme(c, source), "/*/*/**/*/*/");
+	CHECK_EQ(next_lexeme(c, source), "/***/");
+	CHECK_EQ(next_lexeme(c, source), "/* **** */");
+	CHECK_EQ(next_lexeme(c, source), "/*/ */");
+	CHECK_EQ(next_lexeme(c, source), "/*// */");
 }
 
 CERO_TEST(LexBracketCaret) {
@@ -229,7 +232,7 @@ CERO_TEST(LexBracketCaret) {
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
 
-	check_token_kinds(tokens, {LeftBracket, Caret, EndOfFile});
+	check_token_kinds(tokens, {LBracket, Caret, EndOfFile});
 }
 
 CERO_TEST(LexUnicodeNames) {
@@ -241,10 +244,10 @@ CERO_TEST(LexUnicodeNames) {
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
 
-	check_token_kinds(tokens, {Name, LeftParen, RightParen, LeftBrace, RightBrace, EndOfFile});
+	check_token_kinds(tokens, {Name, LParen, RParen, LBrace, RBrace, EndOfFile});
 
 	cero::TokenCursor c(tokens);
-	CHECK_EQ(c.next().get_lexeme(source), "𖭽");
+	CHECK_EQ(next_lexeme(c, source), "𖭽");
 }
 
 CERO_TEST(LexOperators) {
@@ -268,23 +271,23 @@ CERO_TEST(LexOperators) {
 							   Star,
 							   Slash,
 							   Percent,
-							   EqualsEquals,
-							   BangEquals,
-							   LeftAngle,
-							   RightAngle,
-							   LeftAngleEquals,
-							   RightAngleEquals,
+							   EqEq,
+							   BangEq,
+							   LAngle,
+							   RAngle,
+							   LAngleEq,
+							   RAngleEq,
 							   Dot,
 							   ColonColon,
-							   AmpersandAmpersand,
+							   AmpAmp,
 							   PipePipe,
-							   Equals,
-							   Ampersand,
+							   Eq,
+							   Amp,
 							   Pipe,
 							   Tilde,
-							   LeftAngleAngle,
-							   RightAngle,
-							   RightAngle,
+							   LAngleLAngle,
+							   RAngle,
+							   RAngle,
 							   EndOfFile});
 }
 

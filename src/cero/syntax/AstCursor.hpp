@@ -10,7 +10,7 @@ namespace cero {
 /// method on the same cursor has not yet completed.
 class AstCursor {
 public:
-	/// Creates a cursor positioned at the given AST's root.
+	/// Creates a cursor positioned at the root of the given AST.
 	explicit AstCursor(const Ast& ast);
 
 	/// Traverse the entire AST using the given visitor.

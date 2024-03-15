@@ -11,6 +11,9 @@ struct CodeLocation {
 	uint32_t line = 0;
 	uint32_t column = 0;
 
+	/// For code locations not associated with any specific line or column.
+	static CodeLocation blank(std::string_view source_name);
+
 	/// Create a string representation for diagnostic messages.
 	std::string to_string() const;
 
