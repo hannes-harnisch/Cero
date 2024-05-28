@@ -3,6 +3,7 @@
 #include "cero/io/Source.hpp"
 #include "cero/syntax/AstNode.hpp"
 #include "cero/syntax/AstVisitor.hpp"
+#include "cero/syntax/TokenStream.hpp"
 
 #include <span>
 #include <string>
@@ -30,7 +31,20 @@ private:
 	std::vector<AstNode> nodes_;
 	bool has_errors_;
 
-	explicit Ast(std::vector<AstNode>&& nodes);
+	/// Index of the leftmost descendant of a node (the node that is syntactically "first")
+	using NodeIndex = uint32_t;
+
+	explicit Ast(const TokenStream& token_stream);
+
+	template<typename T>
+	T& store() {
+		// valid thanks to pointer interconvertibility for unions and union members
+		return reinterpret_cast<T&>(nodes_.emplace_back(AstNode(T())));
+	}
+
+	void insert_parent(NodeIndex first_descendant_index, AstNode&& node);
+
+	NodeIndex next_index() const;
 
 	friend class Parser;
 };

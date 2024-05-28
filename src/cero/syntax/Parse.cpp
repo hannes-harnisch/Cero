@@ -66,12 +66,12 @@ public:
 	Parser(const TokenStream& token_stream, const SourceGuard& source, Reporter& reporter) :
 		source_(source),
 		reporter_(reporter),
-		cursor_(token_stream) {
-		nodes_.reserve(token_stream.num_tokens());
+		cursor_(token_stream),
+		ast_(token_stream) {
 	}
 
-	Ast parse() {
-		auto& root = store<AstRoot>();
+	Ast parse() && {
+		auto& root = ast_.store<AstRoot>();
 
 		uint16_t num_definitions = 0;
 		while (!cursor_.match(TokenKind::EndOfFile)) {
@@ -84,45 +84,28 @@ public:
 		}
 
 		root = AstRoot(AstNodeHeader<AstNodeKind::Root>(0), num_definitions);
-		return Ast(std::move(nodes_));
+		return std::move(ast_);
 	}
 
 private:
-	std::vector<AstNode> nodes_;
 	const SourceGuard& source_;
 	Reporter& reporter_;
 	TokenCursor cursor_;
+	Ast ast_;
 	bool is_looking_ahead_ = false;
 	bool is_binding_allowed_ = true;
 	uint32_t open_angles_ = 0;
 
-	/// Index of the leftmost descendant of a node (the node that is syntactically "first")
-	using NodeIndex = uint32_t;
-
 	/// Parse method for grammar rules determined by the kind of their first token, like prefix operators
-	using HeadParseMethod = NodeIndex (Parser::*)();
+	using HeadParseMethod = Ast::NodeIndex (Parser::*)();
 
 	/// Parse method for grammar rules determined by the kind of token appearing after another expression, like infix operators
-	using TailParseMethod = void (Parser::*)(NodeIndex head_begin, SourceOffset offset);
+	using TailParseMethod = void (Parser::*)(Ast::NodeIndex head_begin, SourceOffset offset);
 
 	struct TailParseRule {
 		Precedence precedence = {};
 		TailParseMethod method = nullptr;
 	};
-
-	template<typename T>
-	T& store() {
-		// valid thanks to pointer interconvertibility for unions and union members
-		return reinterpret_cast<T&>(nodes_.emplace_back(AstNode(T())));
-	}
-
-	void insert_parent(NodeIndex first_descendant_index, AstNode&& node) {
-		nodes_.insert(nodes_.begin() + static_cast<ptrdiff_t>(first_descendant_index), std::move(node));
-	}
-
-	NodeIndex next_index() const {
-		return static_cast<NodeIndex>(nodes_.size());
-	}
 
 	void parse_definition() {
 		auto offset = cursor_.peek_offset();
@@ -159,7 +142,7 @@ private:
 	}
 
 	void parse_struct(SourceOffset offset, AccessSpecifier access_specifier) {
-		auto& struct_def = store<AstStructDefinition>();
+		auto& struct_def = ast_.store<AstStructDefinition>();
 
 		auto name = expect_name(Message::ExpectNameForStruct);
 
@@ -167,7 +150,7 @@ private:
 	}
 
 	void parse_enum(SourceOffset offset, AccessSpecifier access_specifier) {
-		auto& enum_def = store<AstEnumDefinition>();
+		auto& enum_def = ast_.store<AstEnumDefinition>();
 
 		auto name = expect_name(Message::ExpectNameForEnum);
 
@@ -175,7 +158,7 @@ private:
 	}
 
 	void parse_function(SourceOffset offset, AccessSpecifier access_specifier, StringId name) {
-		auto& func_def = store<AstFunctionDefinition>();
+		auto& func_def = ast_.store<AstFunctionDefinition>();
 
 		expect(TokenKind::LParen, Message::ExpectParenAfterFuncName);
 
@@ -200,7 +183,7 @@ private:
 	}
 
 	void parse_function_definition_parameter() {
-		auto& parameter = store<AstFunctionParameter>();
+		auto& parameter = ast_.store<AstFunctionParameter>();
 
 		auto offset = cursor_.peek_offset();
 
@@ -238,7 +221,7 @@ private:
 	}
 
 	void parse_function_definition_output() {
-		auto& output = store<AstFunctionOutput>();
+		auto& output = ast_.store<AstFunctionOutput>();
 		auto offset = cursor_.peek_offset();
 
 		parse_type();
@@ -316,7 +299,7 @@ private:
 		}
 	}
 
-	void on_trailing_name(SourceOffset offset, NodeIndex prev_expr, StringId name, SourceOffset name_offset) {
+	void on_trailing_name(SourceOffset offset, Ast::NodeIndex prev_expr, StringId name, SourceOffset name_offset) {
 		auto kind = nodes_[prev_expr].get_kind();
 
 		static constexpr AstNodeKind type_expr_kinds[] {AstNodeKind::NameExpr,		  AstNodeKind::GenericNameExpr,
@@ -334,20 +317,20 @@ private:
 			has_initializer = true;
 		}
 
-		insert_parent(prev_expr, AstBindingStatement {offset, BindingSpecifier::Let, true, name, has_initializer});
+		ast_.insert_parent(prev_expr, AstBindingStatement {offset, BindingSpecifier::Let, true, name, has_initializer});
 	}
 
-	NodeIndex parse_expression_or_binding() {
+	Ast::NodeIndex parse_expression_or_binding() {
 		ScopedAssign _(is_binding_allowed_, true);
 		return parse_expression(Precedence::Statement);
 	}
 
-	NodeIndex parse_subexpression(Precedence precedence = Precedence::Statement) {
+	Ast::NodeIndex parse_subexpression(Precedence precedence = Precedence::Statement) {
 		ScopedAssign _(is_binding_allowed_, false);
 		return parse_expression(precedence);
 	}
 
-	NodeIndex parse_expression(Precedence precedence) {
+	Ast::NodeIndex parse_expression(Precedence precedence) {
 		auto next = cursor_.peek();
 
 		auto head_parse_method = lookup_head_parse_method(next.kind);
@@ -461,7 +444,7 @@ private:
 		}
 	}
 
-	NodeIndex on_if_stmt() {
+	Ast::NodeIndex on_if_stmt() {
 		auto token = cursor_.next();
 
 		auto if_stmt_begin = parse_expression_or_binding();
@@ -474,11 +457,11 @@ private:
 			has_else = true;
 		}
 
-		insert_parent(if_stmt_begin, AstIfExpr {token.offset, has_else});
+		ast_.insert_parent(if_stmt_begin, AstIfExpr {token.offset, has_else});
 		return if_stmt_begin;
 	}
 
-	NodeIndex on_if_expr() {
+	Ast::NodeIndex on_if_expr() {
 		auto token = cursor_.next();
 
 		auto if_expr_begin = parse_expression_or_binding();
@@ -487,11 +470,11 @@ private:
 		expect(TokenKind::Else, Message::ExpectElse);
 		parse_subexpression();
 
-		insert_parent(if_expr_begin, AstIfExpr {token.offset, true});
+		ast_.insert_parent(if_expr_begin, AstIfExpr {token.offset, true});
 		return if_expr_begin;
 	}
 
-	NodeIndex on_while() {
+	Ast::NodeIndex on_while() {
 		auto token = cursor_.next();
 
 		auto while_begin = parse_expression_or_binding();
@@ -499,22 +482,22 @@ private:
 		cursor_.advance(); // TODO: cleanup depending on whether blocks are required here
 		auto num_statements = parse_block();
 
-		insert_parent(while_begin, AstWhileLoop {token.offset, num_statements});
+		ast_.insert_parent(while_begin, AstWhileLoop {token.offset, num_statements});
 		return while_begin;
 	}
 
-	NodeIndex on_for() {
+	Ast::NodeIndex on_for() {
 		cursor_.advance();
 
 		to_do();
 	}
 
-	NodeIndex on_left_brace() {
+	Ast::NodeIndex on_left_brace() {
 		auto token = cursor_.next();
 
-		auto block_stmt_begin = next_index();
+		auto block_stmt_begin = ast_.next_index();
 		auto num_statements = parse_block();
-		insert_parent(block_stmt_begin, AstBlockStatement {token.offset, num_statements});
+		ast_.insert_parent(block_stmt_begin, AstBlockStatement {token.offset, num_statements});
 		return block_stmt_begin;
 	}
 
@@ -535,10 +518,10 @@ private:
 		}
 	}
 
-	NodeIndex on_let() {
+	Ast::NodeIndex on_let() {
 		auto token = cursor_.next();
 
-		auto let_stmt_begin = next_index();
+		auto let_stmt_begin = ast_.next_index();
 		auto name = expect_name(Message::ExpectNameAfterLet);
 
 		bool has_initializer = false;
@@ -546,11 +529,12 @@ private:
 			let_stmt_begin = parse_subexpression();
 			has_initializer = true;
 		}
-		insert_parent(let_stmt_begin, AstBindingStatement {token.offset, BindingSpecifier::Let, false, name, has_initializer});
+		ast_.insert_parent(let_stmt_begin,
+						   AstBindingStatement {token.offset, BindingSpecifier::Let, false, name, has_initializer});
 		return let_stmt_begin;
 	}
 
-	NodeIndex on_var() {
+	Ast::NodeIndex on_var() {
 		auto token = cursor_.next();
 
 		if (cursor_.peek_kind() == TokenKind::LBrace) {
@@ -560,20 +544,20 @@ private:
 		return parse_binding(token.offset, BindingSpecifier::Var);
 	}
 
-	NodeIndex on_const() {
+	Ast::NodeIndex on_const() {
 		auto token = cursor_.next();
 
 		return parse_binding(token.offset, BindingSpecifier::Const);
 	}
 
-	NodeIndex on_static() {
+	Ast::NodeIndex on_static() {
 		auto token = cursor_.next();
 
 		auto specifier = cursor_.match(TokenKind::Var) ? BindingSpecifier::StaticVar : BindingSpecifier::Static;
 		return parse_binding(token.offset, specifier);
 	}
 
-	NodeIndex parse_binding(SourceOffset offset, BindingSpecifier specifier) {
+	Ast::NodeIndex parse_binding(SourceOffset offset, BindingSpecifier specifier) {
 		auto lookahead = cursor_;
 		auto name = lookahead.match_identifier(source_);
 		if (!name.empty()) {
@@ -582,7 +566,7 @@ private:
 
 				auto binding_begin = parse_subexpression();
 
-				insert_parent(binding_begin, AstBindingStatement {offset, specifier, false, name, true});
+				ast_.insert_parent(binding_begin, AstBindingStatement {offset, specifier, false, name, true});
 				return binding_begin;
 			}
 		}
@@ -596,31 +580,31 @@ private:
 			has_initializer = true;
 		}
 
-		insert_parent(binding_begin, AstBindingStatement {offset, specifier, true, name, has_initializer});
+		ast_.insert_parent(binding_begin, AstBindingStatement {offset, specifier, true, name, has_initializer});
 		return binding_begin;
 	}
 
-	NodeIndex on_name() {
+	Ast::NodeIndex on_name() {
 		auto lexeme = cursor_.get_lexeme(source_);
 		auto token = cursor_.next();
 		return parse_name(token.offset, lexeme);
 	}
 
-	NodeIndex parse_name(SourceOffset offset, StringId name) {
+	Ast::NodeIndex parse_name(SourceOffset offset, StringId name) {
 		auto saved_cursor = cursor_;
 		if (cursor_.match(TokenKind::LAngle)) {
 			return parse_generic_name(offset, name, saved_cursor);
 		}
 
-		auto name_begin = next_index();
+		auto name_begin = ast_.next_index();
 		nodes_.push_back(AstNameExpr {offset, name});
 		return name_begin;
 	}
 
-	NodeIndex parse_generic_name(SourceOffset offset, StringId name, TokenCursor name_start) {
+	Ast::NodeIndex parse_generic_name(SourceOffset offset, StringId name, TokenCursor name_start) {
 		ScopedAssign _(open_angles_, open_angles_ + 1);
 
-		const auto name_begin = next_index();
+		const auto name_begin = ast_.next_index();
 		uint16_t num_generic_args = 0;
 		if (!cursor_.match(TokenKind::RAngle)) {
 			const bool fall_back = should_fall_back_to_name();
@@ -640,7 +624,7 @@ private:
 			cursor_.advance();
 		}
 
-		insert_parent(name_begin, AstGenericNameExpr {offset, name, num_generic_args});
+		ast_.insert_parent(name_begin, AstGenericNameExpr {offset, name, num_generic_args});
 		return name_begin;
 	}
 
@@ -664,30 +648,30 @@ private:
 	}
 
 	template<void LiteralParseFn(std::string_view), NumericLiteralKind Kind>
-	NodeIndex on_numeric_literal() {
+	Ast::NodeIndex on_numeric_literal() {
 		auto lexeme = cursor_.get_lexeme(source_);
 		auto token = cursor_.next();
 		LiteralParseFn(lexeme);
 
-		auto literal_begin = next_index();
+		auto literal_begin = ast_.next_index();
 		nodes_.push_back(AstNumericLiteralExpr {token.offset, Kind});
 		return literal_begin;
 	}
 
-	NodeIndex on_string_literal() {
+	Ast::NodeIndex on_string_literal() {
 		auto lexeme = cursor_.get_lexeme(source_);
 		auto token = cursor_.next();
 
-		auto literal_begin = next_index();
+		auto literal_begin = ast_.next_index();
 		nodes_.push_back(AstStringLiteralExpr {token.offset, evaluate_string_literal(lexeme)});
 		return literal_begin;
 	}
 
-	NodeIndex on_prefix_left_paren() { // TODO: function type
+	Ast::NodeIndex on_prefix_left_paren() { // TODO: function type
 		ScopedAssign _(open_angles_, 0);
 
 		auto token = cursor_.next();
-		auto group_begin = next_index();
+		auto group_begin = ast_.next_index();
 
 		uint16_t num_args = 0;
 		if (!cursor_.match(TokenKind::RParen)) {
@@ -698,11 +682,11 @@ private:
 			expect(TokenKind::RParen, Message::ExpectClosingParen);
 		}
 
-		insert_parent(group_begin, AstGroupExpr {token.offset, num_args});
+		ast_.insert_parent(group_begin, AstGroupExpr {token.offset, num_args});
 		return group_begin;
 	}
 
-	NodeIndex on_prefix_left_bracket() {
+	Ast::NodeIndex on_prefix_left_bracket() {
 		auto token = cursor_.next();
 		// TODO: array literal
 		return parse_array_type(token.offset);
@@ -722,28 +706,28 @@ private:
 		return num_args;
 	}
 
-	NodeIndex on_break() {
+	Ast::NodeIndex on_break() {
 		auto token = cursor_.next();
 
 		bool has_expression = false;
 		auto break_begin = parse_optional_subexpression(has_expression);
-		insert_parent(break_begin, AstBreakExpr {token.offset, has_expression});
+		ast_.insert_parent(break_begin, AstBreakExpr {token.offset, has_expression});
 		return break_begin;
 	}
 
-	NodeIndex on_continue() {
+	Ast::NodeIndex on_continue() {
 		auto token = cursor_.next();
 
 		bool has_expression = false;
 		auto continue_begin = parse_optional_subexpression(has_expression);
-		insert_parent(continue_begin, AstContinueExpr {token.offset, has_expression});
+		ast_.insert_parent(continue_begin, AstContinueExpr {token.offset, has_expression});
 		return continue_begin;
 	}
 
-	NodeIndex on_return() {
+	Ast::NodeIndex on_return() {
 		auto token = cursor_.next();
 
-		auto return_begin = next_index();
+		auto return_begin = ast_.next_index();
 		uint16_t num_expressions = 0;
 		if (expression_may_follow()) {
 			do {
@@ -752,25 +736,25 @@ private:
 			} while (cursor_.match(TokenKind::Comma));
 		}
 
-		insert_parent(return_begin, AstReturnExpr {token.offset, num_expressions});
+		ast_.insert_parent(return_begin, AstReturnExpr {token.offset, num_expressions});
 		return return_begin;
 	}
 
-	NodeIndex on_throw() {
+	Ast::NodeIndex on_throw() {
 		auto token = cursor_.next();
 
 		bool has_expression = false;
 		auto throw_begin = parse_optional_subexpression(has_expression);
-		insert_parent(throw_begin, AstThrowExpr {token.offset, has_expression});
+		ast_.insert_parent(throw_begin, AstThrowExpr {token.offset, has_expression});
 		return throw_begin;
 	}
 
-	NodeIndex parse_optional_subexpression(bool& has_expression) {
+	Ast::NodeIndex parse_optional_subexpression(bool& has_expression) {
 		if (expression_may_follow()) {
 			has_expression = true;
 			return parse_subexpression();
 		} else {
-			return next_index();
+			return ast_.next_index();
 		}
 	}
 
@@ -780,17 +764,17 @@ private:
 	}
 
 	template<UnaryOperator O>
-	NodeIndex on_prefix_operator() {
+	Ast::NodeIndex on_prefix_operator() {
 		auto token = cursor_.next();
 
 		auto expr_begin = parse_subexpression(Precedence::Prefix);
 
-		insert_parent(expr_begin, AstUnaryExpr {token.offset, O});
+		ast_.insert_parent(expr_begin, AstUnaryExpr {token.offset, O});
 		return expr_begin;
 	}
 
 	template<BinaryOperator O>
-	void on_binary_operator(NodeIndex left, SourceOffset offset) {
+	void on_binary_operator(Ast::NodeIndex left, SourceOffset offset) {
 		static constexpr auto precedence = lookup_precedence_for_associativity(O);
 
 		auto operator_token = cursor_.next();
@@ -801,10 +785,10 @@ private:
 		auto right = parse_subexpression(precedence);
 		validate_associativity(O, left, right, operator_token);
 
-		insert_parent(left, AstBinaryExpr {offset, O});
+		ast_.insert_parent(left, AstBinaryExpr {offset, O});
 	}
 
-	void validate_associativity(BinaryOperator op, NodeIndex left_idx, NodeIndex right_idx, Token operator_token) {
+	void validate_associativity(BinaryOperator op, Ast::NodeIndex left_idx, Ast::NodeIndex right_idx, Token operator_token) {
 		auto& left_node = nodes_[left_idx];
 		auto& right_node = nodes_[right_idx];
 
@@ -882,20 +866,20 @@ private:
 	}
 
 	template<UnaryOperator O>
-	void on_postfix_operator(NodeIndex left, SourceOffset offset) {
+	void on_postfix_operator(Ast::NodeIndex left, SourceOffset offset) {
 		cursor_.advance();
 
-		insert_parent(left, AstUnaryExpr {offset, O});
+		ast_.insert_parent(left, AstUnaryExpr {offset, O});
 	}
 
-	void on_dot(NodeIndex left, SourceOffset offset) {
+	void on_dot(Ast::NodeIndex left, SourceOffset offset) {
 		cursor_.advance();
 
 		auto member = expect_name(Message::ExpectNameAfterDot);
-		insert_parent(left, AstMemberExpr {offset, member, 0});
+		ast_.insert_parent(left, AstMemberExpr {offset, member, 0});
 	}
 
-	void on_infix_left_paren(NodeIndex left, SourceOffset offset) {
+	void on_infix_left_paren(Ast::NodeIndex left, SourceOffset offset) {
 		ScopedAssign _(open_angles_, 0);
 
 		cursor_.advance();
@@ -907,28 +891,28 @@ private:
 			} while (cursor_.match(TokenKind::Comma));
 			expect(TokenKind::RParen, Message::ExpectClosingParen);
 		}
-		insert_parent(left, AstCallExpr {offset, num_args});
+		ast_.insert_parent(left, AstCallExpr {offset, num_args});
 	}
 
-	void on_infix_left_bracket(NodeIndex left, SourceOffset offset) {
+	void on_infix_left_bracket(Ast::NodeIndex left, SourceOffset offset) {
 		cursor_.advance();
 
 		auto num_args = parse_bracketed_arguments();
-		insert_parent(left, AstIndexExpr {offset, num_args});
+		ast_.insert_parent(left, AstIndexExpr {offset, num_args});
 	}
 
-	NodeIndex on_caret() {
+	Ast::NodeIndex on_caret() {
 		auto token = cursor_.next();
 		return parse_pointer_type(token.offset);
 	}
 
-	NodeIndex on_permission() {
+	Ast::NodeIndex on_permission() {
 		auto token = cursor_.next();
 		return parse_permission(token.offset);
 	}
 
-	NodeIndex parse_permission(SourceOffset offset) {
-		auto permission_begin = next_index();
+	Ast::NodeIndex parse_permission(SourceOffset offset) {
+		auto permission_begin = ast_.next_index();
 
 		auto specifier = PermissionSpecifier::Var;
 		uint16_t num_args = 0;
@@ -950,11 +934,11 @@ private:
 			}
 		}
 
-		insert_parent(permission_begin, AstPermissionExpr {offset, specifier, num_args});
+		ast_.insert_parent(permission_begin, AstPermissionExpr {offset, specifier, num_args});
 		return permission_begin;
 	}
 
-	NodeIndex parse_type() {
+	Ast::NodeIndex parse_type() {
 		auto offset = cursor_.peek_offset();
 
 		if (cursor_.match(TokenKind::Caret)) {
@@ -971,9 +955,9 @@ private:
 		return parse_name(offset, name);
 	}
 
-	NodeIndex parse_array_type(SourceOffset offset) {
+	Ast::NodeIndex parse_array_type(SourceOffset offset) {
 		bool has_bound;
-		NodeIndex array_type_begin;
+		Ast::NodeIndex array_type_begin;
 		if (cursor_.match(TokenKind::RBracket)) {
 			has_bound = false;
 			array_type_begin = parse_type();
@@ -984,13 +968,13 @@ private:
 			parse_type();
 		}
 
-		insert_parent(array_type_begin, AstArrayTypeExpr {offset, has_bound});
+		ast_.insert_parent(array_type_begin, AstArrayTypeExpr {offset, has_bound});
 		return array_type_begin;
 	}
 
-	NodeIndex parse_pointer_type(SourceOffset offset) {
+	Ast::NodeIndex parse_pointer_type(SourceOffset offset) {
 		bool has_permission;
-		NodeIndex ptr_type_begin;
+		Ast::NodeIndex ptr_type_begin;
 		if (cursor_.peek_kind() == TokenKind::Var) { // TODO: handle other ways to have subexpressions here
 			has_permission = true;
 			ptr_type_begin = parse_subexpression();
@@ -1000,18 +984,18 @@ private:
 			ptr_type_begin = parse_type();
 		}
 
-		insert_parent(ptr_type_begin, AstPointerTypeExpr {offset, has_permission});
+		ast_.insert_parent(ptr_type_begin, AstPointerTypeExpr {offset, has_permission});
 		return ptr_type_begin;
 	}
 
-	NodeIndex parse_function_type(SourceOffset offset) {
-		auto func_type_begin = next_index();
+	Ast::NodeIndex parse_function_type(SourceOffset offset) {
+		auto func_type_begin = ast_.next_index();
 
 		auto num_parameters = parse_function_type_parameters();
 		expect(TokenKind::ThinArrow, Message::ExpectArrowAfterFuncTypeParams);
 		auto num_outputs = parse_function_type_outputs();
 
-		insert_parent(func_type_begin, AstFunctionTypeExpr {offset, num_parameters, num_outputs});
+		ast_.insert_parent(func_type_begin, AstFunctionTypeExpr {offset, num_parameters, num_outputs});
 		return func_type_begin;
 	}
 
@@ -1046,7 +1030,7 @@ private:
 			throw ParseError();
 		}
 
-		insert_parent(param_begin, AstFunctionParameter {offset, specifier, name, false});
+		ast_.insert_parent(param_begin, AstFunctionParameter {offset, specifier, name, false});
 	}
 
 	uint16_t parse_function_type_outputs() {
@@ -1066,10 +1050,10 @@ private:
 		auto output_begin = parse_type();
 		auto name = cursor_.match_identifier(source_);
 
-		insert_parent(output_begin, AstFunctionOutput {offset, name});
+		ast_.insert_parent(output_begin, AstFunctionOutput {offset, name});
 	}
 
-	void rescind_lookahead(NodeIndex node_index) {
+	void rescind_lookahead(Ast::NodeIndex node_index) {
 		auto first = nodes_.begin() + static_cast<ptrdiff_t>(node_index);
 		nodes_.erase(first, nodes_.end());
 	}
@@ -1114,8 +1098,7 @@ Ast parse(const SourceGuard& source, Reporter& reporter) {
 }
 
 Ast parse(const TokenStream& token_stream, const SourceGuard& source, Reporter& reporter) {
-	Parser parser(token_stream, source, reporter);
-	return parser.parse();
+	return Parser(token_stream, source, reporter).parse();
 }
 
 } // namespace cero

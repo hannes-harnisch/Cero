@@ -62,7 +62,7 @@ AstToString::AstToString(const Ast& ast, const SourceGuard& source) :
 	prefixes_.emplace();
 }
 
-std::string AstToString::make_string() {
+std::string AstToString::make_string() && {
 	cursor_.visit_all(*this);
 	return std::move(string_);
 }

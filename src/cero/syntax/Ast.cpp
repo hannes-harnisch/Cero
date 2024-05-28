@@ -17,13 +17,20 @@ std::span<const AstNode> Ast::raw() const {
 }
 
 std::string Ast::to_string(const SourceGuard& source) const {
-	AstToString ast_to_string(*this, source);
-	return ast_to_string.make_string();
+	return AstToString(*this, source).make_string();
 }
 
-Ast::Ast(std::vector<AstNode>&& nodes) :
-	nodes_(std::move(nodes)),
+Ast::Ast(const TokenStream& token_stream) :
 	has_errors_(false) {
+	nodes_.reserve(token_stream.num_tokens());
+}
+
+void Ast::insert_parent(Ast::NodeIndex first_descendant_index, AstNode&& node) {
+	nodes_.insert(nodes_.begin() + static_cast<ptrdiff_t>(first_descendant_index), std::move(node));
+}
+
+Ast::NodeIndex Ast::next_index() const {
+	return static_cast<NodeIndex>(nodes_.size());
 }
 
 } // namespace cero

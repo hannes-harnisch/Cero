@@ -44,7 +44,7 @@ private:
 	uint8_t tab_size_;
 
 	SourceGuard(std::string_view source_code, std::string_view name, uint8_t tab_size);
-	SourceGuard(FileMapping mapping, std::string_view name, uint8_t tab_size);
+	SourceGuard(FileMapping&& mapping, std::string_view name, uint8_t tab_size);
 
 	friend class Source;
 };

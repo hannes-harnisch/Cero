@@ -42,7 +42,7 @@ SourceGuard::SourceGuard(std::string_view text, std::string_view source_code, ui
 	tab_size_(tab_size) {
 }
 
-SourceGuard::SourceGuard(FileMapping mapping, std::string_view source_code, uint8_t tab_size) :
+SourceGuard::SourceGuard(FileMapping&& mapping, std::string_view source_code, uint8_t tab_size) :
 	mapping_(std::move(mapping)),
 	source_code_(mapping_->get_text()),
 	name_(source_code),

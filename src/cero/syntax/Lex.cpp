@@ -15,7 +15,7 @@ public:
 		stream_(source) {
 	}
 
-	TokenStream lex() {
+	TokenStream lex() && {
 		if (source_.get_length() > MaxSourceLength) {
 			const auto blank = CodeLocation::blank(source_.get_name());
 			reporter_.report(Message::SourceInputTooLarge, blank, MessageArgs(MaxSourceLength));
@@ -549,8 +549,7 @@ private:
 };
 
 TokenStream lex(const SourceGuard& source, Reporter& reporter) {
-	Lexer lexer(source, reporter);
-	return lexer.lex();
+	return Lexer(source, reporter).lex();
 }
 
 } // namespace cero

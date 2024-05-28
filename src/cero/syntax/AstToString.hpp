@@ -10,8 +10,7 @@ class AstToString : public AstVisitor {
 public:
 	AstToString(const Ast& ast, const SourceGuard& source);
 
-	// May only be called once on a given instance.
-	std::string make_string();
+	std::string make_string() &&;
 
 private:
 	struct Edge {
