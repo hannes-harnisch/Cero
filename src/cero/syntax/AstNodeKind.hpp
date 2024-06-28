@@ -46,8 +46,8 @@ enum class AstNodeKind {
 
 template<AstNodeKind K>
 struct AstNodeHeader {
-	AstNodeKind kind : 8 = K;
-	SourceOffset offset : SourceOffsetBits = 0;
+	const AstNodeKind kind : 8 = K;
+	const SourceOffset offset : SourceOffsetBits = 0;
 
 	AstNodeHeader() = default;
 

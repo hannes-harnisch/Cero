@@ -32,6 +32,7 @@ CERO_TEST(LexEmptySource) {
 
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
+	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens, {EndOfFile});
 }
@@ -54,6 +55,7 @@ CERO_TEST(LexIntegerLiterals) {
 
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
+	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens,
 					  {DecIntLiteral, Semicolon,	 DecIntLiteral, Semicolon,	   DecIntLiteral, Semicolon,	 DecIntLiteral,
@@ -105,6 +107,7 @@ CERO_TEST(LexFloatLiterals) {
 
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
+	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens, {FloatLiteral, Semicolon,		DecIntLiteral, Dot,		  Semicolon,	FloatLiteral, Semicolon,
 							   FloatLiteral, Semicolon,		FloatLiteral,  Semicolon, FloatLiteral, Semicolon,	  FloatLiteral,
@@ -152,6 +155,7 @@ CERO_TEST(LexStringLiteralsWithEscapes) {
 
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
+	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens, {StringLiteral, StringLiteral, StringLiteral, StringLiteral, StringLiteral, StringLiteral,
 							   StringLiteral, StringLiteral, EndOfFile});
@@ -177,6 +181,7 @@ CERO_TEST(LexLineComments) {
 
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
+	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens, {LineComment, LineComment, LineComment, LineComment, EndOfFile});
 
@@ -207,6 +212,7 @@ CERO_TEST(LexBlockComments) {
 
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
+	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens, {BlockComment, BlockComment, BlockComment, BlockComment, BlockComment, BlockComment, BlockComment,
 							   BlockComment, BlockComment, BlockComment, EndOfFile});
@@ -231,6 +237,7 @@ CERO_TEST(LexBracketCaret) {
 
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
+	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens, {LBracket, Caret, EndOfFile});
 }
@@ -243,6 +250,7 @@ CERO_TEST(LexUnicodeNames) {
 
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
+	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens, {Name, LParen, RParen, LBrace, RBrace, EndOfFile});
 
@@ -264,6 +272,7 @@ CERO_TEST(LexOperators) {
 
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
+	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens, {Bang,
 							   Plus,
@@ -298,6 +307,7 @@ CERO_TEST(LexDotDot) {
 
 	ExhaustiveReporter r;
 	auto tokens = cero::lex(source, r);
+	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens, {Dot, Dot, EndOfFile});
 }

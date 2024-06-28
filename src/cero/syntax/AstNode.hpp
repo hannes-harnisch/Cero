@@ -38,12 +38,40 @@ public:
 	}
 
 	template<typename T>
+	T& as() {
+#define CERO_AST_NODE_KIND(X)                                                                                                  \
+	if constexpr (std::is_same_v<T, Ast##X>) {                                                                                 \
+		if (Root_.header.kind == AstNodeKind::X) return X##_;                                                                  \
+                                                                                                                               \
+		fail_assert("node does not hold expected type");                                                                       \
+	} else
+		CERO_AST_NODE_KINDS
+#undef CERO_AST_NODE_KIND
+		{
+			static_assert(always_false<T>, "T must be an AST node type.");
+		}
+	}
+
+	template<typename T>
 	const T& as() const {
 #define CERO_AST_NODE_KIND(X)                                                                                                  \
 	if constexpr (std::is_same_v<T, Ast##X>) {                                                                                 \
 		if (Root_.header.kind == AstNodeKind::X) return X##_;                                                                  \
                                                                                                                                \
 		fail_assert("node does not hold expected type");                                                                       \
+	} else
+		CERO_AST_NODE_KINDS
+#undef CERO_AST_NODE_KIND
+		{
+			static_assert(always_false<T>, "T must be an AST node type.");
+		}
+	}
+
+	template<typename T>
+	T* get() {
+#define CERO_AST_NODE_KIND(X)                                                                                                  \
+	if constexpr (std::is_same_v<T, Ast##X>) {                                                                                 \
+		return Root_.header.kind == AstNodeKind::X ? &X##_ : nullptr;                                                          \
 	} else
 		CERO_AST_NODE_KINDS
 #undef CERO_AST_NODE_KIND
@@ -84,17 +112,8 @@ public:
 	}
 
 	AstNode& operator=(AstNode&& other) noexcept {
-		if (Root_.header.kind == other.Root_.header.kind) {
-			switch (Root_.header.kind) {
-#define CERO_AST_NODE_KIND(X)                                                                                                  \
-	case AstNodeKind::X: X##_ = std::move(other.X##_); break;
-				CERO_AST_NODE_KINDS
-#undef CERO_AST_NODE_KIND
-			}
-		} else {
-			this->~AstNode();
-			new (this) AstNode(std::move(other));
-		}
+		this->~AstNode();
+		new (this) AstNode(std::move(other));
 		return *this;
 	}
 

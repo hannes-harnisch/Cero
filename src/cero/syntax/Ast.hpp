@@ -15,7 +15,7 @@ namespace cero {
 /// array stores the AST nodes in pre-order.
 class Ast {
 public:
-	/// Gets the number of AST nodes.
+	/// Number of AST nodes.
 	uint32_t num_nodes() const;
 
 	/// Whether syntax errors were encountered during parsing.
@@ -29,22 +29,29 @@ public:
 
 private:
 	std::vector<AstNode> nodes_;
-	bool has_errors_;
+	bool has_errors_ = false;
+	uint16_t current_num_children_ = 0;
+	uint32_t current_num_descendants_ = 0;
 
-	/// Index of the leftmost descendant of a node (the node that is syntactically "first")
 	using NodeIndex = uint32_t;
 
+	/// Reserves storage for the AST based on the number of tokens.
 	explicit Ast(const TokenStream& token_stream);
 
-	template<typename T>
-	T& store() {
-		// valid thanks to pointer interconvertibility for unions and union members
-		return reinterpret_cast<T&>(nodes_.emplace_back(AstNode(T())));
+	/// Stores a new node in the AST, positioning it as the rightmost child of the currently rightmost node. TODO: Not true
+	NodeIndex store(AstNode&& node);
+
+	/// Stores a new node in the AST as the parent of a node already in the AST. For performance reasons, should only be used
+	/// when it cannot be known that a node must be the parent of an already stored node until after the child node was stored.
+	NodeIndex store_parent_of(NodeIndex first_child, AstNode&& node);
+
+	AstNode& get(NodeIndex index);
+
+	NodeIndex next_index() const {
+		return static_cast<NodeIndex>(nodes_.size());
 	}
 
-	void insert_parent(NodeIndex first_descendant_index, AstNode&& node);
-
-	NodeIndex next_index() const;
+	void undo_nodes_from_lookahead(NodeIndex first);
 
 	friend class Parser;
 };

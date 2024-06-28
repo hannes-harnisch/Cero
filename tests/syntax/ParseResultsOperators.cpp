@@ -18,6 +18,7 @@ foo(int32 a, int32 b) -> int32 {
 
 	ExhaustiveReporter r;
 	auto ast = cero::parse(source, r);
+	CHECK(!ast.has_errors());
 
 	AstCompare c(ast);
 	c.root();
@@ -86,6 +87,7 @@ bar(int32 a, int32 b, int32 c) -> bool {
 
 	ExhaustiveReporter r;
 	auto ast = cero::parse(source, r);
+	CHECK(!ast.has_errors());
 
 	AstCompare c(ast);
 	c.root();
@@ -206,6 +208,7 @@ baz(int32 a, int32 b, int32 c, int32 d) -> bool {
 
 	ExhaustiveReporter r;
 	auto ast = cero::parse(source, r);
+	CHECK(!ast.has_errors());
 
 	AstCompare c(ast);
 	c.root();

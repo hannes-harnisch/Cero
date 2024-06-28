@@ -16,8 +16,9 @@ foo "bar" 'baz' 123 456;
 )_____");
 
 	ExhaustiveReporter r;
-	auto stream = cero::lex(source, r);
-	auto str = stream.to_string(source);
+	auto tokens = cero::lex(source, r);
+	CHECK(!tokens.has_errors());
+	auto str = tokens.to_string(source);
 
 	CHECK_EQ(str, R"_____(Token stream for TokenStringForBracketsLiterals (21 tokens)
 	LParen `(` [2:1]
@@ -51,8 +52,9 @@ CERO_TEST(TokenStringForOperators) {
 )_____");
 
 	ExhaustiveReporter r;
-	auto stream = cero::lex(source, r);
-	auto str = stream.to_string(source);
+	auto tokens = cero::lex(source, r);
+	CHECK(!tokens.has_errors());
+	auto str = tokens.to_string(source);
 
 	CHECK_EQ(str, R"_____(Token stream for TokenStringForOperators (16 tokens)
 	Plus `+` [2:1]
@@ -87,8 +89,9 @@ struct S {
 )_____");
 
 	ExhaustiveReporter r;
-	auto stream = cero::lex(source, r);
-	auto str = stream.to_string(source);
+	auto tokens = cero::lex(source, r);
+	CHECK(!tokens.has_errors());
+	auto str = tokens.to_string(source);
 
 	CHECK_EQ(str, R"_____(Token stream for TokenStringForKeywords (19 tokens)
 	Struct `struct` [2:1]

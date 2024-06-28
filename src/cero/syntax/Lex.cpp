@@ -34,69 +34,26 @@ private:
 	TokenStream stream_;
 
 	void lex_source() {
-		while (auto position = cursor_.next_position()) {
-			const auto [character, offset] = position;
-			switch (character) {
-				case ' ':
-				case '\t':
-				case '\n':
-				case '\v':
-				case '\f':
-				case '\r': continue;
+		while (auto next = cursor_.peek()) {
+			const char character = *next;
+			if (is_whitespace(character)) {
+				cursor_.advance();
+				continue;
+			}
 
-				case '_':
-				case 'a':
-				case 'b':
-				case 'c':
-				case 'd':
-				case 'e':
-				case 'f':
-				case 'g':
-				case 'h':
-				case 'i':
-				case 'j':
-				case 'k':
-				case 'l':
-				case 'm':
-				case 'n':
-				case 'o':
-				case 'p':
-				case 'q':
-				case 'r':
-				case 's':
-				case 't':
-				case 'u':
-				case 'v':
-				case 'w':
-				case 'x':
-				case 'y':
-				case 'z':
-				case 'A':
-				case 'B':
-				case 'C':
-				case 'D':
-				case 'E':
-				case 'F':
-				case 'G':
-				case 'H':
-				case 'I':
-				case 'J':
-				case 'K':
-				case 'L':
-				case 'M':
-				case 'N':
-				case 'O':
-				case 'P':
-				case 'Q':
-				case 'R':
-				case 'S':
-				case 'T':
-				case 'U':
-				case 'V':
-				case 'W':
-				case 'X':
-				case 'Y':
-				case 'Z': lex_word(offset); break;
+			const auto offset = cursor_.offset();
+			cursor_.advance();
+			switch (character) {
+					// clang-format off
+				case 'A': case 'B': case 'C': case 'D': case 'E': case 'F': case 'G': case 'H': case 'I':
+				case 'J': case 'K': case 'L': case 'M': case 'N': case 'O': case 'P': case 'Q': case 'R':
+				case 'S': case 'T': case 'U': case 'V': case 'W': case 'X': case 'Y': case 'Z': case '_':
+
+				case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g': case 'h': case 'i':
+				case 'j': case 'k': case 'l': case 'm': case 'n': case 'o': case 'p': case 'q': case 'r':
+				case 's': case 't': case 'u': case 'v': case 'w': case 'x': case 'y': case 'z':
+					lex_word(offset); break;
+					// clang-format on
 
 				case '0': lex_zero(offset); break;
 				case '1':
@@ -109,33 +66,33 @@ private:
 				case '8':
 				case '9': lex_number(offset); break;
 
-				case '.':  lex_dot(offset); break;
-				case ':':  stream_.add_token(lex_colon(), offset); break;
-				case ',':  stream_.add_token(TokenKind::Comma, offset); break;
-				case ';':  stream_.add_token(TokenKind::Semicolon, offset); break;
-				case '{':  stream_.add_token(TokenKind::LBrace, offset); break;
-				case '}':  stream_.add_token(TokenKind::RBrace, offset); break;
 				case '(':  stream_.add_token(TokenKind::LParen, offset); break;
 				case ')':  stream_.add_token(TokenKind::RParen, offset); break;
 				case '[':  stream_.add_token(TokenKind::LBracket, offset); break;
 				case ']':  stream_.add_token(TokenKind::RBracket, offset); break;
-				case '<':  stream_.add_token(lex_left_angle(), offset); break;
-				case '>':  lex_right_angle(offset); break;
-				case '=':  stream_.add_token(lex_equal(), offset); break;
+				case '{':  stream_.add_token(TokenKind::LBrace, offset); break;
+				case '}':  stream_.add_token(TokenKind::RBrace, offset); break;
+				case ',':  stream_.add_token(TokenKind::Comma, offset); break;
+				case ';':  stream_.add_token(TokenKind::Semicolon, offset); break;
+				case '^':  stream_.add_token(TokenKind::Caret, offset); break;
+				case '?':  stream_.add_token(TokenKind::Quest, offset); break;
+				case '@':  stream_.add_token(TokenKind::At, offset); break;
+				case '#':  stream_.add_token(TokenKind::Hash, offset); break;
+				case '$':  stream_.add_token(TokenKind::Dollar, offset); break;
 				case '+':  stream_.add_token(lex_plus(), offset); break;
 				case '-':  stream_.add_token(lex_minus(), offset); break;
 				case '*':  stream_.add_token(lex_star(), offset); break;
 				case '/':  stream_.add_token(lex_slash(offset), offset); break;
 				case '%':  stream_.add_token(lex_percent(), offset); break;
-				case '!':  stream_.add_token(lex_bang(), offset); break;
 				case '&':  stream_.add_token(lex_ampersand(), offset); break;
 				case '|':  stream_.add_token(lex_pipe(), offset); break;
 				case '~':  stream_.add_token(lex_tilde(), offset); break;
-				case '^':  stream_.add_token(TokenKind::Caret, offset); break;
-				case '?':  stream_.add_token(TokenKind::Quest, offset); break;
-				case '@':  stream_.add_token(TokenKind::At, offset); break;
-				case '$':  stream_.add_token(TokenKind::Dollar, offset); break;
-				case '#':  stream_.add_token(TokenKind::Hash, offset); break;
+				case '!':  stream_.add_token(lex_bang(), offset); break;
+				case ':':  stream_.add_token(lex_colon(), offset); break;
+				case '=':  stream_.add_token(lex_equal(), offset); break;
+				case '<':  stream_.add_token(lex_left_angle(), offset); break;
+				case '>':  lex_right_angle(offset); break;
+				case '.':  lex_dot(offset); break;
 				case '"':  lex_quoted_sequence(TokenKind::StringLiteral, offset, '"'); break;
 				case '\'': lex_quoted_sequence(TokenKind::CharLiteral, offset, '\''); break;
 				default:   lex_unicode_name(character, offset); break;
@@ -490,9 +447,10 @@ private:
 		stream_.add_token(TokenKind::Name, offset);
 	}
 
-	void report(Message message, SourceOffset offset, MessageArgs args) const {
+	void report(Message message, SourceOffset offset, MessageArgs args) {
 		auto location = source_.locate(offset);
 		reporter_.report(message, location, std::move(args));
+		stream_.has_errors_ = true;
 	}
 
 	static TokenKind identify_keyword(std::string_view lexeme) {

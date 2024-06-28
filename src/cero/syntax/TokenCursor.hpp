@@ -45,7 +45,7 @@ public:
 
 	/// Returns a string view of the lexeme and advances if the current token kind is an identifier token, skipping comments,
 	/// otherwise returns an empty string.
-	std::string_view match_identifier(const SourceGuard& source) {
+	std::string_view match_name(const SourceGuard& source) {
 		if (peek_kind() == TokenKind::Name) {
 			auto identifier = get_lexeme(source);
 			advance();

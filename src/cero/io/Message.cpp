@@ -34,13 +34,15 @@ std::string_view get_message_format(Message message) {
 		case ExpectNameAfterDeclarationType: return "expected a name after type in declaration, but found {}";
 		case ExpectExpr:					 return "expected expression, but found {}";
 		case ExpectSemicolon:				 return "expected a `;`, but found {}";
+		case UnnecessarySemicolon:			 return "unnecessary semicolon";
 		case NameCannotAppearHere:			 return "name cannot appear here";
 		case ExpectNameAfterDot:			 return "expected a member name after `.`, but found {}";
-		case ExpectColonInIfExpr:			 return "expected `:` after `if` condition, but found {}";
-		case ExpectColonOrBlock:			 return "expected `:` or `{{` before control flow statement, but found {}";
+		case ExpectColonOrBlockInIfExpr:	 return "expected `:`or block after `if` condition, but found {}";
+		case ExpectBlockAfterIfCond:		 return "expected block after `if` condition, but found {}";
+		case ExpectBlockAfterElse:			 return "expected block after `else`, but found {}";
 		case UnnecessaryColonBeforeBlock:	 return "`:` is unnecessary before a block";
-		case UnnecessarySemicolon:			 return "unnecessary semicolon";
 		case ExpectElse:					 return "expected `else` after `if` expression, but found {}";
+		case ExpectBlockAfterWhileCond:		 return "expected block after `while` condition, but found {}";
 		case ExpectClosingParen:			 return "expected closing `)`, but found {}";
 		case ExpectBracketAfterIndex:		 return "expected `]` after index expression, but found {}";
 		case ExpectBracketAfterArrayBound:	 return "expected `]` after array bound, but found {}";

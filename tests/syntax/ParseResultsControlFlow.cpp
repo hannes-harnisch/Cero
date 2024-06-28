@@ -24,6 +24,7 @@ fibonacci(var uint32 n) -> uint32 {
 
 	ExhaustiveReporter r;
 	auto ast = cero::parse(source, r);
+	CHECK(!ast.has_errors());
 
 	AstCompare c(ast);
 	c.root();
@@ -82,6 +83,7 @@ public divChecked(int32 a, int32 b) -> Opt<int32> {
 
 	ExhaustiveReporter r;
 	auto ast = cero::parse(source, r);
+	CHECK(!ast.has_errors());
 
 	AstCompare c(ast);
 	c.root();
@@ -113,8 +115,6 @@ public divChecked(int32 a, int32 b) -> Opt<int32> {
 			});
 		});
 	});
-
-	fmt::println("{}", ast.to_string(source));
 
 	c.compare();
 }

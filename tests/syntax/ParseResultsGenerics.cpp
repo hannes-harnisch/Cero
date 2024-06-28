@@ -35,6 +35,7 @@ f() -> List<List<List<int32>>> {
 
 	ExhaustiveReporter r;
 	auto ast = cero::parse(source, r);
+	CHECK(!ast.has_errors());
 
 	AstCompare c(ast);
 	c.root();
@@ -131,6 +132,7 @@ oof(int32 a, int32 b) -> bool {
 
 	ExhaustiveReporter r;
 	auto ast = cero::parse(source, r);
+	CHECK(!ast.has_errors());
 
 	AstCompare c(ast);
 	c.root();
@@ -172,6 +174,7 @@ ouch(float32 e) -> float64 {
 
 	ExhaustiveReporter r;
 	auto ast = cero::parse(source, r);
+	CHECK(!ast.has_errors());
 
 	AstCompare c(ast);
 	c.root();
@@ -208,6 +211,7 @@ ouch(float32 e) -> float64 {
 
 	ExhaustiveReporter r;
 	auto ast = cero::parse(source, r);
+	CHECK(!ast.has_errors());
 
 	AstCompare c(ast);
 	c.root();
@@ -249,6 +253,7 @@ meow() -> A<(D >> E)> {
 
 	ExhaustiveReporter r;
 	auto ast = cero::parse(source, r);
+	CHECK(!ast.has_errors());
 
 	AstCompare c(ast);
 	c.root();
@@ -300,6 +305,7 @@ moo(List<int32> _a,
 
 	ExhaustiveReporter r;
 	auto ast = cero::parse(source, r);
+	CHECK(!ast.has_errors());
 
 	AstCompare c(ast);
 	c.root();
@@ -379,6 +385,7 @@ bark() {
 
 	ExhaustiveReporter r;
 	auto ast = cero::parse(source, r);
+	CHECK(!ast.has_errors());
 
 	AstCompare c(ast);
 	c.root();

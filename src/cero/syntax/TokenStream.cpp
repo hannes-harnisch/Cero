@@ -40,8 +40,7 @@ std::string TokenStream::to_string(const SourceGuard& source) const {
 	return str;
 }
 
-TokenStream::TokenStream(const SourceGuard& source) :
-	has_errors_(false) {
+TokenStream::TokenStream(const SourceGuard& source) {
 	// TODO: find the most common ratio between source length and token count and then reserve based on that
 	stream_.reserve(source.get_length());
 }

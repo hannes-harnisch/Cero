@@ -14,6 +14,7 @@ main() {
 
 	ExhaustiveReporter r;
 	auto ast = cero::parse(source, r);
+	CHECK(!ast.has_errors());
 
 	AstCompare c(ast);
 	c.root();

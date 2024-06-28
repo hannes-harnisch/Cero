@@ -71,7 +71,7 @@ public:
 	}
 
 	Ast parse() && {
-		auto& root = ast_.store<AstRoot>();
+		auto root_idx = ast_.store(AstRoot {});
 
 		uint16_t num_definitions = 0;
 		while (!cursor_.match(TokenKind::EndOfFile)) {
@@ -83,7 +83,9 @@ public:
 			}
 		}
 
-		root = AstRoot(AstNodeHeader<AstNodeKind::Root>(0), num_definitions);
+		auto& root = ast_.get(root_idx).as<AstRoot>();
+		root.num_definitions = num_definitions;
+
 		return std::move(ast_);
 	}
 
@@ -96,17 +98,6 @@ private:
 	bool is_binding_allowed_ = true;
 	uint32_t open_angles_ = 0;
 
-	/// Parse method for grammar rules determined by the kind of their first token, like prefix operators
-	using HeadParseMethod = Ast::NodeIndex (Parser::*)();
-
-	/// Parse method for grammar rules determined by the kind of token appearing after another expression, like infix operators
-	using TailParseMethod = void (Parser::*)(Ast::NodeIndex head_begin, SourceOffset offset);
-
-	struct TailParseRule {
-		Precedence precedence = {};
-		TailParseMethod method = nullptr;
-	};
-
 	void parse_definition() {
 		auto offset = cursor_.peek_offset();
 
@@ -117,7 +108,7 @@ private:
 			access_specifier = AccessSpecifier::Public;
 		}
 
-		auto name = cursor_.match_identifier(source_);
+		auto name = cursor_.match_name(source_);
 		if (!name.empty()) {
 			parse_function(offset, access_specifier, name);
 		} else if (cursor_.match(TokenKind::Struct)) {
@@ -142,23 +133,25 @@ private:
 	}
 
 	void parse_struct(SourceOffset offset, AccessSpecifier access_specifier) {
-		auto& struct_def = ast_.store<AstStructDefinition>();
-
 		auto name = expect_name(Message::ExpectNameForStruct);
+		auto node_idx = ast_.store(AstStructDefinition {offset, access_specifier, name});
 
-		struct_def = AstStructDefinition {offset, access_specifier, name};
+		auto& struct_def = ast_.get(node_idx).as<AstStructDefinition>();
+		std::ignore = struct_def;
+		to_do();
 	}
 
 	void parse_enum(SourceOffset offset, AccessSpecifier access_specifier) {
-		auto& enum_def = ast_.store<AstEnumDefinition>();
-
 		auto name = expect_name(Message::ExpectNameForEnum);
+		auto node_idx = ast_.store(AstEnumDefinition {offset, access_specifier, name});
 
-		enum_def = AstEnumDefinition {offset, access_specifier, name};
+		auto& enum_def = ast_.get(node_idx).as<AstEnumDefinition>();
+		std::ignore = enum_def;
+		to_do();
 	}
 
 	void parse_function(SourceOffset offset, AccessSpecifier access_specifier, StringId name) {
-		auto& func_def = ast_.store<AstFunctionDefinition>();
+		auto node_idx = ast_.store(AstFunctionDefinition {offset, access_specifier, name});
 
 		expect(TokenKind::LParen, Message::ExpectParenAfterFuncName);
 
@@ -167,7 +160,11 @@ private:
 		expect(TokenKind::LBrace, Message::ExpectBraceBeforeFuncBody);
 
 		auto num_statements = parse_block();
-		func_def = AstFunctionDefinition {offset, access_specifier, name, num_parameters, num_outputs, num_statements};
+
+		auto& func_def = ast_.get(node_idx).as<AstFunctionDefinition>();
+		func_def.num_parameters = num_parameters;
+		func_def.num_outputs = num_outputs;
+		func_def.num_statements = num_statements;
 	}
 
 	uint16_t parse_function_definition_parameters() {
@@ -183,8 +180,6 @@ private:
 	}
 
 	void parse_function_definition_parameter() {
-		auto& parameter = ast_.store<AstFunctionParameter>();
-
 		auto offset = cursor_.peek_offset();
 
 		auto specifier = ParameterSpecifier::None;
@@ -194,19 +189,24 @@ private:
 			specifier = ParameterSpecifier::Var;
 		}
 
+		auto node_idx = ast_.store(AstFunctionParameter {offset, specifier});
+
 		parse_type();
 		auto name = expect_name(Message::ExpectParamName);
-		if (name.empty()) {
-			throw ParseError(); // TODO: test if this is really necessary
-		}
 
-		bool has_default_argument = false;
-		if (cursor_.match(TokenKind::Eq)) {
+		bool has_default_argument = cursor_.match(TokenKind::Eq);
+		if (has_default_argument) {
 			parse_subexpression();
-			has_default_argument = true;
 		}
 
-		parameter = AstFunctionParameter(offset, specifier, name, has_default_argument);
+		auto& parameter = ast_.get(node_idx).as<AstFunctionParameter>();
+		parameter.name = name;
+		parameter.has_default_argument = has_default_argument;
+
+		// abort parsing here and start next definition so we don't accumulate errors in a malformed signature
+		if (name.empty()) {
+			throw ParseError();
+		}
 	}
 
 	uint16_t parse_function_definition_outputs() {
@@ -221,13 +221,14 @@ private:
 	}
 
 	void parse_function_definition_output() {
-		auto& output = ast_.store<AstFunctionOutput>();
 		auto offset = cursor_.peek_offset();
+		auto node_idx = ast_.store(AstFunctionOutput {offset});
 
 		parse_type();
-		auto name = cursor_.match_identifier(source_);
+		auto name = cursor_.match_name(source_);
 
-		output = AstFunctionOutput(offset, name);
+		auto& output = ast_.get(node_idx).as<AstFunctionOutput>();
+		output.name = name;
 	}
 
 	uint32_t parse_block() {
@@ -267,15 +268,14 @@ private:
 	}
 
 	void parse_statement() {
-		bool parses_complete_stmt = false;
-		auto parse_method = lookup_statement_parse_method(parses_complete_stmt);
+		auto [parse_method, parses_full_stmt] = lookup_statement_parse_method();
 
 		auto offset = cursor_.peek_offset();
 		auto prev_expr = (this->*parse_method)();
 
-		if (!parses_complete_stmt) {
+		if (!parses_full_stmt) {
 			auto name_offset = cursor_.peek_offset();
-			auto name = cursor_.match_identifier(source_);
+			auto name = cursor_.match_name(source_);
 			if (!name.empty()) {
 				on_trailing_name(offset, prev_expr, name, name_offset);
 			}
@@ -283,24 +283,40 @@ private:
 		}
 	}
 
-	HeadParseMethod lookup_statement_parse_method(bool& parses_complete_stmt) {
+	/// Parse method for grammar rules determined by the kind of their first token, like prefix operators
+	using HeadParseMethod = Ast::NodeIndex (Parser::*)();
+
+	/// Parse method for grammar rules determined by the kind of token appearing after another expression, like infix operators
+	using TailParseMethod = void (Parser::*)(Ast::NodeIndex head_begin, SourceOffset offset);
+
+	struct TailParseRule {
+		Precedence precedence = {};
+		TailParseMethod method = nullptr;
+	};
+
+	struct StatementParseMethod {
+		HeadParseMethod parse_method = nullptr;
+		bool parses_full_stmt = false;
+	};
+
+	StatementParseMethod lookup_statement_parse_method() {
 		auto next = cursor_.peek_kind();
 		switch (next) {
 			using enum TokenKind;
-			case If:	 parses_complete_stmt = true; return &Parser::on_if_stmt;
-			case For:	 parses_complete_stmt = true; return &Parser::on_for;
-			case While:	 parses_complete_stmt = true; return &Parser::on_while;
-			case LBrace: parses_complete_stmt = true; return &Parser::on_left_brace;
-			case Let:	 return &Parser::on_let;
-			case Var:	 return &Parser::on_var;
-			case Const:	 return &Parser::on_const;
-			case Static: return &Parser::on_static;
-			default:	 return &Parser::parse_expression_or_binding;
+			case If:	 return {&Parser::on_if_stmt, true};
+			case For:	 return {&Parser::on_for, true};
+			case While:	 return {&Parser::on_while, true};
+			case LBrace: return {&Parser::on_left_brace, true};
+			case Let:	 return {&Parser::on_let};
+			case Var:	 return {&Parser::on_var};
+			case Const:	 return {&Parser::on_const};
+			case Static: return {&Parser::on_static};
+			default:	 return {&Parser::parse_expression_or_binding};
 		}
 	}
 
 	void on_trailing_name(SourceOffset offset, Ast::NodeIndex prev_expr, StringId name, SourceOffset name_offset) {
-		auto kind = nodes_[prev_expr].get_kind();
+		auto kind = ast_.get(prev_expr).get_kind();
 
 		static constexpr AstNodeKind type_expr_kinds[] {AstNodeKind::NameExpr,		  AstNodeKind::GenericNameExpr,
 														AstNodeKind::MemberExpr,	  AstNodeKind::ArrayTypeExpr,
@@ -311,13 +327,15 @@ private:
 			throw ParseError();
 		}
 
-		bool has_initializer = false;
-		if (cursor_.match(TokenKind::Eq)) {
+		auto node_idx = ast_.store_parent_of(prev_expr, AstBindingStatement {offset, BindingSpecifier::Let, true, name});
+
+		bool has_initializer = cursor_.match(TokenKind::Eq);
+		if (has_initializer) {
 			parse_subexpression();
-			has_initializer = true;
 		}
 
-		ast_.insert_parent(prev_expr, AstBindingStatement {offset, BindingSpecifier::Let, true, name, has_initializer});
+		auto& binding_stmt = ast_.get(node_idx).as<AstBindingStatement>();
+		binding_stmt.has_initializer = has_initializer;
 	}
 
 	Ast::NodeIndex parse_expression_or_binding() {
@@ -360,6 +378,7 @@ private:
 			case FloatLiteral:	return &Parser::on_numeric_literal<evaluate_float_literal, NumericLiteralKind::Float>;
 			case CharLiteral:	return &Parser::on_numeric_literal<evaluate_char_literal, NumericLiteralKind::Character>;
 			case StringLiteral: return &Parser::on_string_literal;
+			case LBrace:		return &Parser::on_left_brace;
 			case LParen:		return &Parser::on_prefix_left_paren;
 			case LBracket:		return &Parser::on_prefix_left_bracket;
 			case Break:			return &Parser::on_break;
@@ -383,6 +402,7 @@ private:
 		switch (token.kind) {
 			using enum TokenKind;
 			using enum Precedence;
+			default:			 rule = {Statement, nullptr}; break;
 			case Eq:			 rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::Assign>}; break;
 			case PlusEq:		 rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::AddAssign>}; break;
 			case MinusEq:		 rule = {Assignment, &Parser::on_binary_operator<BinaryOperator::SubAssign>}; break;
@@ -421,20 +441,19 @@ private:
 			case LParen:		 rule = {Postfix, &Parser::on_infix_left_paren}; break;
 			case LBracket:		 rule = {Postfix, &Parser::on_infix_left_bracket}; break;
 			case RAngle:
-				// check for unclosed angle brackets so the last one gets closed instead of parsing a greater-than expression
+				// check for unclosed angle brackets so the last one gets closed instead of parsing a greater-than
+				// expression
 				if (open_angles_ > 0) {
 					return nullptr;
 				} else {
 					auto next = cursor_.peek_ahead();
 					if (next.kind == TokenKind::RAngle && next.offset == token.offset + 1) {
-						rule = {Precedence::AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::Shr>};
+						rule = {AdditiveOrBitwise, &Parser::on_binary_operator<BinaryOperator::Shr>};
 					} else {
-						rule = {Precedence::Comparison, &Parser::on_binary_operator<BinaryOperator::Greater>};
+						rule = {Comparison, &Parser::on_binary_operator<BinaryOperator::Greater>};
 					}
 				}
 				break;
-
-			default: rule = {}; break;
 		}
 
 		if (current_precedence < rule.precedence) {
@@ -446,44 +465,60 @@ private:
 
 	Ast::NodeIndex on_if_stmt() {
 		auto token = cursor_.next();
+		auto node_idx = ast_.store(AstIfExpr {token.offset});
 
-		auto if_stmt_begin = parse_expression_or_binding();
-		expect_colon_or_block();
-		parse_statement();
+		parse_expression_or_binding();
+		expect(TokenKind::LBrace, Message::ExpectBlockAfterIfCond);
+		const auto num_then_stmts = parse_block();
 
-		bool has_else = false;
+		uint32_t num_else_stmts = 0;
 		if (cursor_.match(TokenKind::Else)) {
-			parse_statement();
-			has_else = true;
+			expect(TokenKind::LBrace, Message::ExpectBlockAfterElse);
+			num_else_stmts = parse_block();
 		}
 
-		ast_.insert_parent(if_stmt_begin, AstIfExpr {token.offset, has_else});
-		return if_stmt_begin;
+		auto& if_expr = ast_.get(node_idx).as<AstIfExpr>();
+		if_expr.num_then_statements = num_then_stmts;
+		if_expr.num_else_statements = num_else_stmts;
+
+		return node_idx;
 	}
 
 	Ast::NodeIndex on_if_expr() {
 		auto token = cursor_.next();
+		auto node_idx = ast_.store(AstIfExpr {token.offset, 1, 1});
 
-		auto if_expr_begin = parse_expression_or_binding();
-		expect(TokenKind::Colon, Message::ExpectColonInIfExpr);
+		parse_expression_or_binding();
+
+		if (auto colon = cursor_.match_token(TokenKind::Colon)) {
+			if (cursor_.peek_kind() == TokenKind::LBrace) {
+				report(Message::UnnecessaryColonBeforeBlock, colon->locate_in(source_), {});
+			}
+		} else {
+			if (cursor_.peek_kind() != TokenKind::LBrace) {
+				report_expectation(Message::ExpectColonOrBlockInIfExpr);
+			}
+		}
 		parse_subexpression();
+
 		expect(TokenKind::Else, Message::ExpectElse);
 		parse_subexpression();
 
-		ast_.insert_parent(if_expr_begin, AstIfExpr {token.offset, true});
-		return if_expr_begin;
+		return node_idx;
 	}
 
 	Ast::NodeIndex on_while() {
 		auto token = cursor_.next();
+		auto node_idx = ast_.store(AstWhileLoop {token.offset});
 
-		auto while_begin = parse_expression_or_binding();
-		expect_colon_or_block();
-		cursor_.advance(); // TODO: cleanup depending on whether blocks are required here
+		parse_expression_or_binding();
+		expect(TokenKind::LBrace, Message::ExpectBlockAfterWhileCond);
 		auto num_statements = parse_block();
 
-		ast_.insert_parent(while_begin, AstWhileLoop {token.offset, num_statements});
-		return while_begin;
+		auto& while_loop = ast_.get(node_idx).as<AstWhileLoop>();
+		while_loop.num_statements = num_statements;
+
+		return node_idx;
 	}
 
 	Ast::NodeIndex on_for() {
@@ -494,44 +529,30 @@ private:
 
 	Ast::NodeIndex on_left_brace() {
 		auto token = cursor_.next();
+		auto node_idx = ast_.store(AstBlockStatement {token.offset});
 
-		auto block_stmt_begin = ast_.next_index();
 		auto num_statements = parse_block();
-		ast_.insert_parent(block_stmt_begin, AstBlockStatement {token.offset, num_statements});
-		return block_stmt_begin;
-	}
 
-	/// True if colon is matched.
-	bool expect_colon_or_block() {
-		if (auto colon = cursor_.match_token(TokenKind::Colon)) {
-			auto next = cursor_.peek();
-			if (next.kind == TokenKind::LBrace) {
-				report(Message::UnnecessaryColonBeforeBlock, colon->locate_in(source_), {});
-			}
-			return true;
-		} else {
-			auto next = cursor_.peek();
-			if (next.kind != TokenKind::LBrace) {
-				report_expectation(Message::ExpectColonOrBlock);
-			}
-			return false;
-		}
+		auto& block = ast_.get(node_idx).as<AstBlockStatement>();
+		block.num_statements = num_statements;
+
+		return node_idx;
 	}
 
 	Ast::NodeIndex on_let() {
 		auto token = cursor_.next();
-
-		auto let_stmt_begin = ast_.next_index();
 		auto name = expect_name(Message::ExpectNameAfterLet);
+		auto node_idx = ast_.store(AstBindingStatement {token.offset, BindingSpecifier::Let, false, name});
 
-		bool has_initializer = false;
-		if (cursor_.match(TokenKind::Eq)) {
-			let_stmt_begin = parse_subexpression();
-			has_initializer = true;
+		bool has_initializer = cursor_.match(TokenKind::Eq);
+		if (has_initializer) {
+			parse_subexpression();
 		}
-		ast_.insert_parent(let_stmt_begin,
-						   AstBindingStatement {token.offset, BindingSpecifier::Let, false, name, has_initializer});
-		return let_stmt_begin;
+
+		auto& let_stmt = ast_.get(node_idx).as<AstBindingStatement>();
+		let_stmt.has_initializer = has_initializer;
+
+		return node_idx;
 	}
 
 	Ast::NodeIndex on_var() {
@@ -558,30 +579,37 @@ private:
 	}
 
 	Ast::NodeIndex parse_binding(SourceOffset offset, BindingSpecifier specifier) {
+		auto node_idx = ast_.store(AstBindingStatement {offset, specifier});
+
+		bool has_type;
+		bool has_initializer;
+
 		auto lookahead = cursor_;
-		auto name = lookahead.match_identifier(source_);
-		if (!name.empty()) {
-			if (lookahead.match(TokenKind::Eq)) {
-				cursor_ = lookahead;
+		auto name = lookahead.match_name(source_);
+		if (!name.empty() && lookahead.match(TokenKind::Eq)) {
+			cursor_ = lookahead;
 
-				auto binding_begin = parse_subexpression();
+			parse_subexpression();
 
-				ast_.insert_parent(binding_begin, AstBindingStatement {offset, specifier, false, name, true});
-				return binding_begin;
+			has_type = false;
+			has_initializer = true;
+		} else {
+			parse_type();
+			name = expect_name(Message::ExpectNameAfterDeclarationType);
+
+			has_type = true;
+			has_initializer = cursor_.match(TokenKind::Eq);
+			if (has_initializer) {
+				parse_subexpression();
 			}
 		}
 
-		auto binding_begin = parse_type();
-		name = expect_name(Message::ExpectNameAfterDeclarationType);
+		auto& binding = ast_.get(node_idx).as<AstBindingStatement>();
+		binding.has_type = has_type;
+		binding.has_initializer = has_initializer;
+		binding.name = name;
 
-		bool has_initializer = false;
-		if (cursor_.match(TokenKind::Eq)) {
-			parse_subexpression();
-			has_initializer = true;
-		}
-
-		ast_.insert_parent(binding_begin, AstBindingStatement {offset, specifier, true, name, has_initializer});
-		return binding_begin;
+		return node_idx;
 	}
 
 	Ast::NodeIndex on_name() {
@@ -591,87 +619,94 @@ private:
 	}
 
 	Ast::NodeIndex parse_name(SourceOffset offset, StringId name) {
-		auto saved_cursor = cursor_;
-		if (cursor_.match(TokenKind::LAngle)) {
-			return parse_generic_name(offset, name, saved_cursor);
+		if (cursor_.peek_kind() == TokenKind::LAngle) {
+			return parse_generic_name(offset, name);
 		}
 
-		auto name_begin = ast_.next_index();
-		nodes_.push_back(AstNameExpr {offset, name});
-		return name_begin;
+		return ast_.store(AstNameExpr {offset, name});
 	}
 
-	Ast::NodeIndex parse_generic_name(SourceOffset offset, StringId name, TokenCursor name_start) {
+	Ast::NodeIndex parse_generic_name(SourceOffset offset, StringId name) {
 		ScopedAssign _(open_angles_, open_angles_ + 1);
 
-		const auto name_begin = ast_.next_index();
-		uint16_t num_generic_args = 0;
+		auto before_lookahead = cursor_;
+		cursor_.advance(); // consume left angle bracket
+
+		bool is_generic = true;
 		if (!cursor_.match(TokenKind::RAngle)) {
-			const bool fall_back = should_fall_back_to_name();
+			const auto lookahead_idx = ast_.next_index();
+			is_generic = lookahead_whether_is_generic();
 
-			cursor_ = name_start;
-			rescind_lookahead(name_begin);
-			if (fall_back) {
-				nodes_.push_back(AstNameExpr {offset, name});
-				return name_begin;
-			}
+			cursor_ = before_lookahead;
+			ast_.undo_nodes_from_lookahead(lookahead_idx);
+		}
 
-			cursor_.advance();
+		if (is_generic) {
+			auto node_idx = ast_.store(AstGenericNameExpr {offset, name});
+
+			cursor_.advance(); // consume left angle bracket
+
+			uint16_t num_generic_args = 0;
 			do {
 				parse_subexpression();
 				++num_generic_args;
 			} while (cursor_.match(TokenKind::Comma));
-			cursor_.advance();
-		}
 
-		ast_.insert_parent(name_begin, AstGenericNameExpr {offset, name, num_generic_args});
-		return name_begin;
+			cursor_.advance(); // consume right angle bracket
+
+			auto& generic_name_expr = ast_.get(node_idx).as<AstGenericNameExpr>();
+			generic_name_expr.num_generic_args = num_generic_args;
+
+			return node_idx;
+		} else {
+			return ast_.store(AstNameExpr {offset, name});
+		}
 	}
 
-	bool should_fall_back_to_name() {
+	bool lookahead_whether_is_generic() {
 		ScopedAssign _(is_looking_ahead_, true);
 
 		do {
 			parse_subexpression();
 		} while (cursor_.match(TokenKind::Comma));
 
-		static constexpr TokenKind fallbacks[] {TokenKind::DecIntLiteral, TokenKind::HexIntLiteral, TokenKind::BinIntLiteral,
-												TokenKind::OctIntLiteral, TokenKind::FloatLiteral,	TokenKind::CharLiteral,
-												TokenKind::StringLiteral, TokenKind::Minus,			TokenKind::Tilde,
-												TokenKind::Amp,			  TokenKind::PlusPlus,		TokenKind::MinusMinus};
 		if (cursor_.match(TokenKind::RAngle)) {
+			static constexpr TokenKind fallbacks[] {TokenKind::DecIntLiteral, TokenKind::HexIntLiteral,
+													TokenKind::BinIntLiteral, TokenKind::OctIntLiteral,
+													TokenKind::FloatLiteral,  TokenKind::CharLiteral,
+													TokenKind::StringLiteral, TokenKind::Minus,
+													TokenKind::Tilde,		  TokenKind::Amp,
+													TokenKind::PlusPlus,	  TokenKind::MinusMinus};
+
 			auto kind = cursor_.peek_kind();
-			return (kind == TokenKind::Name && !is_binding_allowed_) || contains(fallbacks, kind)
-				   || (open_angles_ == 1 && kind == TokenKind::RAngle);
+			return (is_binding_allowed_ || kind != TokenKind::Name) && !contains(fallbacks, kind)
+				   && (kind != TokenKind::RAngle || open_angles_ != 1);
+		} else {
+			return false;
 		}
-		return true;
 	}
 
 	template<void LiteralParseFn(std::string_view), NumericLiteralKind Kind>
 	Ast::NodeIndex on_numeric_literal() {
 		auto lexeme = cursor_.get_lexeme(source_);
 		auto token = cursor_.next();
-		LiteralParseFn(lexeme);
+		LiteralParseFn(lexeme); // TODO
 
-		auto literal_begin = ast_.next_index();
-		nodes_.push_back(AstNumericLiteralExpr {token.offset, Kind});
-		return literal_begin;
+		return ast_.store(AstNumericLiteralExpr {token.offset, Kind});
 	}
 
 	Ast::NodeIndex on_string_literal() {
 		auto lexeme = cursor_.get_lexeme(source_);
 		auto token = cursor_.next();
 
-		auto literal_begin = ast_.next_index();
-		nodes_.push_back(AstStringLiteralExpr {token.offset, evaluate_string_literal(lexeme)});
-		return literal_begin;
+		return ast_.store(AstStringLiteralExpr {token.offset, evaluate_string_literal(lexeme)});
 	}
 
 	Ast::NodeIndex on_prefix_left_paren() { // TODO: function type
 		ScopedAssign _(open_angles_, 0);
 
 		auto token = cursor_.next();
-		auto group_begin = ast_.next_index();
+		auto node_idx = ast_.store(AstGroupExpr {token.offset});
 
 		uint16_t num_args = 0;
 		if (!cursor_.match(TokenKind::RParen)) {
@@ -682,8 +717,10 @@ private:
 			expect(TokenKind::RParen, Message::ExpectClosingParen);
 		}
 
-		ast_.insert_parent(group_begin, AstGroupExpr {token.offset, num_args});
-		return group_begin;
+		auto& group_expr = ast_.get(node_idx).as<AstGroupExpr>();
+		group_expr.num_args = num_args;
+
+		return node_idx;
 	}
 
 	Ast::NodeIndex on_prefix_left_bracket() {
@@ -708,26 +745,32 @@ private:
 
 	Ast::NodeIndex on_break() {
 		auto token = cursor_.next();
+		auto node_idx = ast_.store(AstBreakExpr {token.offset});
 
-		bool has_expression = false;
-		auto break_begin = parse_optional_subexpression(has_expression);
-		ast_.insert_parent(break_begin, AstBreakExpr {token.offset, has_expression});
-		return break_begin;
+		bool has_expression = parse_optional_subexpression();
+
+		auto& break_expr = ast_.get(node_idx).as<AstBreakExpr>();
+		break_expr.has_label = has_expression;
+
+		return node_idx;
 	}
 
 	Ast::NodeIndex on_continue() {
 		auto token = cursor_.next();
+		auto node_idx = ast_.store(AstContinueExpr {token.offset});
 
-		bool has_expression = false;
-		auto continue_begin = parse_optional_subexpression(has_expression);
-		ast_.insert_parent(continue_begin, AstContinueExpr {token.offset, has_expression});
-		return continue_begin;
+		bool has_expression = parse_optional_subexpression();
+
+		auto& continue_expr = ast_.get(node_idx).as<AstContinueExpr>();
+		continue_expr.has_label = has_expression;
+
+		return node_idx;
 	}
 
 	Ast::NodeIndex on_return() {
 		auto token = cursor_.next();
+		auto node_idx = ast_.store(AstReturnExpr {token.offset});
 
-		auto return_begin = ast_.next_index();
 		uint16_t num_expressions = 0;
 		if (expression_may_follow()) {
 			do {
@@ -736,25 +779,30 @@ private:
 			} while (cursor_.match(TokenKind::Comma));
 		}
 
-		ast_.insert_parent(return_begin, AstReturnExpr {token.offset, num_expressions});
-		return return_begin;
+		auto& return_expr = ast_.get(node_idx).as<AstReturnExpr>();
+		return_expr.num_expressions = num_expressions;
+
+		return node_idx;
 	}
 
 	Ast::NodeIndex on_throw() {
 		auto token = cursor_.next();
+		auto node_idx = ast_.store(AstThrowExpr {token.offset});
 
-		bool has_expression = false;
-		auto throw_begin = parse_optional_subexpression(has_expression);
-		ast_.insert_parent(throw_begin, AstThrowExpr {token.offset, has_expression});
-		return throw_begin;
+		bool has_expression = parse_optional_subexpression();
+
+		auto& throw_expr = ast_.get(node_idx).as<AstThrowExpr>();
+		throw_expr.has_expression = has_expression;
+
+		return node_idx;
 	}
 
-	Ast::NodeIndex parse_optional_subexpression(bool& has_expression) {
+	bool parse_optional_subexpression() {
 		if (expression_may_follow()) {
-			has_expression = true;
-			return parse_subexpression();
+			parse_subexpression();
+			return true;
 		} else {
-			return ast_.next_index();
+			return false;
 		}
 	}
 
@@ -766,11 +814,11 @@ private:
 	template<UnaryOperator O>
 	Ast::NodeIndex on_prefix_operator() {
 		auto token = cursor_.next();
+		auto node_idx = ast_.store(AstUnaryExpr {token.offset, O});
 
-		auto expr_begin = parse_subexpression(Precedence::Prefix);
+		parse_subexpression(Precedence::Prefix);
 
-		ast_.insert_parent(expr_begin, AstUnaryExpr {token.offset, O});
-		return expr_begin;
+		return node_idx;
 	}
 
 	template<BinaryOperator O>
@@ -779,32 +827,27 @@ private:
 
 		auto operator_token = cursor_.next();
 		if constexpr (O == BinaryOperator::Shr) {
-			cursor_.advance();
+			cursor_.advance(); // consume second right angle bracket since `>>` is lexed as two tokens
 		}
 
+		if constexpr (O == BinaryOperator::Pow) {
+			check_negation_exponentiation_ambiguity(left, operator_token);
+		}
+
+		if (auto left_expr = ast_.get(left).get<AstBinaryExpr>()) {
+			check_binary_operator_ambiguity(left_expr->op, O, operator_token);
+		}
+
+		ast_.store_parent_of(left, AstBinaryExpr {offset, O});
 		auto right = parse_subexpression(precedence);
-		validate_associativity(O, left, right, operator_token);
 
-		ast_.insert_parent(left, AstBinaryExpr {offset, O});
-	}
-
-	void validate_associativity(BinaryOperator op, Ast::NodeIndex left_idx, Ast::NodeIndex right_idx, Token operator_token) {
-		auto& left_node = nodes_[left_idx];
-		auto& right_node = nodes_[right_idx];
-
-		if (auto right = right_node.get<AstBinaryExpr>()) {
-			validate_binary_associativity(op, right->op, operator_token);
-		}
-
-		if (auto left = left_node.get<AstBinaryExpr>()) {
-			validate_binary_associativity(left->op, op, operator_token);
-		} else if (auto unary = left_node.get<AstUnaryExpr>()) {
-			validate_unary_binary_associativity(unary->op, op, operator_token);
+		if (auto right_expr = ast_.get(right).get<AstBinaryExpr>()) {
+			check_binary_operator_ambiguity(O, right_expr->op, operator_token);
 		}
 	}
 
-	void validate_binary_associativity(BinaryOperator left, BinaryOperator right, Token operator_token) {
-		if (associates_ambiguous_operators(left, right)) {
+	void check_binary_operator_ambiguity(BinaryOperator left, BinaryOperator right, Token operator_token) {
+		if (operators_are_ambiguous(left, right)) {
 			auto location = operator_token.locate_in(source_);
 			auto left_str = binary_operator_to_string(left);
 			auto right_str = binary_operator_to_string(right);
@@ -812,7 +855,7 @@ private:
 		}
 	}
 
-	static bool associates_ambiguous_operators(BinaryOperator left, BinaryOperator right) {
+	static bool operators_are_ambiguous(BinaryOperator left, BinaryOperator right) {
 		using enum BinaryOperator;
 
 		static constexpr BinaryOperator bitwise_operators[] {BitAnd, BitOr, Xor, Shl, Shr};
@@ -858,10 +901,12 @@ private:
 		}
 	}
 
-	void validate_unary_binary_associativity(UnaryOperator left, BinaryOperator right, Token operator_token) {
-		if (left == UnaryOperator::Neg && right == BinaryOperator::Pow) {
-			auto location = operator_token.locate_in(source_);
-			report(Message::AmbiguousOperatorMixing, location, MessageArgs("-", "**"));
+	void check_negation_exponentiation_ambiguity(Ast::NodeIndex left, Token operator_token) {
+		if (auto unary = ast_.get(left).get<AstUnaryExpr>()) {
+			if (unary->op == UnaryOperator::Neg) {
+				auto location = operator_token.locate_in(source_);
+				report(Message::AmbiguousOperatorMixing, location, MessageArgs("-", "**"));
+			}
 		}
 	}
 
@@ -869,20 +914,22 @@ private:
 	void on_postfix_operator(Ast::NodeIndex left, SourceOffset offset) {
 		cursor_.advance();
 
-		ast_.insert_parent(left, AstUnaryExpr {offset, O});
+		ast_.store_parent_of(left, AstUnaryExpr {offset, O});
 	}
 
 	void on_dot(Ast::NodeIndex left, SourceOffset offset) {
 		cursor_.advance();
 
 		auto member = expect_name(Message::ExpectNameAfterDot);
-		ast_.insert_parent(left, AstMemberExpr {offset, member, 0});
+		ast_.store_parent_of(left, AstMemberExpr {offset, member, 0}); // TODO: generic members
 	}
 
 	void on_infix_left_paren(Ast::NodeIndex left, SourceOffset offset) {
 		ScopedAssign _(open_angles_, 0);
-
 		cursor_.advance();
+
+		auto node_idx = ast_.store_parent_of(left, AstCallExpr {offset});
+
 		uint16_t num_args = 0;
 		if (!cursor_.match(TokenKind::RParen)) {
 			do {
@@ -891,14 +938,20 @@ private:
 			} while (cursor_.match(TokenKind::Comma));
 			expect(TokenKind::RParen, Message::ExpectClosingParen);
 		}
-		ast_.insert_parent(left, AstCallExpr {offset, num_args});
+
+		auto& call_expr = ast_.get(node_idx).as<AstCallExpr>();
+		call_expr.num_args = num_args;
 	}
 
 	void on_infix_left_bracket(Ast::NodeIndex left, SourceOffset offset) {
 		cursor_.advance();
 
+		auto node_idx = ast_.store_parent_of(left, AstIndexExpr {offset});
+
 		auto num_args = parse_bracketed_arguments();
-		ast_.insert_parent(left, AstIndexExpr {offset, num_args});
+
+		auto& index_expr = ast_.get(node_idx).as<AstIndexExpr>();
+		index_expr.num_args = num_args;
 	}
 
 	Ast::NodeIndex on_caret() {
@@ -912,7 +965,7 @@ private:
 	}
 
 	Ast::NodeIndex parse_permission(SourceOffset offset) {
-		auto permission_begin = ast_.next_index();
+		auto node_idx = ast_.store(AstPermissionExpr {offset});
 
 		auto specifier = PermissionSpecifier::Var;
 		uint16_t num_args = 0;
@@ -934,8 +987,11 @@ private:
 			}
 		}
 
-		ast_.insert_parent(permission_begin, AstPermissionExpr {offset, specifier, num_args});
-		return permission_begin;
+		auto& permission_expr = ast_.get(node_idx).as<AstPermissionExpr>();
+		permission_expr.specifier = specifier;
+		permission_expr.num_args = num_args;
+
+		return node_idx;
 	}
 
 	Ast::NodeIndex parse_type() {
@@ -956,47 +1012,48 @@ private:
 	}
 
 	Ast::NodeIndex parse_array_type(SourceOffset offset) {
-		bool has_bound;
-		Ast::NodeIndex array_type_begin;
-		if (cursor_.match(TokenKind::RBracket)) {
-			has_bound = false;
-			array_type_begin = parse_type();
-		} else {
-			has_bound = true;
-			array_type_begin = parse_subexpression();
-			expect(TokenKind::RBracket, Message::ExpectBracketAfterArrayBound);
-			parse_type();
-		}
+		auto node_idx = ast_.store(AstArrayTypeExpr {offset});
 
-		ast_.insert_parent(array_type_begin, AstArrayTypeExpr {offset, has_bound});
-		return array_type_begin;
+		bool has_bound = !cursor_.match(TokenKind::RBracket);
+		if (has_bound) {
+			parse_subexpression();
+			expect(TokenKind::RBracket, Message::ExpectBracketAfterArrayBound);
+		}
+		parse_type();
+
+		auto& array_type_expr = ast_.get(node_idx).as<AstArrayTypeExpr>();
+		array_type_expr.has_bound = has_bound;
+
+		return node_idx;
 	}
 
 	Ast::NodeIndex parse_pointer_type(SourceOffset offset) {
-		bool has_permission;
-		Ast::NodeIndex ptr_type_begin;
-		if (cursor_.peek_kind() == TokenKind::Var) { // TODO: handle other ways to have subexpressions here
-			has_permission = true;
-			ptr_type_begin = parse_subexpression();
-			parse_type();
-		} else {
-			has_permission = false;
-			ptr_type_begin = parse_type();
-		}
+		auto node_idx = ast_.store(AstPointerTypeExpr {offset});
 
-		ast_.insert_parent(ptr_type_begin, AstPointerTypeExpr {offset, has_permission});
-		return ptr_type_begin;
+		bool has_permission = cursor_.peek_kind() == TokenKind::Var;
+		if (has_permission) { // TODO: handle other ways to have subexpressions here
+			parse_subexpression();
+		}
+		parse_type();
+
+		auto& ptr_type_expr = ast_.get(node_idx).as<AstPointerTypeExpr>();
+		ptr_type_expr.has_permission = has_permission;
+
+		return node_idx;
 	}
 
 	Ast::NodeIndex parse_function_type(SourceOffset offset) {
-		auto func_type_begin = ast_.next_index();
+		auto node_idx = ast_.store(AstFunctionTypeExpr {offset});
 
 		auto num_parameters = parse_function_type_parameters();
 		expect(TokenKind::ThinArrow, Message::ExpectArrowAfterFuncTypeParams);
 		auto num_outputs = parse_function_type_outputs();
 
-		ast_.insert_parent(func_type_begin, AstFunctionTypeExpr {offset, num_parameters, num_outputs});
-		return func_type_begin;
+		auto& func_type_expr = ast_.get(node_idx).as<AstFunctionTypeExpr>();
+		func_type_expr.num_parameters = num_parameters;
+		func_type_expr.num_outputs = num_outputs;
+
+		return node_idx;
 	}
 
 	uint16_t parse_function_type_parameters() {
@@ -1021,16 +1078,19 @@ private:
 			specifier = ParameterSpecifier::Var;
 		}
 
-		auto param_begin = parse_type();
-		auto name = cursor_.match_identifier(source_);
+		auto node_idx = ast_.store(AstFunctionParameter {offset, specifier, {}, false});
+
+		parse_type();
+		auto name = cursor_.match_name(source_);
+
+		auto& param = ast_.get(node_idx).as<AstFunctionParameter>();
+		param.name = name;
 
 		if (auto equal = cursor_.match_token(TokenKind::Eq)) {
 			auto location = equal->locate_in(source_);
 			report(Message::FuncTypeDefaultArgument, location, {});
 			throw ParseError();
 		}
-
-		ast_.insert_parent(param_begin, AstFunctionParameter {offset, specifier, name, false});
 	}
 
 	uint16_t parse_function_type_outputs() {
@@ -1046,16 +1106,13 @@ private:
 
 	void parse_function_type_output() {
 		auto offset = cursor_.peek_offset();
+		auto node_idx = ast_.store(AstFunctionOutput {offset});
 
-		auto output_begin = parse_type();
-		auto name = cursor_.match_identifier(source_);
+		parse_type();
+		auto name = cursor_.match_name(source_);
 
-		ast_.insert_parent(output_begin, AstFunctionOutput {offset, name});
-	}
-
-	void rescind_lookahead(Ast::NodeIndex node_index) {
-		auto first = nodes_.begin() + static_cast<ptrdiff_t>(node_index);
-		nodes_.erase(first, nodes_.end());
+		auto& output = ast_.get(node_idx).as<AstFunctionOutput>();
+		output.name = name;
 	}
 
 	void expect(TokenKind kind, Message message) {
@@ -1066,7 +1123,7 @@ private:
 	}
 
 	std::string_view expect_name(Message message) {
-		auto name = cursor_.match_identifier(source_);
+		auto name = cursor_.match_name(source_);
 		if (name.empty()) {
 			report_expectation(message);
 		}
@@ -1088,6 +1145,7 @@ private:
 	void report(Message message, CodeLocation location, MessageArgs args) {
 		if (!is_looking_ahead_) {
 			reporter_.report(message, location, std::move(args));
+			ast_.has_errors_ = true;
 		}
 	}
 };

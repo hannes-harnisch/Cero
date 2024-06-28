@@ -15,6 +15,7 @@ main() {
 
 	ExhaustiveReporter r;
 	auto ast = cero::parse(source, r);
+	CHECK(!ast.has_errors());
 
 	auto str = ast.to_string(source);
 	auto expected = R"_____(AST for AstStringForEmptyFunction (2 nodes)
@@ -36,6 +37,7 @@ a(int32 x, bool _a, bool _b = x) -> float32 {
 
 	ExhaustiveReporter r;
 	auto ast = cero::parse(source, r);
+	CHECK(!ast.has_errors());
 
 	auto str = ast.to_string(source);
 	auto expected = R"_____(AST for AstStringForSimpleFunctionWithParametersAndReturn (11 nodes)
@@ -70,6 +72,7 @@ b(int32 i, float64 f) {
 
 	ExhaustiveReporter r;
 	auto ast = cero::parse(source, r);
+	CHECK(!ast.has_errors());
 
 	auto str = ast.to_string(source);
 	auto expected = R"_____(AST for AstStringForCall (20 nodes)
@@ -121,6 +124,7 @@ fibonacci(var uint32 n) -> uint32 {
 
 	ExhaustiveReporter r;
 	auto ast = cero::parse(source, r);
+	CHECK(!ast.has_errors());
 
 	auto str = ast.to_string(source);
 	auto expected = R"_____(AST for AstStringForFibonacci (27 nodes)

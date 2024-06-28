@@ -200,7 +200,7 @@ f() {
 
 CERO_TEST(MissingColonInIfExpression) {
 	ExhaustiveReporter r;
-	r.expect(3, 18, cero::Message::ExpectColonInIfExpr, cero::MessageArgs("integer literal `0`"));
+	r.expect(3, 18, cero::Message::ExpectColonOrBlockInIfExpr, cero::MessageArgs("integer literal `0`"));
 
 	build_test_source(r, R"_____(
 f(bool b) -> int32 {
@@ -215,9 +215,9 @@ g(bool b) -> int32 {
 )_____");
 }
 
-CERO_TEST(MissingColonAfterIfStatementCondition) {
+CERO_TEST(ExpectBlockAfterIfCond) {
 	ExhaustiveReporter r;
-	r.expect(4, 9, cero::Message::ExpectColonOrBlock, cero::MessageArgs("`return`"));
+	r.expect(4, 9, cero::Message::ExpectBlockAfterIfCond, cero::MessageArgs("`return`"));
 
 	build_test_source(r, R"_____(
 f(bool b) -> int32 {
@@ -228,11 +228,18 @@ f(bool b) -> int32 {
 	print(b);
 	print(b);
 }
+)_____");
+}
 
+CERO_TEST(ExpectBlockAfterElse) {
+	ExhaustiveReporter r;
+	r.expect(6, 9, cero::Message::ExpectBlockAfterElse, cero::MessageArgs("`return`"));
+
+	build_test_source(r, R"_____(
 g(bool b) -> int32 {
-	if b:
+	if b {
 		return 4;
-	else
+	} else
 		return 5;
 }
 )_____");
@@ -240,14 +247,11 @@ g(bool b) -> int32 {
 
 CERO_TEST(UnnecessaryColonBeforeBlock) {
 	ExhaustiveReporter r;
-	r.expect(3, 9, cero::Message::UnnecessaryColonBeforeBlock, {});
+	r.expect(3, 16, cero::Message::UnnecessaryColonBeforeBlock, {}); // TODO: fix the example so it's semantically valid
 
 	build_test_source(r, R"_____(
 f(bool b) -> int32 {
-	if b: {
-		return 4;
-	}
-	return 5;
+	return if b: { h(); } else 5;
 }
 
 g(bool b) -> int32 {
@@ -255,6 +259,33 @@ g(bool b) -> int32 {
 		return 4;
 	}
 	return 5;
+}
+)_____");
+}
+
+CERO_TEST(ExpectElse) {
+	ExhaustiveReporter r;
+	r.expect(3, 19, cero::Message::ExpectElse, cero::MessageArgs("`;`"));
+
+	build_test_source(r, R"_____(
+f(bool b) -> int32 {
+	return if b: 5;
+}
+)_____");
+}
+
+CERO_TEST(ExpectBlockAfterWhileCond) {
+	ExhaustiveReporter r;
+	r.expect(5, 19, cero::Message::ExpectBlockAfterWhileCond, cero::MessageArgs("`:`"));
+
+	build_test_source(r, R"_____(
+foo(var uint32 n) -> uint32 {
+	var uint32 x = 0;
+
+	while n-- != 0:
+		x += n**2 + n;
+
+	return x;
 }
 )_____");
 }
@@ -350,8 +381,8 @@ a(^(int32) f) -> int32 {
 )_____");
 }
 
-CERO_TEST(FuncTypeDefaultArgument) // TODO: add check for this in expression context
-{
+// TODO: add check for this in expression context
+CERO_TEST(FuncTypeDefaultArgument) {
 	ExhaustiveReporter r;
 	r.expect(2, 13, cero::Message::FuncTypeDefaultArgument, {});
 
