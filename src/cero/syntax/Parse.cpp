@@ -421,7 +421,8 @@ private:
 			case LParen:		 rule = {Postfix, &Parser::on_infix_left_paren}; break;
 			case LBracket:		 rule = {Postfix, &Parser::on_infix_left_bracket}; break;
 			case RAngle:
-				// check for unclosed angle brackets so the last one gets closed instead of parsing a greater-than expression
+				// check for unclosed angle brackets so the last one gets closed instead of parsing a greater-than
+				// expression
 				if (open_angles_ > 0) {
 					return nullptr;
 				} else {
