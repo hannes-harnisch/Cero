@@ -4,16 +4,12 @@
 
 namespace cero {
 
-namespace {
-
-	[[noreturn]] void fail(std::source_location location) {
-		CERO_DEBUG_BREAK();
-		fmt::println("\tFile:     {}", location.file_name());
-		fmt::println("\tFunction: {}", location.function_name());
-		std::abort();
-	}
-
-} // namespace
+[[noreturn]] static void fail(std::source_location location) {
+	CERO_DEBUG_BREAK();
+	fmt::println("\tFile:     {}", location.file_name());
+	fmt::println("\tFunction: {}", location.function_name());
+	std::abort();
+}
 
 void to_do(std::source_location location) {
 	fmt::println("Not yet implemented.");

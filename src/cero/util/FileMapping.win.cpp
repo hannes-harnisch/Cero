@@ -7,21 +7,17 @@
 
 namespace cero {
 
-namespace {
-
-	void close_file(HANDLE file) {
-		if (!::CloseHandle(file)) {
-			fail_result(fmt::format("Could not close file. System error: {}", get_system_error_message()));
-		}
+static void close_file(HANDLE file) {
+	if (!::CloseHandle(file)) {
+		fail_result(fmt::format("Could not close file. System error: {}", get_system_error_message()));
 	}
+}
 
-	void close_mapping(HANDLE mapping) {
-		if (!::CloseHandle(mapping)) {
-			fail_result(fmt::format("Could not close file mapping. System error: {}", get_system_error_message()));
-		}
+static void close_mapping(HANDLE mapping) {
+	if (!::CloseHandle(mapping)) {
+		fail_result(fmt::format("Could not close file mapping. System error: {}", get_system_error_message()));
 	}
-
-} // namespace
+}
 
 Result<FileMapping, std::error_code> FileMapping::from(std::string_view path) {
 	auto w_path = windows::utf8_to_utf16(path);

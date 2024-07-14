@@ -16,25 +16,21 @@ bool run_build_command(const Configuration& config) {
 	return !reporter.has_errors();
 }
 
-namespace {
-
-	void build_locked_source(const SourceGuard& source, const Configuration& config, Reporter& reporter) {
-		if (config.print_source) {
-			fmt::println("{}", source.get_text());
-		}
-
-		auto token_stream = lex(source, reporter);
-		if (config.print_tokens) {
-			fmt::println("{}", token_stream.to_string(source));
-		}
-
-		auto ast = parse(token_stream, source, reporter);
-		if (config.print_ast) {
-			fmt::println("{}", ast.to_string(source));
-		}
+static void build_locked_source(const SourceGuard& source, const Configuration& config, Reporter& reporter) {
+	if (config.print_source) {
+		fmt::println("{}", source.get_text());
 	}
 
-} // namespace
+	auto token_stream = lex(source, reporter, false);
+	if (config.print_tokens) {
+		fmt::println("{}", token_stream.to_string(source));
+	}
+
+	auto ast = parse(token_stream, source, reporter);
+	if (config.print_ast) {
+		fmt::println("{}", ast.to_string(source));
+	}
+}
 
 void build_source(const Source& source, const Configuration& config, Reporter& reporter) {
 	auto lock_result = source.lock();

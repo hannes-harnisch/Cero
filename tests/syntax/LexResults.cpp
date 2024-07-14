@@ -6,24 +6,20 @@
 
 namespace tests {
 
-namespace {
+static void check_token_kinds(const cero::TokenStream& token_stream, std::initializer_list<cero::TokenKind> kinds) {
+	REQUIRE(token_stream.num_tokens() == kinds.size());
 
-	void check_token_kinds(const cero::TokenStream& token_stream, std::initializer_list<cero::TokenKind> kinds) {
-		REQUIRE(token_stream.num_tokens() == kinds.size());
-
-		cero::TokenCursor c(token_stream);
-		for (auto kind : kinds) {
-			CHECK_EQ(kind, c.next().kind);
-		}
+	cero::TokenCursor c(token_stream);
+	for (auto kind : kinds) {
+		CHECK_EQ(kind, c.next().kind);
 	}
+}
 
-	std::string_view next_lexeme(cero::TokenCursor& cursor, const cero::SourceGuard& source) {
-		auto lexeme = cursor.get_lexeme(source);
-		cursor.advance();
-		return lexeme;
-	}
-
-} // namespace
+static std::string_view next_lexeme(cero::TokenCursor& cursor, const cero::SourceGuard& source) {
+	auto lexeme = cursor.get_lexeme(source);
+	cursor.advance();
+	return lexeme;
+}
 
 using enum cero::TokenKind;
 
@@ -31,7 +27,7 @@ CERO_TEST(LexEmptySource) {
 	auto source = make_test_source("");
 
 	ExhaustiveReporter r;
-	auto tokens = cero::lex(source, r);
+	auto tokens = cero::lex(source, r, true);
 	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens, {EndOfFile});
@@ -54,7 +50,7 @@ CERO_TEST(LexIntegerLiterals) {
 )_____");
 
 	ExhaustiveReporter r;
-	auto tokens = cero::lex(source, r);
+	auto tokens = cero::lex(source, r, true);
 	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens,
@@ -106,7 +102,7 @@ CERO_TEST(LexFloatLiterals) {
 )_____");
 
 	ExhaustiveReporter r;
-	auto tokens = cero::lex(source, r);
+	auto tokens = cero::lex(source, r, true);
 	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens, {FloatLiteral, Semicolon,		DecIntLiteral, Dot,		  Semicolon,	FloatLiteral, Semicolon,
@@ -154,7 +150,7 @@ CERO_TEST(LexStringLiteralsWithEscapes) {
 )_____");
 
 	ExhaustiveReporter r;
-	auto tokens = cero::lex(source, r);
+	auto tokens = cero::lex(source, r, true);
 	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens, {StringLiteral, StringLiteral, StringLiteral, StringLiteral, StringLiteral, StringLiteral,
@@ -180,7 +176,7 @@ CERO_TEST(LexLineComments) {
 )_____");
 
 	ExhaustiveReporter r;
-	auto tokens = cero::lex(source, r);
+	auto tokens = cero::lex(source, r, true);
 	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens, {LineComment, LineComment, LineComment, LineComment, EndOfFile});
@@ -211,7 +207,7 @@ CERO_TEST(LexBlockComments) {
 )_____");
 
 	ExhaustiveReporter r;
-	auto tokens = cero::lex(source, r);
+	auto tokens = cero::lex(source, r, true);
 	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens, {BlockComment, BlockComment, BlockComment, BlockComment, BlockComment, BlockComment, BlockComment,
@@ -236,7 +232,7 @@ CERO_TEST(LexBracketCaret) {
 )_____");
 
 	ExhaustiveReporter r;
-	auto tokens = cero::lex(source, r);
+	auto tokens = cero::lex(source, r, true);
 	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens, {LBracket, Caret, EndOfFile});
@@ -249,7 +245,7 @@ CERO_TEST(LexUnicodeNames) {
 )_____");
 
 	ExhaustiveReporter r;
-	auto tokens = cero::lex(source, r);
+	auto tokens = cero::lex(source, r, true);
 	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens, {Name, LParen, RParen, LBrace, RBrace, EndOfFile});
@@ -271,33 +267,12 @@ CERO_TEST(LexOperators) {
 )_____");
 
 	ExhaustiveReporter r;
-	auto tokens = cero::lex(source, r);
+	auto tokens = cero::lex(source, r, true);
 	CHECK(!tokens.has_errors());
 
-	check_token_kinds(tokens, {Bang,
-							   Plus,
-							   Minus,
-							   Star,
-							   Slash,
-							   Percent,
-							   EqEq,
-							   BangEq,
-							   LAngle,
-							   RAngle,
-							   LAngleEq,
-							   RAngleEq,
-							   Dot,
-							   ColonColon,
-							   AmpAmp,
-							   PipePipe,
-							   Eq,
-							   Amp,
-							   Pipe,
-							   Tilde,
-							   LAngleLAngle,
-							   RAngle,
-							   RAngle,
-							   EndOfFile});
+	check_token_kinds(tokens, {Bang,   Plus,   Minus,	 Star,	   Slash,		 Percent,	 EqEq,	 BangEq,
+							   LAngle, RAngle, LAngleEq, RAngleEq, Dot,			 ColonColon, AmpAmp, PipePipe,
+							   Eq,	   Amp,	   Pipe,	 Tilde,	   LAngleLAngle, RAngle,	 RAngle, EndOfFile});
 }
 
 CERO_TEST(LexDotDot) {
@@ -306,7 +281,7 @@ CERO_TEST(LexDotDot) {
 )_____");
 
 	ExhaustiveReporter r;
-	auto tokens = cero::lex(source, r);
+	auto tokens = cero::lex(source, r, true);
 	CHECK(!tokens.has_errors());
 
 	check_token_kinds(tokens, {Dot, Dot, EndOfFile});

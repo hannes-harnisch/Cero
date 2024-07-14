@@ -2,14 +2,10 @@
 
 namespace cero {
 
-namespace {
-
-	std::string_view get_arg_value_string(std::string_view arg) {
-		const size_t i = arg.find('=');
-		return arg.substr(i + 1);
-	}
-
-} // namespace
+static std::string_view get_arg_value_string(std::string_view arg) {
+	const size_t i = arg.find('=');
+	return arg.substr(i + 1);
+}
 
 std::optional<Configuration> Configuration::from(std::span<char*> args) {
 	Configuration config;

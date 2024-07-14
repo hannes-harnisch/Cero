@@ -16,7 +16,7 @@ foo "bar" 'baz' 123 456;
 )_____");
 
 	ExhaustiveReporter r;
-	auto tokens = cero::lex(source, r);
+	auto tokens = cero::lex(source, r, true);
 	CHECK(!tokens.has_errors());
 	auto str = tokens.to_string(source);
 
@@ -52,7 +52,7 @@ CERO_TEST(TokenStringForOperators) {
 )_____");
 
 	ExhaustiveReporter r;
-	auto tokens = cero::lex(source, r);
+	auto tokens = cero::lex(source, r, true);
 	CHECK(!tokens.has_errors());
 	auto str = tokens.to_string(source);
 
@@ -89,7 +89,7 @@ struct S {
 )_____");
 
 	ExhaustiveReporter r;
-	auto tokens = cero::lex(source, r);
+	auto tokens = cero::lex(source, r, true);
 	CHECK(!tokens.has_errors());
 	auto str = tokens.to_string(source);
 

@@ -8,10 +8,8 @@
 
 namespace cero {
 
-namespace {
-
-	bool run_help_command() {
-		static constexpr auto help = R"_____(
+static bool run_help_command() {
+	static constexpr auto help = R"_____(
 Cero compiler, version {}.{}.{}
 
 usage: cero [COMMAND] [OPTIONS]
@@ -28,28 +26,26 @@ options:
     -V, --version       Show version and build info for the compiler
 )_____";
 
-		fmt::println(help, version::Major, version::Minor, version::Patch);
-		return true;
-	}
+	fmt::println(help, version::Major, version::Minor, version::Patch);
+	return true;
+}
 
-	bool run_version_command() {
-		fmt::println("Cero compiler, version {}.{}.{}", version::Major, version::Minor, version::Patch);
-		return true;
-	}
+static bool run_version_command() {
+	fmt::println("Cero compiler, version {}.{}.{}", version::Major, version::Minor, version::Patch);
+	return true;
+}
 
-	bool run_install_command() {
-		to_do();
-	}
+static bool run_install_command() {
+	to_do();
+}
 
-	bool run_clean_command() {
-		to_do();
-	}
+static bool run_clean_command() {
+	to_do();
+}
 
-	bool run_run_command() {
-		to_do();
-	}
-
-} // namespace
+static bool run_run_command() {
+	to_do();
+}
 
 bool run(std::span<char*> args) {
 	initialize_environment();

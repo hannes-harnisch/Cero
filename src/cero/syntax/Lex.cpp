@@ -8,11 +8,12 @@ namespace cero {
 
 class Lexer {
 public:
-	Lexer(const SourceGuard& source, Reporter& reporter) :
+	Lexer(const SourceGuard& source, Reporter& reporter, bool lex_comments) :
 		source_(source),
 		reporter_(reporter),
 		cursor_(source),
-		stream_(source) {
+		stream_(source),
+		lex_comments_(lex_comments) {
 	}
 
 	TokenStream lex() && {
@@ -32,6 +33,7 @@ private:
 	Reporter& reporter_;
 	SourceCursor cursor_;
 	TokenStream stream_;
+	const bool lex_comments_;
 
 	void lex_source() {
 		while (auto next = cursor_.peek()) {
@@ -82,7 +84,7 @@ private:
 				case '+':  stream_.add_token(lex_plus(), offset); break;
 				case '-':  stream_.add_token(lex_minus(), offset); break;
 				case '*':  stream_.add_token(lex_star(), offset); break;
-				case '/':  stream_.add_token(lex_slash(offset), offset); break;
+				case '/':  lex_slash(offset); break;
 				case '%':  stream_.add_token(lex_percent(), offset); break;
 				case '&':  stream_.add_token(lex_ampersand(), offset); break;
 				case '|':  stream_.add_token(lex_pipe(), offset); break;
@@ -323,17 +325,21 @@ private:
 		}
 	}
 
-	TokenKind lex_slash(SourceOffset offset) {
+	void lex_slash(SourceOffset offset) {
 		if (cursor_.match('/')) {
 			eat_line_comment();
-			return TokenKind::LineComment;
+			if (lex_comments_) {
+				stream_.add_token(TokenKind::LineComment, offset);
+			}
 		} else if (cursor_.match('*')) {
 			eat_block_comment(offset);
-			return TokenKind::BlockComment;
+			if (lex_comments_) {
+				stream_.add_token(TokenKind::BlockComment, offset);
+			}
 		} else if (cursor_.match('=')) {
-			return TokenKind::SlashEq;
+			stream_.add_token(TokenKind::SlashEq, offset);
 		} else {
-			return TokenKind::Slash;
+			stream_.add_token(TokenKind::Slash, offset);
 		}
 	}
 
@@ -506,8 +512,8 @@ private:
 	}
 };
 
-TokenStream lex(const SourceGuard& source, Reporter& reporter) {
-	return Lexer(source, reporter).lex();
+TokenStream lex(const SourceGuard& source, Reporter& reporter, bool lex_comments) {
+	return Lexer(source, reporter, lex_comments).lex();
 }
 
 } // namespace cero

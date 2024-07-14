@@ -4,55 +4,51 @@
 
 namespace cero {
 
-namespace {
-
-	std::string_view parameter_specifier_to_string(ParameterSpecifier specifier) {
-		switch (specifier) {
-			using enum ParameterSpecifier;
-			case None: return "value";
-			case In:   return "in";
-			case Var:  return "var";
-		}
-		fail_unreachable();
+static std::string_view parameter_specifier_to_string(ParameterSpecifier specifier) {
+	switch (specifier) {
+		using enum ParameterSpecifier;
+		case None: return "value";
+		case In:   return "in";
+		case Var:  return "var";
 	}
+	fail_unreachable();
+}
 
-	std::string_view permission_specifier_to_string(PermissionSpecifier spec) {
-		switch (spec) {
-			using enum PermissionSpecifier;
-			case In:		   return "in";
-			case Var:		   return "var";
-			case VarBounded:   return "var (bounded)";
-			case VarUnbounded: return "var (unbounded)";
-		}
-		fail_unreachable();
+static std::string_view permission_specifier_to_string(PermissionSpecifier spec) {
+	switch (spec) {
+		using enum PermissionSpecifier;
+		case In:		   return "in";
+		case Var:		   return "var";
+		case VarBounded:   return "var (bounded)";
+		case VarUnbounded: return "var (unbounded)";
 	}
+	fail_unreachable();
+}
 
-	std::string_view binding_specifier_to_string(BindingSpecifier spec) {
-		switch (spec) {
-			using enum BindingSpecifier;
-			case Let:		return "let";
-			case Var:		return "var";
-			case Const:		return "const";
-			case Static:	return "static";
-			case StaticVar: return "static var";
-		}
-		fail_unreachable();
+static std::string_view binding_specifier_to_string(BindingSpecifier spec) {
+	switch (spec) {
+		using enum BindingSpecifier;
+		case Let:		return "let";
+		case Var:		return "var";
+		case Const:		return "const";
+		case Static:	return "static";
+		case StaticVar: return "static var";
 	}
+	fail_unreachable();
+}
 
-	std::string_view numeric_literal_kind_to_string(NumericLiteralKind kind) {
-		switch (kind) {
-			using enum NumericLiteralKind;
-			case Decimal:	  return "decimal";
-			case Hexadecimal: return "hexadecimal";
-			case Binary:	  return "binary";
-			case Octal:		  return "octal";
-			case Float:		  return "float";
-			case Character:	  return "character";
-		}
-		fail_unreachable();
+static std::string_view numeric_literal_kind_to_string(NumericLiteralKind kind) {
+	switch (kind) {
+		using enum NumericLiteralKind;
+		case Decimal:	  return "decimal";
+		case Hexadecimal: return "hexadecimal";
+		case Binary:	  return "binary";
+		case Octal:		  return "octal";
+		case Float:		  return "float";
+		case Character:	  return "character";
 	}
-
-} // namespace
+	fail_unreachable();
+}
 
 AstToString::AstToString(const Ast& ast, const SourceGuard& source) :
 	cursor_(ast),

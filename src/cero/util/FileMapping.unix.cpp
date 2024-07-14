@@ -10,15 +10,11 @@
 
 namespace cero {
 
-namespace {
-
-	void close_file(int file_descriptor) {
-		if (::close(file_descriptor) == -1) {
-			fail_result(fmt::format("Could not close file. System error: {}", get_system_error_message()));
-		}
+static void close_file(int file_descriptor) {
+	if (::close(file_descriptor) == -1) {
+		fail_result(fmt::format("Could not close file. System error: {}", get_system_error_message()));
 	}
-
-} // namespace
+}
 
 Result<FileMapping, std::error_code> FileMapping::from(std::string_view path) {
 	int file = ::open(path.data(), O_RDONLY);

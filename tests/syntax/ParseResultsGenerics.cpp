@@ -128,6 +128,10 @@ CERO_TEST(ParseLessAndRightShift) {
 oof(int32 a, int32 b) -> bool {
 	return a < b >> (16 - 4);
 }
+
+oog(int32 a, int32 b, int32 c) -> bool {
+	return a < b >> c;
+}
 )_____");
 
 	ExhaustiveReporter r;
@@ -157,6 +161,29 @@ oof(int32 a, int32 b) -> bool {
 							c.numeric_literal_expr(cero::NumericLiteralKind::Decimal);
 						});
 					});
+				});
+			});
+		});
+	});
+	c.function_definition(cero::AccessSpecifier::None, "oog", [&] {
+		c.function_parameter(cero::ParameterSpecifier::None, "a", [&] {
+			c.name_expr("int32");
+		});
+		c.function_parameter(cero::ParameterSpecifier::None, "b", [&] {
+			c.name_expr("int32");
+		});
+		c.function_parameter(cero::ParameterSpecifier::None, "c", [&] {
+			c.name_expr("int32");
+		});
+		c.function_output("", [&] {
+			c.name_expr("bool");
+		});
+		c.return_expr([&] {
+			c.binary_expr(cero::BinaryOperator::Less, [&] {
+				c.name_expr("a");
+				c.binary_expr(cero::BinaryOperator::Shr, [&] {
+					c.name_expr("b");
+					c.name_expr("c");
 				});
 			});
 		});

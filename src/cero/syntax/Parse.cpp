@@ -128,7 +128,7 @@ private:
 		TokenKind kind;
 		do {
 			cursor_.advance();
-			kind = cursor_.current_kind();
+			kind = cursor_.peek_kind();
 		} while (!contains(recovery_tokens, kind));
 	}
 
@@ -251,7 +251,7 @@ private:
 	}
 
 	bool recover_at_statement_scope() {
-		TokenKind kind = cursor_.current_kind();
+		TokenKind kind = cursor_.peek_kind();
 		while (kind != TokenKind::EndOfFile) {
 			if (kind == TokenKind::Semicolon) {
 				cursor_.advance();
@@ -262,7 +262,7 @@ private:
 			}
 
 			cursor_.advance();
-			kind = cursor_.current_kind();
+			kind = cursor_.peek_kind();
 		}
 		return true;
 	}
@@ -441,8 +441,7 @@ private:
 			case LParen:		 rule = {Postfix, &Parser::on_infix_left_paren}; break;
 			case LBracket:		 rule = {Postfix, &Parser::on_infix_left_bracket}; break;
 			case RAngle:
-				// check for unclosed angle brackets so the last one gets closed instead of parsing a greater-than
-				// expression
+				// check for unclosed angle brackets so the last one gets closed instead of parsing a greater-than expression
 				if (open_angles_ > 0) {
 					return nullptr;
 				} else {
@@ -671,16 +670,21 @@ private:
 		} while (cursor_.match(TokenKind::Comma));
 
 		if (cursor_.match(TokenKind::RAngle)) {
-			static constexpr TokenKind fallbacks[] {TokenKind::DecIntLiteral, TokenKind::HexIntLiteral,
-													TokenKind::BinIntLiteral, TokenKind::OctIntLiteral,
-													TokenKind::FloatLiteral,  TokenKind::CharLiteral,
-													TokenKind::StringLiteral, TokenKind::Minus,
-													TokenKind::Tilde,		  TokenKind::Amp,
-													TokenKind::PlusPlus,	  TokenKind::MinusMinus};
+			static constexpr TokenKind ForbiddenAfterGeneric[] {TokenKind::DecIntLiteral, TokenKind::HexIntLiteral,
+																 TokenKind::BinIntLiteral, TokenKind::OctIntLiteral,
+																 TokenKind::FloatLiteral,  TokenKind::CharLiteral,
+																 TokenKind::StringLiteral, TokenKind::Minus,
+																 TokenKind::Tilde,		   TokenKind::Amp,
+																 TokenKind::PlusPlus,	   TokenKind::MinusMinus};
 
-			auto kind = cursor_.peek_kind();
-			return (is_binding_allowed_ || kind != TokenKind::Name) && !contains(fallbacks, kind)
-				   && (kind != TokenKind::RAngle || open_angles_ != 1);
+			auto next = cursor_.peek_kind();
+
+			// allow statements with generics like `a<b, c> d;`, but comparison expressions like `f(a < b, c > d)`
+			return (is_binding_allowed_ || next != TokenKind::Name)
+				   // allow comparison expressions like `f(a < b, c > 0)`
+				   && !contains(ForbiddenAfterGeneric, next)
+				   // allow comparison expressions like `a < b >> c`
+				   && (next != TokenKind::RAngle || open_angles_ > 1);
 		} else {
 			return false;
 		}
@@ -1132,7 +1136,7 @@ private:
 	}
 
 	void report_expectation(Message message) {
-		auto token = cursor_.current();
+		auto token = cursor_.peek();
 		auto location = token.locate_in(source_);
 
 		auto format = get_token_message_format(token.kind);
@@ -1151,7 +1155,7 @@ private:
 };
 
 Ast parse(const SourceGuard& source, Reporter& reporter) {
-	auto token_stream = lex(source, reporter);
+	auto token_stream = lex(source, reporter, false);
 	return parse(token_stream, source, reporter);
 }
 

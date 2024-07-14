@@ -13,29 +13,40 @@ public:
 		it_(token_stream.raw().begin()) {
 	}
 
+	/// Returns the current token.
+	Token peek() const {
+		return *it_;
+	}
+
+	/// Returns the current token kind.
+	TokenKind peek_kind() const {
+		return it_->kind;
+	}
+
+	/// Returns the current token offset.
+	SourceOffset peek_offset() const {
+		return it_->offset;
+	}
+
 	/// Returns the current token and then advances if not at the end.
 	Token next() {
 		const auto token = *it_;
-		if (token.kind != TokenKind::EndOfFile) {
-			++it_;
-		}
+		advance();
 		return token;
 	}
 
-	/// Returns true and advances if the current token kind equals the expected, skipping comments, otherwise returns false.
+	/// Returns true and advances if the current token kind equals the expected, otherwise returns false.
 	bool match(TokenKind kind) {
-		auto token = peek();
-		if (token.kind == kind) {
+		if (it_->kind == kind) {
 			advance();
 			return true;
 		}
 		return false;
 	}
 
-	/// Returns the current token and advances if the current token kind equals the expected, skipping comments, otherwise
-	/// returns null.
+	/// Returns the current token and advances if the current token kind equals the expected, otherwise returns null.
 	std::optional<Token> match_token(TokenKind kind) {
-		auto token = peek();
+		auto token = *it_;
 		if (token.kind == kind) {
 			advance();
 			return token;
@@ -43,10 +54,10 @@ public:
 		return std::nullopt;
 	}
 
-	/// Returns a string view of the lexeme and advances if the current token kind is an identifier token, skipping comments,
-	/// otherwise returns an empty string.
+	/// Returns a string view of the lexeme and advances if the current token kind is an identifier token, otherwise returns an
+	/// empty string.
 	std::string_view match_name(const SourceGuard& source) {
-		if (peek_kind() == TokenKind::Name) {
+		if (it_->kind == TokenKind::Name) {
 			auto identifier = get_lexeme(source);
 			advance();
 			return identifier;
@@ -54,47 +65,13 @@ public:
 		return {};
 	}
 
-	/// Returns the current token, skipping comments.
-	Token peek() {
-		skip_comments();
-		return current();
-	}
-
-	/// Returns the token after the current token, skipping comments.
+	/// Returns the token after the current token.
 	Token peek_ahead() {
-		skip_comments();
 		auto saved = it_;
 		advance();
-		auto token = peek();
+		auto token = *it_;
 		it_ = saved;
 		return token;
-	}
-
-	/// Returns the current token kind, skipping comments.
-	TokenKind peek_kind() {
-		skip_comments();
-		return it_->kind;
-	}
-
-	/// Returns the current token offset, skipping comments.
-	SourceOffset peek_offset() {
-		skip_comments();
-		return it_->offset;
-	}
-
-	/// Returns the current token, without skipping comments.
-	Token current() const {
-		return *it_;
-	}
-
-	/// Returns the current token kind, without skipping comments.
-	TokenKind current_kind() const {
-		return it_->kind;
-	}
-
-	/// Returns the current token offset, without skipping comments.
-	SourceOffset current_offset() const {
-		return it_->offset;
 	}
 
 	std::string_view get_lexeme(const SourceGuard& source) const {
