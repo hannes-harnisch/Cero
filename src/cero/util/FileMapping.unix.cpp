@@ -10,57 +10,67 @@
 
 namespace cero {
 
-static void close_file(int file_descriptor) {
-	if (::close(file_descriptor) == -1) {
+void FileMapping::close_fd(int fd) {
+	int result = ::close(fd);
+	if (result == -1) {
 		fail_result(fmt::format("Could not close file. System error: {}", get_system_error_message()));
 	}
 }
 
+int FileMapping::null_fd() {
+	return -1;
+}
+
+void FileMapping::unmap(Mapping map) {
+	int result = ::munmap(map.addr, map.size);
+	if (result == -1) {
+		fail_result(fmt::format("Could not unmap file. System error: {}", get_system_error_message()));
+	}
+}
+
+FileMapping::Mapping FileMapping::null_mapping() {
+	return {MAP_FAILED, 0};
+}
+
 Result<FileMapping, std::error_code> FileMapping::from(std::string_view path) {
-	int file = ::open(path.data(), O_RDONLY);
-	if (file == -1) {
+	std::string path_nt(path);
+	UniqueFd file(::open(path_nt.c_str(), O_RDONLY));
+	if (file.get() == -1) {
 		return get_system_error();
 	}
 
 	struct stat file_stats = {};
-	if (::fstat(file, &file_stats) == -1) {
-		close_file(file);
+	int result = ::fstat(file.get(), &file_stats);
+	if (result == -1) {
 		return get_system_error();
 	}
-
-	const void* addr = "";
 	const size_t size = static_cast<size_t>(file_stats.st_size);
+
+	UniqueMapping mapping;
 	if (size > 0) {
-		addr = ::mmap(nullptr, size, PROT_READ, MAP_PRIVATE, file, 0);
+		void* addr = ::mmap(nullptr, size, PROT_READ, MAP_PRIVATE, file.get(), 0);
 		if (addr == MAP_FAILED) {
-			close_file(file);
 			return get_system_error();
 		}
+		mapping.reset({addr, size});
 	}
 
-	FileMapping fm {};
-	fm.size_ = size;
-	fm.file_ = file;
-	fm.addr_ = addr;
+	FileMapping fm;
+	fm.file_ = std::move(file);
+	fm.mapping_ = std::move(mapping);
 	return fm;
 }
 
-FileMapping::~FileMapping() {
-	if (addr_ != nullptr && size_ > 0) {
-		if (::munmap(const_cast<void*>(addr_), size_) == -1) {
-			fail_result(fmt::format("Could not unmap file. System error: {}", get_system_error_message()));
-		}
-	}
-
-	if (file_ != -1) {
-		close_file(file_);
+std::string_view FileMapping::get_text() const {
+	if (mapping_->size == 0) {
+		return "";
+	} else {
+		return std::string_view(static_cast<const char*>(mapping_->addr), mapping_->size);
 	}
 }
 
-FileMapping::FileMapping(FileMapping&& other) noexcept :
-	size_(other.size_),
-	file_(std::exchange(other.file_, -1)),
-	addr_(std::exchange(other.addr_, nullptr)) {
+size_t FileMapping::get_size() const {
+	return mapping_->size;
 }
 
 } // namespace cero

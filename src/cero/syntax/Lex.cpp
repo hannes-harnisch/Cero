@@ -506,8 +506,8 @@ private:
 
 			case 9:
 				if (lexeme == "unchecked") return Unchecked;
-				break; // clang-format on
-		}
+				break;
+		} // clang-format on
 		return Name;
 	}
 };
