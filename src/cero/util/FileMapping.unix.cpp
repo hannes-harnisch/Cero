@@ -10,67 +10,69 @@
 
 namespace cero {
 
-void FileMapping::close_fd(int fd) {
-	int result = ::close(fd);
-	if (result == -1) {
-		fail_result(fmt::format("Could not close file. System error: {}", get_system_error_message()));
+struct FileMappingImpl {
+	int fd = -1;
+	size_t size = 0;
+	void* addr = MAP_FAILED;
+
+	void destroy() const {
+		if (fd != -1) {
+			int result = ::close(fd);
+			if (result == -1) {
+				fail_result(fmt::format("Could not close file. System error: {}", get_system_error_message()));
+			}
+		}
+
+		if (addr != MAP_FAILED) {
+			int result = ::munmap(addr, size);
+			if (result == -1) {
+				fail_result(fmt::format("Could not unmap file. System error: {}", get_system_error_message()));
+			}
+		}
 	}
-}
-
-int FileMapping::null_fd() {
-	return -1;
-}
-
-void FileMapping::unmap(Mapping map) {
-	int result = ::munmap(map.addr, map.size);
-	if (result == -1) {
-		fail_result(fmt::format("Could not unmap file. System error: {}", get_system_error_message()));
-	}
-}
-
-FileMapping::Mapping FileMapping::null_mapping() {
-	return {MAP_FAILED, 0};
-}
+};
 
 Result<FileMapping, std::error_code> FileMapping::from(std::string_view path) {
 	std::string path_nt(path);
-	UniqueFd file(::open(path_nt.c_str(), O_RDONLY));
-	if (file.get() == -1) {
+
+	FileMapping f;
+	f.impl_->fd = ::open(path_nt.c_str(), O_RDONLY);
+	if (f.impl_->fd == -1) {
 		return get_system_error();
 	}
 
 	struct stat file_stats = {};
-	int result = ::fstat(file.get(), &file_stats);
+	int result = ::fstat(f.impl_->fd, &file_stats);
 	if (result == -1) {
 		return get_system_error();
 	}
-	const size_t size = static_cast<size_t>(file_stats.st_size);
+	f.impl_->size = static_cast<size_t>(file_stats.st_size);
 
-	UniqueMapping mapping;
-	if (size > 0) {
-		void* addr = ::mmap(nullptr, size, PROT_READ, MAP_PRIVATE, file.get(), 0);
-		if (addr == MAP_FAILED) {
+	if (f.impl_->size > 0) {
+		f.impl_->addr = ::mmap(nullptr, f.impl_->size, PROT_READ, MAP_PRIVATE, f.impl_->fd, 0);
+		if (f.impl_->addr == MAP_FAILED) {
 			return get_system_error();
 		}
-		mapping.reset({addr, size});
 	}
 
-	FileMapping fm;
-	fm.file_ = std::move(file);
-	fm.mapping_ = std::move(mapping);
-	return fm;
+	return f;
 }
 
 std::string_view FileMapping::get_text() const {
-	if (mapping_->size == 0) {
+	if (impl_->size == 0) {
 		return "";
 	} else {
-		return std::string_view(static_cast<const char*>(mapping_->addr), mapping_->size);
+		return std::string_view(static_cast<const char*>(impl_->addr), impl_->size);
 	}
 }
 
 size_t FileMapping::get_size() const {
-	return mapping_->size;
+	return impl_->size;
 }
+
+FileMapping::FileMapping() = default;
+FileMapping::~FileMapping() = default;
+FileMapping::FileMapping(FileMapping&&) noexcept = default;
+FileMapping& FileMapping::operator=(FileMapping&&) noexcept = default;
 
 } // namespace cero

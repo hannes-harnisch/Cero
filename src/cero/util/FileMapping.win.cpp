@@ -7,77 +7,84 @@
 
 namespace cero {
 
-void FileMapping::close_handle(HANDLE handle) {
-	BOOL success = ::CloseHandle(handle);
-	if (!success) {
-		fail_result(fmt::format("Could not close handle. System error: {}", get_system_error_message()));
+struct FileMappingImpl {
+	HANDLE file = INVALID_HANDLE_VALUE;
+	size_t size = 0;
+	HANDLE mapping = INVALID_HANDLE_VALUE;
+	LPVOID addr = nullptr;
+
+	void destroy() const {
+		if (file != INVALID_HANDLE_VALUE) {
+			BOOL success = ::CloseHandle(file);
+			if (!success) {
+				fail_result(fmt::format("Could not close file handle. System error: {}", get_system_error_message()));
+			}
+		}
+
+		if (mapping != INVALID_HANDLE_VALUE) {
+			BOOL success = ::CloseHandle(mapping);
+			if (!success) {
+				fail_result(fmt::format("Could not close file mapping handle. System error: {}", get_system_error_message()));
+			}
+		}
+
+		if (addr != nullptr) {
+			BOOL success = ::UnmapViewOfFile(addr);
+			if (!success) {
+				fail_result(fmt::format("Could not unmap file. System error: {}", get_system_error_message()));
+			}
+		}
 	}
-}
-
-HANDLE FileMapping::null_handle() {
-	return INVALID_HANDLE_VALUE;
-}
-
-void FileMapping::unmap(LPVOID addr) {
-	BOOL success = ::UnmapViewOfFile(addr);
-	if (!success) {
-		fail_result(fmt::format("Could not unmap file. System error: {}", get_system_error_message()));
-	}
-}
-
-LPVOID FileMapping::null_addr() {
-	return nullptr;
-}
+};
 
 Result<FileMapping, std::error_code> FileMapping::from(std::string_view path) {
 	auto path_utf16 = windows::utf8_to_utf16(path);
 
-	UniqueHandle file(::CreateFileW(path_utf16.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
-									FILE_ATTRIBUTE_NORMAL, nullptr));
-	if (file.get() == INVALID_HANDLE_VALUE) {
+	FileMapping f;
+	f.impl_->file = ::CreateFileW(path_utf16.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
+								  FILE_ATTRIBUTE_NORMAL, nullptr);
+	if (f.impl_->file == INVALID_HANDLE_VALUE) {
 		return get_system_error();
 	}
 
 	LARGE_INTEGER file_size;
-	BOOL success = ::GetFileSizeEx(file.get(), &file_size);
+	BOOL success = ::GetFileSizeEx(f.impl_->file, &file_size);
 	if (!success) {
 		return get_system_error();
 	}
-	const size_t size = static_cast<size_t>(file_size.QuadPart);
+	f.impl_->size = static_cast<size_t>(file_size.QuadPart);
 
-	UniqueHandle mapping;
-	UniqueMapAddr addr;
-	if (size > 0) {
-		HANDLE map_handle = ::CreateFileMappingW(file.get(), nullptr, PAGE_READONLY, 0, 0, nullptr);
-		if (map_handle == nullptr) {
+	if (f.impl_->size > 0) {
+		HANDLE mapping = ::CreateFileMappingW(f.impl_->file, nullptr, PAGE_READONLY, 0, 0, nullptr);
+		if (mapping == nullptr) {
 			return get_system_error();
 		}
-		mapping.reset(map_handle);
+		f.impl_->mapping = mapping;
 
-		addr.reset(::MapViewOfFile(mapping.get(), FILE_MAP_READ, 0, 0, 0));
-		if (addr.get() == nullptr) {
+		f.impl_->addr = ::MapViewOfFile(f.impl_->mapping, FILE_MAP_READ, 0, 0, 0);
+		if (f.impl_->addr == nullptr) {
 			return get_system_error();
 		}
 	}
 
-	FileMapping fm;
-	fm.file_ = std::move(file);
-	fm.mapping_ = std::move(mapping);
-	fm.addr_ = std::move(addr);
-	fm.size_ = size;
-	return fm;
+	return f;
 }
 
 std::string_view FileMapping::get_text() const {
-	if (size_ == 0) {
+	if (impl_->size == 0) {
 		return "";
 	} else {
-		return std::string_view(static_cast<const char*>(addr_.get()), size_);
+		return std::string_view(static_cast<const char*>(impl_->addr), impl_->size);
 	}
 }
 
 size_t FileMapping::get_size() const {
-	return size_;
+	return impl_->size;
 }
+
+FileMapping::FileMapping() = default;
+FileMapping::~FileMapping() = default;
+FileMapping::FileMapping(FileMapping&&) noexcept = default;
+FileMapping& FileMapping::operator=(FileMapping&&) noexcept = default;
 
 } // namespace cero
