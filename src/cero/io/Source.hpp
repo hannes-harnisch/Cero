@@ -64,7 +64,7 @@ public:
 	/// If the source represents a file, tries to open it as a memory-mapped file that will be closed when the guard goes out of
 	/// scope. If the operation fails, the system error code is returned. Locking source objects created directly from strings
 	/// will never fail.
-	Result<SourceGuard, std::error_code> lock() const;
+	Result<SourceGuard, std::error_condition> lock() const;
 
 	/// Gets the name of the source input.
 	std::string_view get_name() const;

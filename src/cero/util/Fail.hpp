@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Macros.hpp"
+
 #include <source_location>
 #include <string_view>
 
@@ -12,12 +14,12 @@ namespace cero {
 /// there are logic bugs in the compiler.
 [[noreturn]] void fail_unreachable(std::source_location location = std::source_location::current());
 
-/// Terminates the compiler immediately and unconditionally. To be used when an expected precondition or invariant was not
-/// upheld.
-[[noreturn]] void fail_assert(std::string_view info, std::source_location location = std::source_location::current());
+/// Terminates the compiler immediately and unconditionally. To be used when an expected precondition, result or invariant
+/// was not upheld.
+[[noreturn]] void fail_check(std::string_view msg, std::source_location location = std::source_location::current());
 
-/// Terminates the compiler immediately and unconditionally. To be used when an expected postcondition or outcome was not
-/// reached.
-[[noreturn]] void fail_result(std::string_view info, std::source_location location = std::source_location::current());
+/// Terminates the compiler immediately if the condition is false. To be used when an expected precondition, result or invariant
+/// was not upheld.
+void check(bool condition, std::string_view msg, std::source_location location = std::source_location::current());
 
 } // namespace cero

@@ -1,13 +1,6 @@
 #include "SystemError.hpp"
 
-namespace cero {
-
-std::error_code get_system_error() {
-	return std::error_code(errno, std::system_category());
+std::error_condition cero::get_last_system_error() {
+	const int last_error = errno;
+	return std::system_category().default_error_condition(last_error);
 }
-
-std::string get_system_error_message(std::error_code error_code) {
-	return error_code.message();
-}
-
-} // namespace cero

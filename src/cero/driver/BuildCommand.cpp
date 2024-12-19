@@ -44,7 +44,7 @@ void build_source(const Source& source, const Configuration& config, Reporter& r
 		if (error_code == std::errc::no_such_file_or_directory) {
 			reporter.report(Message::FileNotFound, blank, {});
 		} else {
-			reporter.report(Message::CouldNotOpenFile, blank, MessageArgs(get_system_error_message(error)));
+			reporter.report(Message::CouldNotOpenFile, blank, MessageArgs(error.message()));
 		}
 	}
 }

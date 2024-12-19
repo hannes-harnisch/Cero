@@ -43,7 +43,7 @@ public:
 	if constexpr (std::is_same_v<T, Ast##X>) {                                                                                 \
 		if (Root_.header.kind == AstNodeKind::X) return X##_;                                                                  \
                                                                                                                                \
-		fail_assert("node does not hold expected type");                                                                       \
+		fail_check("node does not hold expected type");                                                                        \
 	} else
 		CERO_AST_NODE_KINDS
 #undef CERO_AST_NODE_KIND
@@ -58,7 +58,7 @@ public:
 	if constexpr (std::is_same_v<T, Ast##X>) {                                                                                 \
 		if (Root_.header.kind == AstNodeKind::X) return X##_;                                                                  \
                                                                                                                                \
-		fail_assert("node does not hold expected type");                                                                       \
+		fail_check("node does not hold expected type");                                                                        \
 	} else
 		CERO_AST_NODE_KINDS
 #undef CERO_AST_NODE_KIND

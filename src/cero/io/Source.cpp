@@ -57,7 +57,7 @@ Source Source::from_string(std::string_view name, std::string_view source_code, 
 	return Source(name, source_code, config.tab_size);
 }
 
-Result<SourceGuard, std::error_code> Source::lock() const {
+Result<SourceGuard, std::error_condition> Source::lock() const {
 	if (source_code_.data() == nullptr) {
 		return FileMapping::from(name_).map([&](FileMapping&& file_mapping) -> SourceGuard {
 			return SourceGuard(std::move(file_mapping), name_, tab_size_);

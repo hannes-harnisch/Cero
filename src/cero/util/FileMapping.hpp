@@ -10,7 +10,7 @@ namespace cero {
 
 class FileMapping {
 public:
-	static Result<FileMapping, std::error_code> from(std::string_view path);
+	static Result<FileMapping, std::error_condition> from(std::string_view path);
 
 	std::string_view get_text() const;
 	size_t get_size() const;

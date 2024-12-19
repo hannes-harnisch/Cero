@@ -5,30 +5,35 @@
 namespace cero {
 
 [[noreturn]] static void fail(std::source_location location) {
-	CERO_DEBUG_BREAK();
 	fmt::println("\tFile:     {}", location.file_name());
 	fmt::println("\tFunction: {}", location.function_name());
 	std::abort();
 }
 
-void to_do(std::source_location location) {
+} // namespace cero
+
+void cero::to_do(std::source_location location) {
+	CERO_DEBUG_BREAK();
 	fmt::println("Not yet implemented.");
 	fail(location);
 }
 
-void fail_unreachable(std::source_location location) {
+void cero::fail_unreachable(std::source_location location) {
+	CERO_DEBUG_BREAK();
 	fmt::println("The compiler reached code that should be unreachable.");
 	fail(location);
 }
 
-void fail_assert(std::string_view info, std::source_location location) {
-	fmt::println("Assertion failed: {}", info);
+void cero::fail_check(std::string_view msg, std::source_location location) {
+	CERO_DEBUG_BREAK();
+	fmt::println("Requirement failed: {}", msg);
 	fail(location);
 }
 
-void fail_result(std::string_view info, std::source_location location) {
-	fmt::println("Result failed: {}", info);
-	fail(location);
+void cero::check(bool condition, std::string_view msg, std::source_location location) {
+	if (!condition) {
+		CERO_DEBUG_BREAK();
+		fmt::println("Requirement failed: {}", msg);
+		fail(location);
+	}
 }
-
-} // namespace cero

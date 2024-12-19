@@ -8,12 +8,10 @@ namespace cero {
 /// Stores formatting arguments for diagnostic messages.
 struct MessageArgs {
 	fmt::dynamic_format_arg_store<fmt::format_context> store;
-	const size_t arg_count = 0;
 
 	MessageArgs() = default;
 
-	explicit MessageArgs(auto&&... args) :
-		arg_count(sizeof...(args)) {
+	explicit MessageArgs(auto&&... args) {
 		store_args(fmt::make_format_args(args...));
 	}
 

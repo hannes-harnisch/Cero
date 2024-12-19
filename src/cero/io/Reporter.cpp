@@ -5,8 +5,6 @@
 namespace cero {
 
 void MessageArgs::store_args(fmt::format_args args) {
-	store.reserve(arg_count, 0);
-
 	int i = 0;
 	while (auto arg = args.get(i++)) {
 		arg.visit([&]<typename T>(const T& value) {
@@ -31,13 +29,11 @@ bool MessageArgs::verify_message_arg_count(Message message) const {
 		}
 	}
 
-	return brace_pair_count == arg_count;
+	return brace_pair_count == store.size();
 }
 
 void Reporter::report(Message message, CodeLocation location, MessageArgs args) {
-	if (!args.verify_message_arg_count(message)) {
-		fail_assert("Incorrect number of message arguments.");
-	}
+	check(args.verify_message_arg_count(message), "Incorrect number of message arguments.");
 
 	auto message_level = get_default_message_level(message);
 	if (warnings_as_errors_ && message_level == MessageLevel::Warning) {

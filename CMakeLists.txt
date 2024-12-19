@@ -17,15 +17,15 @@ include(FetchContent)
 
 message("Fetching dependency: fmtlib")
 FetchContent_Declare(fmt
-  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-  GIT_TAG 45b772f85c0c8ef95cdee73a2f33ed5d69739e28
+        GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+        GIT_TAG 7c50da5385cb9e67e9be37544caa1649fd466dae
 )
 FetchContent_MakeAvailable(fmt)
 
 message("Fetching dependency: doctest")
 FetchContent_Declare(doctest
-  GIT_REPOSITORY https://github.com/doctest/doctest.git
-  GIT_TAG v2.4.11
+        GIT_REPOSITORY https://github.com/doctest/doctest.git
+        GIT_TAG v2.4.11
 )
 FetchContent_MakeAvailable(doctest)
 

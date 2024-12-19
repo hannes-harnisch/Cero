@@ -24,7 +24,7 @@
 		do {                                                                                                                   \
 			if (!(condition)) {                                                                                                \
 				CERO_DEBUG_BREAK();                                                                                            \
-				fail_assert(info);                                                                                             \
+				fail_check(info);                                                                                            \
 			}                                                                                                                  \
 		} while (false)
 #else
